@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from 'react'
-import { offerCalendarFile } from '../lib/calendar'
+import { offerCalendarFile, type OfferCalendarOptions } from '../lib/calendar'
 import type { Occurrence } from '../types'
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   className?: string
   /** Optional calendar display name inside the .ics file. */
   calendarName?: string
+  /** Extra ICS options (timezone, source label, filename prefix). */
+  calendarOptions?: Omit<OfferCalendarOptions, 'calendarName'>
 }
 
 export function AddToCalendarButton({
@@ -19,6 +21,7 @@ export function AddToCalendarButton({
   compact = false,
   className = '',
   calendarName,
+  calendarOptions,
 }: Props) {
   const [status, setStatus] = useState<string | null>(null)
   const disabled = occurrences.length === 0
@@ -36,7 +39,10 @@ export function AddToCalendarButton({
     event.stopPropagation()
     if (disabled) return
 
-    const result = await offerCalendarFile(occurrences, calendarName)
+    const result = await offerCalendarFile(occurrences, {
+      ...calendarOptions,
+      calendarName,
+    })
     if (result === 'opened') setStatus('Opening Calendar…')
     else if (result === 'downloaded') setStatus('Opening Calendar…')
     else if (result === 'empty') setStatus('Nothing to add')

@@ -1,8 +1,9 @@
 /**
  * Serve an .ics calendar inline so iPhone Safari opens Quick Look with
- * the native “Add To Calendar” button (same sheet as swim-carpool).
+ * the native “Add To Calendar” button.
  *
  * Query: ?d=<base64url of utf-8 ics>
+ * Product: CommitCompanionCalendar (tenant-agnostic payload transport)
  */
 export default function handler(req, res) {
   if (req.method !== 'GET') {
@@ -38,7 +39,10 @@ export default function handler(req, res) {
 
   res.statusCode = 200
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8')
-  res.setHeader('Content-Disposition', 'inline; filename="delmar-schedule.ics"')
+  res.setHeader(
+    'Content-Disposition',
+    'inline; filename="commitcompanioncalendar.ics"',
+  )
   res.setHeader('Cache-Control', 'no-store')
   res.end(ics)
 }

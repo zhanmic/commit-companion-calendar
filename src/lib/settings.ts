@@ -1,5 +1,5 @@
-import { SUB_TEAM_ORDER } from './groups'
-import type { SubTeam } from '../types'
+import { PRODUCT_STORAGE_PREFIX } from '../product'
+import type { TenantConfig } from '../tenants/types'
 
 /** Roles for segments of a practice title split by the separator. */
 export type NameField = 'group' | 'location' | 'time' | 'ignore'
@@ -21,7 +21,7 @@ export interface ScheduleSettings {
   /** Fetch Commit meets (`includeMeets=true`) and show them on the week view. */
   queryMeets: boolean
   /** Groups selected by default when the page loads. */
-  defaultGroups: SubTeam[]
+  defaultGroups: string[]
   /** Whether the Event filter chip is selected on page load. */
   defaultShowEvents: boolean
   /** Whether the Meet filter chip is selected on page load. */
@@ -30,25 +30,10 @@ export interface ScheduleSettings {
   practiceNameFormat: PracticeNameFormat
 }
 
-export const SETTINGS_KEY = 'delmar-schedule:settings'
-
 export const DEFAULT_PRACTICE_NAME_FORMAT: PracticeNameFormat = {
   mode: 'fields',
   separator: '-',
   fields: ['group', 'location', 'time'],
-}
-
-export const DEFAULT_GROUPS: SubTeam[] = ['Sr']
-
-export const DEFAULT_SETTINGS: ScheduleSettings = {
-  // On by default so Event / Meet filter chips stay visible in the week view.
-  includeTeamEvents: true,
-  queryMeets: true,
-  defaultGroups: [...DEFAULT_GROUPS],
-  // Chips are available, but not selected until the user opts in (or changes defaults).
-  defaultShowEvents: false,
-  defaultShowMeets: false,
-  practiceNameFormat: { ...DEFAULT_PRACTICE_NAME_FORMAT },
 }
 
 export const PRACTICE_PARSE_MODE_OPTIONS: Array<{
@@ -88,37 +73,14 @@ function isNameField(value: unknown): value is NameField {
   )
 }
 
-function normalizeDefaultGroups(value: unknown): SubTeam[] {
-  if (!Array.isArray(value)) return [...DEFAULT_GROUPS]
-  // Preserve empty selection — empty means no groups selected on load.
-  if (value.length === 0) return []
-  const groups = SUB_TEAM_ORDER.filter((team) => value.includes(team))
-  return groups.length ? groups : [...DEFAULT_GROUPS]
+export function settingsStorageKey(tenantSlug: string): string {
+  return `${PRODUCT_STORAGE_PREFIX}:${tenantSlug}:settings`
 }
 
-function normalizePracticeNameFormat(
-  value: unknown,
-): PracticeNameFormat {
-  if (!value || typeof value !== 'object') {
-    return { ...DEFAULT_PRACTICE_NAME_FORMAT }
-  }
-  const raw = value as Partial<PracticeNameFormat>
-  const fields = Array.isArray(raw.fields)
-    ? raw.fields.filter(isNameField)
-    : DEFAULT_PRACTICE_NAME_FORMAT.fields
-  return {
-    mode: isPracticeParseMode(raw.mode)
-      ? raw.mode
-      : DEFAULT_PRACTICE_NAME_FORMAT.mode,
-    separator:
-      typeof raw.separator === 'string' && raw.separator.length > 0
-        ? raw.separator
-        : DEFAULT_PRACTICE_NAME_FORMAT.separator,
-    fields: fields.length ? fields : [...DEFAULT_PRACTICE_NAME_FORMAT.fields],
-  }
-}
+/** Legacy key from the single-tenant Delma app — migrated once. */
+const LEGACY_SETTINGS_KEY = 'delmar-schedule:settings'
 
-function cloneSettings(settings: ScheduleSettings = DEFAULT_SETTINGS): ScheduleSettings {
+function cloneSettings(settings: ScheduleSettings): ScheduleSettings {
   return {
     ...settings,
     defaultGroups: [...settings.defaultGroups],
@@ -129,46 +91,118 @@ function cloneSettings(settings: ScheduleSettings = DEFAULT_SETTINGS): ScheduleS
   }
 }
 
-export function getStoredSettings(): ScheduleSettings {
-  if (typeof window === 'undefined') return cloneSettings()
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
-    if (!raw) return cloneSettings()
-    const parsed = JSON.parse(raw) as Partial<ScheduleSettings>
-    // Older saves had Event/Meet off by default and omitted these keys. On first
-    // load of the new defaults UI, turn the Event/Meet chips back on.
-    const hasKindDefaults =
-      typeof parsed.defaultShowEvents === 'boolean' ||
-      typeof parsed.defaultShowMeets === 'boolean'
+function normalizeDefaultGroups(
+  value: unknown,
+  tenant: TenantConfig,
+): string[] {
+  const order = tenant.groups.map((g) => g.id)
+  const fallback = [...tenant.defaultSettings.defaultGroups]
+  if (!Array.isArray(value)) return fallback
+  // Preserve empty selection — empty means no groups selected on load.
+  if (value.length === 0) return []
+  const groups = order.filter((team) => value.includes(team))
+  return groups.length ? groups : fallback
+}
 
+function normalizePracticeNameFormat(
+  value: unknown,
+  tenant: TenantConfig,
+): PracticeNameFormat {
+  const defaults = tenant.defaultSettings.practiceNameFormat
+  if (!value || typeof value !== 'object') {
     return {
-      includeTeamEvents: hasKindDefaults
-        ? typeof parsed.includeTeamEvents === 'boolean'
-          ? parsed.includeTeamEvents
-          : DEFAULT_SETTINGS.includeTeamEvents
-        : true,
-      queryMeets: hasKindDefaults
-        ? typeof parsed.queryMeets === 'boolean'
-          ? parsed.queryMeets
-          : DEFAULT_SETTINGS.queryMeets
-        : true,
-      defaultGroups: normalizeDefaultGroups(parsed.defaultGroups),
-      defaultShowEvents:
-        typeof parsed.defaultShowEvents === 'boolean'
-          ? parsed.defaultShowEvents
-          : DEFAULT_SETTINGS.defaultShowEvents,
-      defaultShowMeets:
-        typeof parsed.defaultShowMeets === 'boolean'
-          ? parsed.defaultShowMeets
-          : DEFAULT_SETTINGS.defaultShowMeets,
-      practiceNameFormat: normalizePracticeNameFormat(parsed.practiceNameFormat),
+      ...defaults,
+      fields: [...defaults.fields],
     }
-  } catch {
-    return cloneSettings()
+  }
+  const raw = value as Partial<PracticeNameFormat>
+  const fields = Array.isArray(raw.fields)
+    ? raw.fields.filter(isNameField)
+    : defaults.fields
+  return {
+    mode: isPracticeParseMode(raw.mode) ? raw.mode : defaults.mode,
+    separator:
+      typeof raw.separator === 'string' && raw.separator.length > 0
+        ? raw.separator
+        : defaults.separator,
+    fields: fields.length ? fields : [...defaults.fields],
   }
 }
 
-export function setStoredSettings(settings: ScheduleSettings): void {
+function normalizeSettings(
+  parsed: Partial<ScheduleSettings>,
+  tenant: TenantConfig,
+): ScheduleSettings {
+  const defaults = tenant.defaultSettings
+  // Older saves had Event/Meet off by default and omitted these keys. On first
+  // load of the new defaults UI, turn the Event/Meet chips back on.
+  const hasKindDefaults =
+    typeof parsed.defaultShowEvents === 'boolean' ||
+    typeof parsed.defaultShowMeets === 'boolean'
+
+  return {
+    includeTeamEvents: hasKindDefaults
+      ? typeof parsed.includeTeamEvents === 'boolean'
+        ? parsed.includeTeamEvents
+        : defaults.includeTeamEvents
+      : true,
+    queryMeets: hasKindDefaults
+      ? typeof parsed.queryMeets === 'boolean'
+        ? parsed.queryMeets
+        : defaults.queryMeets
+      : true,
+    defaultGroups: normalizeDefaultGroups(parsed.defaultGroups, tenant),
+    defaultShowEvents:
+      typeof parsed.defaultShowEvents === 'boolean'
+        ? parsed.defaultShowEvents
+        : defaults.defaultShowEvents,
+    defaultShowMeets:
+      typeof parsed.defaultShowMeets === 'boolean'
+        ? parsed.defaultShowMeets
+        : defaults.defaultShowMeets,
+    practiceNameFormat: normalizePracticeNameFormat(
+      parsed.practiceNameFormat,
+      tenant,
+    ),
+  }
+}
+
+function readRawSettings(key: string): Partial<ScheduleSettings> | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    return JSON.parse(raw) as Partial<ScheduleSettings>
+  } catch {
+    return null
+  }
+}
+
+export function getStoredSettings(tenant: TenantConfig): ScheduleSettings {
+  const key = settingsStorageKey(tenant.slug)
+  let parsed = readRawSettings(key)
+
+  // One-time migration from the pre-multi-tenant Delma storage key.
+  if (!parsed && tenant.slug === 'DelmaDolphins') {
+    parsed = readRawSettings(LEGACY_SETTINGS_KEY)
+    if (parsed) {
+      const migrated = normalizeSettings(parsed, tenant)
+      setStoredSettings(tenant, migrated)
+      return migrated
+    }
+  }
+
+  if (!parsed) return cloneSettings(tenant.defaultSettings)
+  return normalizeSettings(parsed, tenant)
+}
+
+export function setStoredSettings(
+  tenant: TenantConfig,
+  settings: ScheduleSettings,
+): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  localStorage.setItem(
+    settingsStorageKey(tenant.slug),
+    JSON.stringify(settings),
+  )
 }

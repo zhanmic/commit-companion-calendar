@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type KeyboardEvent } from 'react'
-import { EVENT_COLOR, MEET_COLOR, SUB_TEAM_COLORS } from '../lib/groups'
+import { EVENT_COLOR, MEET_COLOR, colorForGroup } from '../lib/groups'
+import { useTenant } from '../tenants/TenantContext'
 import {
   dayHeading,
   formatTimeRange,
@@ -7,7 +8,7 @@ import {
   isOccurrenceOnDay,
   type WeekModel,
 } from '../lib/week'
-import type { Occurrence, SubTeam } from '../types'
+import type { Occurrence } from '../types'
 import { DayDetailSheet } from './DayDetailSheet'
 import { ScrollableName } from './ScrollableName'
 import { SessionKindIcon } from './SessionKindIcon'
@@ -21,21 +22,14 @@ interface Props {
 
 type SessionKind = 'practice' | 'meet' | 'event'
 
-function primaryTeam(teams: SubTeam[]): SubTeam {
-  return teams[0] ?? 'Other'
+function primaryTeam(teams: string[]): string | undefined {
+  return teams[0]
 }
 
 function sessionKind(occ: Occurrence): SessionKind {
   if (occ.label === 'meet') return 'meet'
   if (occ.label === 'event') return 'event'
   return 'practice'
-}
-
-function sessionAccent(occ: Occurrence): string {
-  const kind = sessionKind(occ)
-  if (kind === 'meet') return MEET_COLOR
-  if (kind === 'event') return EVENT_COLOR
-  return SUB_TEAM_COLORS[primaryTeam(occ.subTeams)]
 }
 
 function sessionKindTitle(kind: SessionKind): string {
@@ -58,7 +52,15 @@ function groupOccurrencesByDay(week: WeekModel, occurrences: Occurrence[]) {
 }
 
 export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
+  const tenant = useTenant()
   const [openDayKey, setOpenDayKey] = useState<string | null>(null)
+
+  function sessionAccent(occ: Occurrence): string {
+    const kind = sessionKind(occ)
+    if (kind === 'meet') return MEET_COLOR
+    if (kind === 'event') return EVENT_COLOR
+    return colorForGroup(tenant, primaryTeam(occ.subTeams))
+  }
 
   const dayGroups = groupOccurrencesByDay(week, occurrences)
   const openGroup =

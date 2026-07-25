@@ -1,4 +1,9 @@
 import { toZonedTime } from 'date-fns-tz'
+import {
+  PRODUCT_ICS_DOMAIN,
+  PRODUCT_ICS_PRODID,
+  PRODUCT_NAME,
+} from '../product'
 import type { Occurrence } from '../types'
 import { TEAM_TZ } from './week'
 
@@ -42,25 +47,26 @@ function occurrenceSummary(occ: Occurrence): string {
   return occ.name.trim() || kind
 }
 
-function occurrenceDescription(occ: Occurrence): string {
+function occurrenceDescription(occ: Occurrence, sourceLabel: string): string {
   const lines = [
     `Type: ${sessionKindLabel(occ)}`,
     occ.name ? `Name: ${occ.name}` : null,
     occ.subTeams.length ? `Groups: ${occ.subTeams.join(', ')}` : null,
     occ.location ? `Location: ${occ.location}` : null,
-    'Source: Delma Dolphins Schedule',
+    `Source: ${sourceLabel}`,
   ].filter(Boolean) as string[]
   return lines.join('\n')
 }
 
 function occurrenceUid(occ: Occurrence): string {
-  return `${occ.id}@delmar-dolphin-schedule`
+  return `${occ.id}@${PRODUCT_ICS_DOMAIN}`
 }
 
 export function buildIcsEvent(
   occ: Occurrence,
   timeZone: string = TEAM_TZ,
   now = new Date(),
+  sourceLabel: string = PRODUCT_NAME,
 ): string {
   const lines = [
     'BEGIN:VEVENT',
@@ -75,27 +81,30 @@ export function buildIcsEvent(
     lines.push(`LOCATION:${escapeIcsText(occ.location)}`)
   }
 
-  lines.push(`DESCRIPTION:${escapeIcsText(occurrenceDescription(occ))}`)
+  lines.push(
+    `DESCRIPTION:${escapeIcsText(occurrenceDescription(occ, sourceLabel))}`,
+  )
   lines.push('END:VEVENT')
   return lines.join('\r\n')
 }
 
 export function buildIcsCalendar(
   occurrences: Occurrence[],
-  calendarName = 'Delma Dolphins Schedule',
+  calendarName = PRODUCT_NAME,
   timeZone: string = TEAM_TZ,
+  sourceLabel: string = PRODUCT_NAME,
 ): string {
   const now = new Date()
   const events = occurrences
     .slice()
     .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .map((occ) => buildIcsEvent(occ, timeZone, now))
+    .map((occ) => buildIcsEvent(occ, timeZone, now, sourceLabel))
     .join('\r\n')
 
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Delmar Dolphins//Schedule//EN',
+    `PRODID:${PRODUCT_ICS_PRODID}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcsText(calendarName)}`,
@@ -116,11 +125,12 @@ function slugifyFilename(value: string): string {
 
 export function calendarFilenameForOccurrences(
   occurrences: Occurrence[],
+  filenamePrefix = 'schedule',
 ): string {
   if (occurrences.length === 1) {
-    return `delmar-${slugifyFilename(occurrenceSummary(occurrences[0]))}.ics`
+    return `${filenamePrefix}-${slugifyFilename(occurrenceSummary(occurrences[0]))}.ics`
   }
-  return `delmar-week-${occurrences.length}-sessions.ics`
+  return `${filenamePrefix}-week-${occurrences.length}-sessions.ics`
 }
 
 function toBase64Url(value: string): string {
@@ -166,6 +176,13 @@ function openInlineCalendarApi(ics: string): boolean {
   return true
 }
 
+export interface OfferCalendarOptions {
+  calendarName?: string
+  timeZone?: string
+  sourceLabel?: string
+  filenamePrefix?: string
+}
+
 /**
  * Offer an .ics calendar to the user.
  * On iPhone, prefer an inline HTTPS .ics response (Quick Look + Add To Calendar).
@@ -173,13 +190,17 @@ function openInlineCalendarApi(ics: string): boolean {
  */
 export async function offerCalendarFile(
   occurrences: Occurrence[],
-  calendarName = 'Delma Dolphins Schedule',
-  timeZone: string = TEAM_TZ,
+  options: OfferCalendarOptions = {},
 ): Promise<'opened' | 'downloaded' | 'empty'> {
   if (occurrences.length === 0) return 'empty'
 
-  const ics = buildIcsCalendar(occurrences, calendarName, timeZone)
-  const filename = calendarFilenameForOccurrences(occurrences)
+  const calendarName = options.calendarName ?? PRODUCT_NAME
+  const timeZone = options.timeZone ?? TEAM_TZ
+  const sourceLabel = options.sourceLabel ?? PRODUCT_NAME
+  const filenamePrefix = options.filenamePrefix ?? 'schedule'
+
+  const ics = buildIcsCalendar(occurrences, calendarName, timeZone, sourceLabel)
+  const filename = calendarFilenameForOccurrences(occurrences, filenamePrefix)
 
   if (isAppleTouchDevice() && openInlineCalendarApi(ics)) {
     return 'opened'

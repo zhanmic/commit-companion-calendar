@@ -1,7 +1,6 @@
 import type { WebsiteData2a, WebsiteData2b } from '../types'
 
 const API_BASE = 'https://utility.commitswimming.com'
-export const SUPER_TEAM_ID = 'g8g7f3rkF8N23vXs4'
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
@@ -11,14 +10,14 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function fetchTeamConfig() {
+export function fetchTeamConfig(superTeamId: string) {
   return getJson<WebsiteData2a>(
-    `/website-data-2a?superTeamId=${SUPER_TEAM_ID}`,
+    `/website-data-2a?superTeamId=${encodeURIComponent(superTeamId)}`,
   )
 }
 
-export function fetchScheduleData(includeMeets = false) {
+export function fetchScheduleData(superTeamId: string, includeMeets = false) {
   return getJson<WebsiteData2b>(
-    `/website-data-2b?superTeamId=${SUPER_TEAM_ID}&includeMeets=${includeMeets ? 'true' : 'false'}`,
+    `/website-data-2b?superTeamId=${encodeURIComponent(superTeamId)}&includeMeets=${includeMeets ? 'true' : 'false'}`,
   )
 }

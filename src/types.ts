@@ -59,13 +59,11 @@ export interface WebsiteData2a {
   settings?: unknown
 }
 
-export type SubTeam =
-  | 'Sr'
-  | 'Jr'
-  | 'Jr Prep'
-  | 'DEVO'
-  | 'Sr/Jr'
-  | 'Other'
+/**
+ * Practice group id within a tenant (e.g. "Sr", "DEVO").
+ * Concrete values come from each tenant's `groups` config.
+ */
+export type SubTeam = string
 
 /** One labeled row of source API data for the day detail sheet. */
 export interface DetailField {

@@ -2,12 +2,21 @@ import { useEffect, useState } from 'react'
 
 interface ShareButtonProps {
   className?: string
+  title: string
+  text: string
+  /** Defaults to the current page URL. */
+  url?: string
+  /** Accessible label for the share control. */
+  label?: string
 }
 
-const SHARE_TITLE = 'Delma Dolphins Schedule'
-const SHARE_TEXT = 'Weekly swim schedule by group'
-
-export function ShareButton({ className = '' }: ShareButtonProps) {
+export function ShareButton({
+  className = '',
+  title,
+  text,
+  url,
+  label = 'Share this schedule',
+}: ShareButtonProps) {
   const [feedback, setFeedback] = useState<string | null>(null)
 
   useEffect(() => {
@@ -17,14 +26,15 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
   }, [feedback])
 
   async function shareSite() {
-    const url = window.location.href
+    const shareUrl =
+      url ?? (typeof window !== 'undefined' ? window.location.href : '')
 
     try {
       if (typeof navigator.share === 'function') {
         await navigator.share({
-          title: SHARE_TITLE,
-          text: SHARE_TEXT,
-          url,
+          title,
+          text,
+          url: shareUrl,
         })
         return
       }
@@ -34,7 +44,7 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
     }
 
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(shareUrl)
       setFeedback('Link copied')
     } catch {
       setFeedback('Could not copy')
@@ -46,9 +56,10 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
       <button
         type="button"
         className="share__button"
-        aria-label="Share this schedule"
+        aria-label={label}
         title="Share"
-        onClick={() => {
+        onClick={(event) => {
+          event.stopPropagation()
           void shareSite()
         }}
       >
