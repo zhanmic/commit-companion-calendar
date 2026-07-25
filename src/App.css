@@ -481,6 +481,11 @@
   color: var(--muted);
 }
 
+.home .hero__top {
+  /* Leave space on both sides so the centered title clears the theme toggle. */
+  padding-inline: 3.25rem;
+}
+
 .home__brand {
   font-size: clamp(1.85rem, 5.5vw, 3.1rem);
 }

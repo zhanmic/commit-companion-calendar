@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { ShareButton } from './components/ShareButton'
+import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from './product'
 import { listTenantMeta } from './tenants'
@@ -17,7 +18,12 @@ export function HomePage() {
     <div className="app home">
       <div className="app__glow" aria-hidden />
       <header className="hero">
-        <h1 className="hero__brand home__brand">{PRODUCT_NAME}</h1>
+        <div className="hero__top">
+          <h1 className="hero__brand home__brand">{PRODUCT_NAME}</h1>
+          <div className="hero__actions">
+            <ThemeToggle />
+          </div>
+        </div>
         <p className="hero__sub">{PRODUCT_DESCRIPTION}</p>
       </header>
 
