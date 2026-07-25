@@ -197,7 +197,10 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
-            <ShareButton />
+            <ShareButton
+              title={`${tenant.displayName} · ${PRODUCT_NAME}`}
+              text={`Weekly swim schedule for ${tenant.displayName}`}
+            />
           </div>
           <div className="hero__brand-block">
             <button

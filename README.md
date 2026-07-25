@@ -1,6 +1,6 @@
-# CommitCompanionCalendar
+# Commit Companion Calendar
 
-Multi-tenant weekly practice and meet calendars built on Commit Swimming’s public website API.
+Weekly practice and meet schedules for swim teams, built on Commit Swimming’s public website API.
 
 ## Tenants
 

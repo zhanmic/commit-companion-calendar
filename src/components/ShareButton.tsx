@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react'
-import { PRODUCT_NAME } from '../product'
-import { useTenant } from '../tenants/TenantContext'
 
 interface ShareButtonProps {
   className?: string
+  title: string
+  text: string
+  /** Defaults to the current page URL. */
+  url?: string
+  /** Accessible label for the share control. */
+  label?: string
 }
 
-export function ShareButton({ className = '' }: ShareButtonProps) {
-  const tenant = useTenant()
+export function ShareButton({
+  className = '',
+  title,
+  text,
+  url,
+  label = 'Share this schedule',
+}: ShareButtonProps) {
   const [feedback, setFeedback] = useState<string | null>(null)
-  const shareTitle = `${tenant.displayName} · ${PRODUCT_NAME}`
-  const shareText = `Weekly swim schedule for ${tenant.displayName}`
 
   useEffect(() => {
     if (!feedback) return
@@ -19,14 +26,15 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
   }, [feedback])
 
   async function shareSite() {
-    const url = window.location.href
+    const shareUrl =
+      url ?? (typeof window !== 'undefined' ? window.location.href : '')
 
     try {
       if (typeof navigator.share === 'function') {
         await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url,
+          title,
+          text,
+          url: shareUrl,
         })
         return
       }
@@ -36,7 +44,7 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
     }
 
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(shareUrl)
       setFeedback('Link copied')
     } catch {
       setFeedback('Could not copy')
@@ -48,9 +56,10 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
       <button
         type="button"
         className="share__button"
-        aria-label="Share this schedule"
+        aria-label={label}
         title="Share"
-        onClick={() => {
+        onClick={(event) => {
+          event.stopPropagation()
           void shareSite()
         }}
       >
