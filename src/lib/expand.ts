@@ -1,12 +1,9 @@
 import { addDays, addMonths, addYears } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
+import type { MeetParser, PracticeParser } from '../tenants/types'
 import type { CommitEvent, CommitMeet, Occurrence } from '../types'
 import { buildEventDetailFields, buildMeetDetailFields } from './detailFields'
-import { parsePracticeName } from './nameFormat'
-import {
-  DEFAULT_PRACTICE_NAME_FORMAT,
-  type PracticeNameFormat,
-} from './settings'
+import type { PracticeNameFormat } from './settings'
 
 const DEFAULT_TZ = 'America/New_York'
 
@@ -34,10 +31,7 @@ function momentDay(date: Date, timeZone: string): number {
   return toZonedTime(date, timeZone).getDay()
 }
 
-function advanceByPeriod(
-  date: Date,
-  period: string,
-): Date {
+function advanceByPeriod(date: Date, period: string): Date {
   switch (period) {
     case 'weekly':
       return addDays(date, 7)
@@ -51,17 +45,24 @@ function advanceByPeriod(
   }
 }
 
+export interface ExpandPracticeOptions {
+  timeZone?: string
+  practiceNameFormat: PracticeNameFormat
+  parsePractice: PracticeParser
+}
+
 /**
  * Expand Commit calendar events into concrete occurrences in [rangeStart, rangeEnd).
  * Mirrors the recurrence logic used by commitswimming.com website JS.
+ * Practice title → group/location is tenant-specific via `parsePractice`.
  */
 export function expandEvents(
   events: CommitEvent[],
   rangeStart: Date,
   rangeEnd: Date,
-  timeZone: string = DEFAULT_TZ,
-  practiceNameFormat: PracticeNameFormat = DEFAULT_PRACTICE_NAME_FORMAT,
+  options: ExpandPracticeOptions,
 ): Occurrence[] {
+  const timeZone = options.timeZone ?? DEFAULT_TZ
   const results: Occurrence[] = []
 
   for (const event of events) {
@@ -72,9 +73,7 @@ export function expandEvents(
 
     if (!rec) {
       if (baseStart >= rangeStart && baseStart < rangeEnd) {
-        results.push(
-          toOccurrence(event, event.name, baseStart, baseEnd, practiceNameFormat),
-        )
+        results.push(toOccurrence(event, event.name, baseStart, baseEnd, options))
       }
       continue
     }
@@ -141,9 +140,7 @@ export function expandEvents(
       }
 
       if (occStart >= rangeStart && occStart < rangeEnd) {
-        results.push(
-          toOccurrence(event, name, occStart, occEnd, practiceNameFormat),
-        )
+        results.push(toOccurrence(event, name, occStart, occEnd, options))
       }
 
       cursor = advanceByPeriod(cursor, rec.period)
@@ -158,16 +155,13 @@ function toOccurrence(
   name: string,
   start: Date,
   end: Date,
-  practiceNameFormat: PracticeNameFormat = DEFAULT_PRACTICE_NAME_FORMAT,
+  options: ExpandPracticeOptions,
 ): Occurrence {
   const isTeamEvent = event.label === 'event'
   // Team events are filtered via the Event chip — not mapped onto practice groups.
-  const subTeams = isTeamEvent
-    ? []
-    : parsePracticeName(name, practiceNameFormat).subTeams
-  const location = isTeamEvent
-    ? null
-    : parsePracticeName(name, practiceNameFormat).location
+  const parsed = isTeamEvent
+    ? { subTeams: [] as string[], location: null as string | null }
+    : options.parsePractice(name, options.practiceNameFormat)
 
   return {
     id: `${event._id}-${start.getTime()}`,
@@ -176,15 +170,15 @@ function toOccurrence(
     label: event.label,
     start,
     end,
-    subTeams,
-    location,
+    subTeams: parsed.subTeams,
+    location: parsed.location,
     fields: buildEventDetailFields(
       event,
       name,
       start,
       end,
-      subTeams,
-      location,
+      parsed.subTeams,
+      parsed.location,
     ),
   }
 }
@@ -193,39 +187,30 @@ export function expandPractices(
   events: CommitEvent[],
   rangeStart: Date,
   rangeEnd: Date,
-  timeZone?: string,
-  practiceNameFormat: PracticeNameFormat = DEFAULT_PRACTICE_NAME_FORMAT,
+  options: ExpandPracticeOptions,
 ): Occurrence[] {
   return expandEvents(
     events.filter((e) => e.label === 'practice'),
     rangeStart,
     rangeEnd,
-    timeZone,
-    practiceNameFormat,
+    options,
   )
 }
 
-/** Convert Commit meets into week occurrences (one row per meet start). */
+/** Convert Commit meets into week occurrences using the tenant's meet parser. */
 export function expandMeets(
   meets: CommitMeet[],
   rangeStart: Date,
   rangeEnd: Date,
+  parseMeet: MeetParser,
 ): Occurrence[] {
   const results: Occurrence[] = []
 
   for (const meet of meets) {
-    const start = parseUtc(meet.startDateTime)
-    const end = parseUtc(meet.endDateTime)
+    const parsed = parseMeet(meet)
+    if (!parsed) continue
+    const { start, end, name, location } = parsed
     if (start < rangeStart || start >= rangeEnd) continue
-
-    const name =
-      (meet.userTitle && meet.userTitle.trim()) ||
-      (meet.titleEventsFile && meet.titleEventsFile.trim()) ||
-      'Meet'
-    const location =
-      (meet.locationDetails && meet.locationDetails.trim()) ||
-      [meet.city, meet.state].filter(Boolean).join(', ') ||
-      null
 
     results.push({
       id: `meet-${meet._id}-${start.getTime()}`,

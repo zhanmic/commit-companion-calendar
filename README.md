@@ -1,14 +1,23 @@
-# Delmar Dolfins Schedule
+# CommitCompanionCalendar
 
-A modern weekly practice schedule for [Delmar Dolfins](https://www.delmardolfins.com/schedule), built on Commit Swimming’s public website API.
+Multi-tenant weekly practice and meet calendars built on Commit Swimming’s public website API.
+
+## Tenants
+
+| Path | Team |
+|------|------|
+| [`/DelmaDolphins`](/DelmaDolphins) | Delma Dolphins |
+
+Product home (`/`) lists available teams. Each tenant owns its Commit `superTeamId` and its own practice/meet parsers under `src/tenants/<Slug>/`.
 
 ## Features
 
 - Live data from `utility.commitswimming.com`
-- Week view (Sunday–Saturday, America/New York)
-- Filter by group: **Sr**, **Jr**, **Jr Prep**, **DEVO**, **Sr/Jr**, Other
+- Week view (Sunday–Saturday, tenant timezone)
+- Filter by tenant-defined groups
 - Recurring practices expanded with cancel/override support
 - Optional meets & team events toggle
+- Per-tenant practice title parsing (field split or keywords)
 
 ## Develop
 
@@ -16,6 +25,8 @@ A modern weekly practice schedule for [Delmar Dolfins](https://www.delmardolfins
 npm install
 npm run dev
 ```
+
+Open [http://localhost:5173/DelmaDolphins](http://localhost:5173/DelmaDolphins).
 
 ## Build
 
@@ -28,7 +39,12 @@ npm run preview
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /website-data-2a?superTeamId=g8g7f3rkF8N23vXs4` | Team name & timezone |
-| `GET /website-data-2b?superTeamId=g8g7f3rkF8N23vXs4&includeMeets=false` | Practices & events |
+| `GET /api/tenants` | Public tenant catalog |
+| `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
+| Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
 
-Practices are recurring series in `events` (`label: "practice"`). This app expands them client-side.
+## Adding a tenant
+
+1. Add `src/tenants/<Slug>/` with `TenantConfig`, `parsePractice`, and `parseMeet`.
+2. Register it in `src/tenants/registry.ts`.
+3. Mirror slug/displayName in `api/_lib/tenants.js` for `/api/tenants`.

@@ -1,10 +1,10 @@
 import type { NameField, PracticeNameFormat } from './settings'
-import { parseLocation, parseSubTeams } from './groups'
-import type { SubTeam } from '../types'
+import type { ParsedPracticeName } from '../tenants/types'
 
-export interface ParsedPracticeName {
-  subTeams: SubTeam[]
-  location: string | null
+/** Tenant-supplied keyword scanners for group + location. */
+export interface GroupLocationParsers {
+  parseSubTeams: (name: string) => string[]
+  parseLocation: (name: string) => string | null
 }
 
 /** Split a title on the configured separator and drop empty segments. */
@@ -81,10 +81,13 @@ function mapPartsToFields(
 }
 
 /** Keyword scan of the full title (legacy behavior). */
-export function parsePracticeNameKeywords(name: string): ParsedPracticeName {
+export function parsePracticeNameKeywords(
+  name: string,
+  parsers: GroupLocationParsers,
+): ParsedPracticeName {
   return {
-    subTeams: parseSubTeams(name),
-    location: parseLocation(name),
+    subTeams: parsers.parseSubTeams(name),
+    location: parsers.parseLocation(name),
   }
 }
 
@@ -95,6 +98,7 @@ export function parsePracticeNameKeywords(name: string): ParsedPracticeName {
 export function parsePracticeNameFields(
   name: string,
   format: PracticeNameFormat,
+  parsers: GroupLocationParsers,
 ): ParsedPracticeName {
   const parts = splitNameParts(name, format.separator)
   if (parts.length === 0) {
@@ -122,15 +126,7 @@ export function parsePracticeNameFields(
   const locationFromField = cleaned || null
 
   return {
-    subTeams: parseSubTeams(groupText),
-    location: locationFromField ?? parseLocation(name),
+    subTeams: parsers.parseSubTeams(groupText),
+    location: locationFromField ?? parsers.parseLocation(name),
   }
-}
-
-export function parsePracticeName(
-  name: string,
-  format: PracticeNameFormat,
-): ParsedPracticeName {
-  if (format.mode === 'keywords') return parsePracticeNameKeywords(name)
-  return parsePracticeNameFields(name, format)
 }

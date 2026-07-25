@@ -2,10 +2,12 @@ import type { CSSProperties } from 'react'
 import {
   EVENT_COLOR,
   MEET_COLOR,
-  SUB_TEAM_COLORS,
-  SUB_TEAM_ORDER,
+  colorForGroup,
+  groupOrder,
 } from '../lib/groups'
-import type { Occurrence, SubTeam } from '../types'
+import { PRODUCT_NAME } from '../product'
+import { useTenant } from '../tenants/TenantContext'
+import type { Occurrence } from '../types'
 import { AddToCalendarButton } from './AddToCalendarButton'
 
 interface KindFilter {
@@ -15,10 +17,10 @@ interface KindFilter {
 }
 
 interface Props {
-  available: SubTeam[]
-  selected: Set<SubTeam>
-  onChange: (next: Set<SubTeam>) => void
-  counts: Partial<Record<SubTeam, number>>
+  available: string[]
+  selected: Set<string>
+  onChange: (next: Set<string>) => void
+  counts: Partial<Record<string, number>>
   /** When Include team events is on, show a separate Event chip (not a group). */
   eventFilter?: KindFilter | null
   /** When Query meets is on, show a separate Meet chip (not a group). */
@@ -39,11 +41,12 @@ export function GroupFilters({
   meetFilter = null,
   weekCalendar = null,
 }: Props) {
-  const teams = SUB_TEAM_ORDER.filter((t) => available.includes(t))
+  const tenant = useTenant()
+  const teams = groupOrder(tenant).filter((t) => available.includes(t))
   const hasKindFilters = Boolean(eventFilter || meetFilter)
   const showKindsRow = hasKindFilters || Boolean(weekCalendar)
 
-  function toggle(team: SubTeam) {
+  function toggle(team: string) {
     const next = new Set(selected)
     if (next.has(team)) next.delete(team)
     else next.add(team)
@@ -88,7 +91,9 @@ export function GroupFilters({
                   type="button"
                   className={`filter-chip${active ? ' is-active' : ''}`}
                   style={
-                    { '--chip-color': SUB_TEAM_COLORS[team] } as CSSProperties
+                    {
+                      '--chip-color': colorForGroup(tenant, team),
+                    } as CSSProperties
                   }
                   aria-pressed={active}
                   aria-label={`${team}, ${count} this week`}
@@ -165,6 +170,10 @@ export function GroupFilters({
                 occurrences={weekCalendar.occurrences}
                 label="Add to Calendar"
                 calendarName={weekCalendar.calendarName}
+                calendarOptions={{
+                  sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
+                  filenamePrefix: tenant.icsFilenamePrefix,
+                }}
                 className="filters__cal"
               />
             ) : null}

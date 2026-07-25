@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef } from 'react'
-import { EVENT_COLOR, MEET_COLOR, SUB_TEAM_COLORS } from '../lib/groups'
+import { EVENT_COLOR, MEET_COLOR, colorForGroup } from '../lib/groups'
+import { PRODUCT_NAME } from '../product'
+import { useTenant } from '../tenants/TenantContext'
 import { formatTimeRange } from '../lib/week'
-import type { Occurrence, SubTeam } from '../types'
+import type { Occurrence } from '../types'
 import type { CSSProperties } from 'react'
 import { AddToCalendarButton } from './AddToCalendarButton'
 import { SessionKindIcon } from './SessionKindIcon'
@@ -19,6 +21,7 @@ export function DayDetailSheet({
   occurrences,
   onClose,
 }: Props) {
+  const tenant = useTenant()
   const dialogRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -82,13 +85,13 @@ export function DayDetailSheet({
                 : occ.label === 'event'
                   ? 'event'
                   : 'practice'
-            const team = occ.subTeams[0] ?? 'Other'
+            const team = occ.subTeams[0]
             const accent =
               kind === 'meet'
                 ? MEET_COLOR
                 : kind === 'event'
                   ? EVENT_COLOR
-                  : SUB_TEAM_COLORS[team as SubTeam] ?? 'var(--team-other)'
+                  : colorForGroup(tenant, team)
             return (
               <article
                 key={occ.id}
@@ -110,7 +113,11 @@ export function DayDetailSheet({
                     occurrences={[occ]}
                     compact
                     label="Add to Calendar"
-                    calendarName="Delma Dolphins Schedule"
+                    calendarName={`${tenant.displayName} Schedule`}
+                    calendarOptions={{
+                      sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
+                      filenamePrefix: tenant.icsFilenamePrefix,
+                    }}
                     className="day-sheet__cal"
                   />
                 </div>

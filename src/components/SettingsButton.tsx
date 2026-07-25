@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { SUB_TEAM_ORDER } from '../lib/groups'
+import { groupOrder } from '../lib/groups'
 import {
   NAME_FIELD_OPTIONS,
   PRACTICE_PARSE_MODE_OPTIONS,
@@ -7,7 +7,7 @@ import {
   type PracticeParseMode,
   type ScheduleSettings,
 } from '../lib/settings'
-import type { SubTeam } from '../types'
+import { useTenant } from '../tenants/TenantContext'
 
 interface SettingsButtonProps {
   className?: string
@@ -20,6 +20,8 @@ export function SettingsButton({
   settings,
   onChange,
 }: SettingsButtonProps) {
+  const tenant = useTenant()
+  const groups = groupOrder(tenant)
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -67,12 +69,12 @@ export function SettingsButton({
     patchFormat({ fields })
   }
 
-  function toggleDefaultGroup(team: SubTeam) {
+  function toggleDefaultGroup(team: string) {
     const selected = new Set(settings.defaultGroups)
     if (selected.has(team)) selected.delete(team)
     else selected.add(team)
     patch({
-      defaultGroups: SUB_TEAM_ORDER.filter((t) => selected.has(t)),
+      defaultGroups: groups.filter((t) => selected.has(t)),
     })
   }
 
@@ -154,7 +156,7 @@ export function SettingsButton({
             role="group"
             aria-label="Default groups"
           >
-            {SUB_TEAM_ORDER.map((team) => {
+            {groups.map((team) => {
               const active = settings.defaultGroups.includes(team)
               return (
                 <button

@@ -1,276 +1,39 @@
-import { useEffect, useMemo, useState } from 'react'
-import { fetchScheduleData, fetchTeamConfig } from './api/commit'
-import { GroupFilters } from './components/GroupFilters'
-import { SettingsButton } from './components/SettingsButton'
-import { ShareButton } from './components/ShareButton'
-import { ThemeToggle } from './components/ThemeToggle'
-import { WeekNav } from './components/WeekNav'
-import { WeekSchedule } from './components/WeekSchedule'
-import { expandEvents, expandMeets, expandPractices } from './lib/expand'
-import { occurrenceMatchesTeams, SUB_TEAM_ORDER } from './lib/groups'
-import {
-  getStoredSettings,
-  setStoredSettings,
-  type ScheduleSettings,
-} from './lib/settings'
-import { getWeekModel, shiftWeek, TEAM_TZ } from './lib/week'
-import type { CommitEvent, CommitMeet, SubTeam } from './types'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { HomePage } from './HomePage'
+import { NotFoundPage } from './NotFoundPage'
+import { TenantSchedule } from './TenantSchedule'
+import { parsePath, type AppRoute } from './lib/routing'
+import { getTenantBySlug } from './tenants'
+import { TenantProvider } from './tenants/TenantContext'
+
+function readRoute(): AppRoute {
+  return parsePath(window.location.pathname)
+}
 
 export default function App() {
-  const [anchor, setAnchor] = useState(() => new Date())
-  const [events, setEvents] = useState<CommitEvent[]>([])
-  const [meets, setMeets] = useState<CommitMeet[]>([])
-  const [timeZone, setTimeZone] = useState(TEAM_TZ)
-  const [settings, setSettings] = useState<ScheduleSettings>(() =>
-    getStoredSettings(),
-  )
-  const [selected, setSelected] = useState<Set<SubTeam>>(
-    () => new Set(getStoredSettings().defaultGroups),
-  )
-  const [showMeets, setShowMeets] = useState(
-    () => getStoredSettings().defaultShowMeets,
-  )
-  const [showEvents, setShowEvents] = useState(
-    () => getStoredSettings().defaultShowEvents,
-  )
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
+  const [route, setRoute] = useState<AppRoute>(readRoute)
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 720px)')
-    const update = () => setIsMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
+    function onPopState() {
+      setRoute(readRoute())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  useEffect(() => {
-    setStoredSettings(settings)
-  }, [settings])
+  if (route.kind === 'home') {
+    return <HomePage />
+  }
 
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const [config, schedule] = await Promise.all([
-          fetchTeamConfig(),
-          fetchScheduleData(settings.queryMeets),
-        ])
-        if (cancelled) return
-        setTimeZone(config.superTeam?.timezone ?? TEAM_TZ)
-        setEvents(schedule.events ?? [])
-        setMeets(settings.queryMeets ? (schedule.meets ?? []) : [])
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load schedule')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [settings.queryMeets])
-
-  const week = useMemo(
-    () => getWeekModel(anchor, timeZone),
-    [anchor, timeZone],
-  )
-
-  const weekOccurrences = useMemo(() => {
-    const practices = expandPractices(
-      events,
-      week.rangeStart,
-      week.rangeEnd,
-      timeZone,
-      settings.practiceNameFormat,
+  if (route.kind === 'tenant') {
+    const tenant = getTenantBySlug(route.slug)
+    if (!tenant) return <NotFoundPage path={`/${route.slug}`} />
+    return (
+      <TenantProvider tenant={tenant}>
+        <TenantSchedule />
+      </TenantProvider>
     )
+  }
 
-    const teamEvents = settings.includeTeamEvents
-      ? expandEvents(
-          events.filter((e) => e.label === 'event'),
-          week.rangeStart,
-          week.rangeEnd,
-          timeZone,
-          settings.practiceNameFormat,
-        )
-      : []
-
-    const meetOccurrences = settings.queryMeets
-      ? expandMeets(meets, week.rangeStart, week.rangeEnd)
-      : []
-
-    return [...practices, ...teamEvents, ...meetOccurrences].sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    )
-  }, [events, meets, week, timeZone, settings])
-
-  const practiceOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'practice'),
-    [weekOccurrences],
-  )
-
-  const eventOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'event'),
-    [weekOccurrences],
-  )
-
-  const meetOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'meet'),
-    [weekOccurrences],
-  )
-
-  const availableTeams = useMemo(() => {
-    const present = new Set<SubTeam>()
-    for (const occ of practiceOccurrences) {
-      for (const t of occ.subTeams) present.add(t)
-    }
-    const core: SubTeam[] = ['Sr', 'Jr', 'Jr Prep', 'DEVO']
-    return SUB_TEAM_ORDER.filter(
-      (t) => core.includes(t) || present.has(t),
-    )
-  }, [practiceOccurrences])
-
-  const counts = useMemo(() => {
-    const map: Partial<Record<SubTeam, number>> = {}
-    for (const occ of practiceOccurrences) {
-      for (const t of occ.subTeams) {
-        map[t] = (map[t] ?? 0) + 1
-      }
-    }
-    return map
-  }, [practiceOccurrences])
-
-  const filtered = useMemo(() => {
-    const practices = practiceOccurrences.filter((o) =>
-      occurrenceMatchesTeams(o.subTeams, selected),
-    )
-    const teamEvents =
-      settings.includeTeamEvents && showEvents ? eventOccurrences : []
-    const shownMeets =
-      settings.queryMeets && showMeets ? meetOccurrences : []
-    return [...practices, ...teamEvents, ...shownMeets].sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    )
-  }, [
-    practiceOccurrences,
-    eventOccurrences,
-    meetOccurrences,
-    selected,
-    settings.includeTeamEvents,
-    settings.queryMeets,
-    showEvents,
-    showMeets,
-  ])
-
-  /** Phone → concise carpool-style rows for any group selection. */
-  const fitMode = isMobile
-  /** Few sessions fill the screen; more sessions scroll inside the list. */
-  const fitScroll = fitMode && filtered.length > 8
-
-  return (
-    <div
-      className={`app${fitMode ? ' app--fit' : ''}${fitScroll ? ' app--fit-scroll' : ''}`}
-    >
-      <div className="app__glow" aria-hidden />
-      <header className="hero">
-        <div className="hero__top">
-          <div className="hero__controls">
-            <SettingsButton settings={settings} onChange={setSettings} />
-            <ShareButton />
-          </div>
-          <h1 className="hero__brand">Delma Dolphins Schedule</h1>
-          <div className="hero__actions">
-            <a
-              className="hero__carpool"
-              href="https://swim-carpool.vercel.app"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Carpool
-            </a>
-            <ThemeToggle />
-          </div>
-        </div>
-        <p className="hero__sub">
-          Weekly view by group — powered by the live Commit calendar API.
-        </p>
-      </header>
-
-      <main className="panel">
-        <WeekNav
-          label={week.label}
-          onPrev={() => setAnchor((d) => shiftWeek(d, -1))}
-          onNext={() => setAnchor((d) => shiftWeek(d, 1))}
-          onToday={() => setAnchor(new Date())}
-        />
-
-        {loading ? (
-          <div className="state">Loading schedule…</div>
-        ) : error ? (
-          <div className="state state--error">{error}</div>
-        ) : (
-          <>
-            <GroupFilters
-              available={availableTeams}
-              selected={selected}
-              onChange={setSelected}
-              counts={counts}
-              eventFilter={
-                settings.includeTeamEvents
-                  ? {
-                      count: eventOccurrences.length,
-                      selected: showEvents,
-                      onChange: setShowEvents,
-                    }
-                  : null
-              }
-              meetFilter={
-                settings.queryMeets
-                  ? {
-                      count: meetOccurrences.length,
-                      selected: showMeets,
-                      onChange: setShowMeets,
-                    }
-                  : null
-              }
-              weekCalendar={{
-                occurrences: filtered,
-                calendarName: `Delma Dolphins · ${week.label}`,
-              }}
-            />
-
-            {filtered.length === 0 ? (
-              <div className="state">
-                No sessions this week for the selected groups.
-              </div>
-            ) : (
-              <WeekSchedule
-                week={week}
-                occurrences={filtered}
-                fitMode={fitMode}
-              />
-            )}
-          </>
-        )}
-
-        <footer className="footer">
-          <a
-            href="https://www.delmardolfins.com/schedule"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Official Commit calendar
-          </a>
-          <span>·</span>
-          <span>{timeZone.replace(/_/g, ' ')}</span>
-        </footer>
-      </main>
-    </div>
-  )
+  return <NotFoundPage path={route.path} />
 }

@@ -1,6 +1,9 @@
+import { PRODUCT_STORAGE_PREFIX } from '../product'
+
 export type Theme = 'light' | 'dark'
 
-const THEME_KEY = 'delmar-schedule:theme'
+const THEME_KEY = `${PRODUCT_STORAGE_PREFIX}:theme`
+const LEGACY_THEME_KEY = 'delmar-schedule:theme'
 
 /** Local hour (0–23) when light mode starts. */
 export const LIGHT_START_HOUR = 7
@@ -10,7 +13,15 @@ export const DARK_START_HOUR = 19
 export function getStoredTheme(): Theme | null {
   if (typeof window === 'undefined') return null
   const value = localStorage.getItem(THEME_KEY)
-  return value === 'light' || value === 'dark' ? value : null
+  if (value === 'light' || value === 'dark') return value
+
+  // Migrate once from the single-tenant theme key.
+  const legacy = localStorage.getItem(LEGACY_THEME_KEY)
+  if (legacy === 'light' || legacy === 'dark') {
+    localStorage.setItem(THEME_KEY, legacy)
+    return legacy
+  }
+  return null
 }
 
 export function getThemeByLocalTime(date: Date = new Date()): Theme {
@@ -51,5 +62,5 @@ export function applyTheme(theme: Theme): void {
 }
 
 export function buildThemeInitScript(): string {
-  return `(function(){try{var k=${JSON.stringify(THEME_KEY)},t=localStorage.getItem(k),h=new Date().getHours(),d=t==="dark"||(t!=="light"&&(h>=${DARK_START_HOUR}||h<${LIGHT_START_HOUR}));document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";}catch(e){}})();`
+  return `(function(){try{var k=${JSON.stringify(THEME_KEY)},legacy=${JSON.stringify(LEGACY_THEME_KEY)},t=localStorage.getItem(k)||localStorage.getItem(legacy),h=new Date().getHours(),d=t==="dark"||(t!=="light"&&(h>=${DARK_START_HOUR}||h<${LIGHT_START_HOUR}));document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";}catch(e){}})();`
 }

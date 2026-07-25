@@ -9,7 +9,7 @@
     />
     <meta
       name="description"
-      content="Delma Dolphins weekly practice schedule with Sr, Jr, DEVO, and Jr Prep filters."
+      content="CommitCompanionCalendar — multi-tenant weekly practice and meet calendars powered by Commit Swimming."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,12 +17,13 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Delma Dolphins Schedule</title>
+    <title>CommitCompanionCalendar</title>
     <script>
       (function () {
         try {
-          var k = 'delmar-schedule:theme'
-          var t = localStorage.getItem(k)
+          var k = 'ccc:theme'
+          var legacy = 'delmar-schedule:theme'
+          var t = localStorage.getItem(k) || localStorage.getItem(legacy)
           var h = new Date().getHours()
           var d = t === 'dark' || (t !== 'light' && (h >= 19 || h < 7))
           document.documentElement.classList.toggle('dark', d)

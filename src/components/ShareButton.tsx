@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
+import { PRODUCT_NAME } from '../product'
+import { useTenant } from '../tenants/TenantContext'
 
 interface ShareButtonProps {
   className?: string
 }
 
-const SHARE_TITLE = 'Delma Dolphins Schedule'
-const SHARE_TEXT = 'Weekly swim schedule by group'
-
 export function ShareButton({ className = '' }: ShareButtonProps) {
+  const tenant = useTenant()
   const [feedback, setFeedback] = useState<string | null>(null)
+  const shareTitle = `${tenant.displayName} · ${PRODUCT_NAME}`
+  const shareText = `Weekly swim schedule for ${tenant.displayName}`
 
   useEffect(() => {
     if (!feedback) return
@@ -22,8 +24,8 @@ export function ShareButton({ className = '' }: ShareButtonProps) {
     try {
       if (typeof navigator.share === 'function') {
         await navigator.share({
-          title: SHARE_TITLE,
-          text: SHARE_TEXT,
+          title: shareTitle,
+          text: shareText,
           url,
         })
         return
