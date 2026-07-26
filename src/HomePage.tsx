@@ -2,53 +2,124 @@ import { useEffect } from 'react'
 import { ShareButton } from './components/ShareButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
-import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from './product'
+import {
+  PRODUCT_CONTACT_EMAIL,
+  PRODUCT_DESCRIPTION,
+  PRODUCT_NAME,
+} from './product'
 import { listTenantMeta } from './tenants'
 import './App.css'
+import './HomePage.css'
 
-/** Product landing — pick a team schedule. */
+const CONTACT_HREF = `mailto:${PRODUCT_CONTACT_EMAIL}?subject=${encodeURIComponent(
+  `${PRODUCT_NAME} — team calendar inquiry`,
+)}`
+
+/** Commercial landing for swim teams on Commit. */
 export function HomePage() {
   const tenants = listTenantMeta()
+  const demoTenant = tenants[0]
 
   useEffect(() => {
-    document.title = PRODUCT_NAME
+    document.title = `${PRODUCT_NAME} — Mobile calendars for Commit swim teams`
   }, [])
 
   return (
-    <div className="app home">
-      <div className="app__glow" aria-hidden />
-      <header className="hero">
-        <div className="hero__top">
-          <h1 className="hero__brand home__brand">{PRODUCT_NAME}</h1>
-          <div className="hero__actions">
-            <ThemeToggle />
-          </div>
+    <div className="landing">
+      <div className="landing__atmosphere" aria-hidden>
+        <div className="landing__ripple landing__ripple--a" />
+        <div className="landing__ripple landing__ripple--b" />
+        <div className="landing__lanes" />
+      </div>
+
+      <header className="landing-nav">
+        <p className="landing-nav__brand">{PRODUCT_NAME}</p>
+        <div className="landing-nav__actions">
+          <a className="landing-nav__link" href={CONTACT_HREF}>
+            Contact
+          </a>
+          <ThemeToggle />
         </div>
-        <p className="hero__sub">{PRODUCT_DESCRIPTION}</p>
       </header>
 
-      <main className="panel home__panel">
-        <h2 className="home__heading">Teams</h2>
-        <p className="home__section-sub">
-          Open your team’s schedule, or share the link with coaches and families.
+      <section className="landing-hero">
+        <div className="landing-hero__copy">
+          <h1 className="landing-hero__brand">{PRODUCT_NAME}</h1>
+          <p className="landing-hero__headline">
+            The mobile calendar your Commit swim team actually opens.
+          </p>
+          <p className="landing-hero__sub">{PRODUCT_DESCRIPTION}</p>
+          <div className="landing-hero__cta">
+            <a className="landing-cta landing-cta--primary" href={CONTACT_HREF}>
+              Get your team calendar
+            </a>
+            {demoTenant ? (
+              <button
+                type="button"
+                className="landing-cta landing-cta--ghost"
+                onClick={() => navigate(demoTenant.path)}
+              >
+                See a live schedule
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="landing-hero__visual" aria-hidden>
+          <PhonePreview />
+        </div>
+      </section>
+
+      <section className="landing-section landing-section--why">
+        <h2 className="landing-section__title">Built for teams already on Commit</h2>
+        <p className="landing-section__lede">
+          No new scheduling system — a cleaner weekly view for coaches and families.
         </p>
-        <ul className="home__tenants">
+        <ul className="landing-points">
+          <li className="landing-point">
+            <h3 className="landing-point__title">Pulls from Commit</h3>
+            <p className="landing-point__text">
+              Practices, meets, and team events stay in sync with your Commit schedule.
+            </p>
+          </li>
+          <li className="landing-point">
+            <h3 className="landing-point__title">Mobile-first week view</h3>
+            <p className="landing-point__text">
+              A phone-optimized calendar parents can check in seconds between carpools.
+            </p>
+          </li>
+          <li className="landing-point">
+            <h3 className="landing-point__title">Filter and share</h3>
+            <p className="landing-point__text">
+              Group filters and one-tap share links keep every swimmer’s week clear.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <section className="landing-section landing-section--teams">
+        <h2 className="landing-section__title">Live team calendars</h2>
+        <p className="landing-section__lede">
+          Open a schedule, or share the link with coaches and families.
+        </p>
+        <ul className="landing-tenants">
           {tenants.map((tenant) => {
             const teamUrl =
               typeof window !== 'undefined'
                 ? `${window.location.origin}${tenant.path}`
                 : tenant.path
             return (
-              <li key={tenant.slug} className="home__tenant-row">
+              <li key={tenant.slug} className="landing-tenant-row">
                 <button
                   type="button"
-                  className="home__tenant"
+                  className="landing-tenant"
                   onClick={() => navigate(tenant.path)}
                 >
-                  <span className="home__tenant-name">{tenant.displayName}</span>
+                  <span className="landing-tenant__name">{tenant.displayName}</span>
+                  <span className="landing-tenant__hint">Open calendar</span>
                 </button>
                 <ShareButton
-                  className="home__tenant-share"
+                  className="landing-tenant__share"
                   title={`${tenant.displayName} · ${PRODUCT_NAME}`}
                   text={`Weekly swim schedule for ${tenant.displayName}`}
                   url={teamUrl}
@@ -58,7 +129,106 @@ export function HomePage() {
             )
           })}
         </ul>
-      </main>
+      </section>
+
+      <section className="landing-section landing-section--close">
+        <h2 className="landing-section__title">Ready for your team?</h2>
+        <p className="landing-section__lede">
+          Tell us your Commit team and we’ll set up a mobile calendar your families will use.
+        </p>
+        <a className="landing-cta landing-cta--primary" href={CONTACT_HREF}>
+          Request access
+        </a>
+      </section>
+
+      <footer className="landing-footer">
+        <p>
+          {PRODUCT_NAME} · Companion calendars for{' '}
+          <a
+            href="https://www.commitswimming.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Commit Swimming
+          </a>{' '}
+          teams
+        </p>
+      </footer>
+    </div>
+  )
+}
+
+function PhonePreview() {
+  return (
+    <div className="phone-preview">
+      <div className="phone-preview__bezel">
+        <div className="phone-preview__notch" />
+        <div className="phone-preview__screen">
+          <div className="phone-preview__bar">
+            <span className="phone-preview__team">Your Swim Team</span>
+            <span className="phone-preview__week">This week</span>
+          </div>
+          <div className="phone-preview__chips">
+            <span className="phone-preview__chip is-on">SR</span>
+            <span className="phone-preview__chip">JR</span>
+            <span className="phone-preview__chip is-on">Meet</span>
+          </div>
+          <ul className="phone-preview__days">
+            <li className="phone-preview__day is-today">
+              <div className="phone-preview__when">
+                <span className="phone-preview__weekday">Mon</span>
+                <span className="phone-preview__date">Jul 27</span>
+              </div>
+              <div className="phone-preview__sessions">
+                <span className="phone-preview__session">
+                  <i className="phone-preview__accent" />
+                  SR · Main · 4:30–6:00
+                </span>
+              </div>
+            </li>
+            <li className="phone-preview__day">
+              <div className="phone-preview__when">
+                <span className="phone-preview__weekday">Tue</span>
+                <span className="phone-preview__date">Jul 28</span>
+              </div>
+              <div className="phone-preview__sessions">
+                <span className="phone-preview__session">
+                  <i className="phone-preview__accent" />
+                  JR · AM · 6:00–7:30
+                </span>
+                <span className="phone-preview__session phone-preview__session--meet">
+                  <i className="phone-preview__accent phone-preview__accent--meet" />
+                  Dual Meet · 5:00 PM
+                </span>
+              </div>
+            </li>
+            <li className="phone-preview__day">
+              <div className="phone-preview__when">
+                <span className="phone-preview__weekday">Wed</span>
+                <span className="phone-preview__date">Jul 29</span>
+              </div>
+              <div className="phone-preview__sessions">
+                <span className="phone-preview__session">
+                  <i className="phone-preview__accent" />
+                  SR · Main · 4:30–6:00
+                </span>
+              </div>
+            </li>
+            <li className="phone-preview__day">
+              <div className="phone-preview__when">
+                <span className="phone-preview__weekday">Thu</span>
+                <span className="phone-preview__date">Jul 30</span>
+              </div>
+              <div className="phone-preview__sessions">
+                <span className="phone-preview__session">
+                  <i className="phone-preview__accent" />
+                  JR · PM · 5:00–6:30
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }
