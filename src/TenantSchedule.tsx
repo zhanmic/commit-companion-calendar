@@ -20,7 +20,7 @@ import { useTenant } from './tenants/TenantContext'
 import type { CommitEvent, CommitMeet } from './types'
 import './App.css'
 
-/** Week schedule UI for the active tenant (e.g. /DelmaDolphins). */
+/** Week schedule UI for the active tenant (e.g. /DelmarDolphins). */
 export function TenantSchedule() {
   const tenant = useTenant()
   const [anchor, setAnchor] = useState(() => new Date())

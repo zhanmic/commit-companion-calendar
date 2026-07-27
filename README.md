@@ -6,7 +6,7 @@ Weekly practice and meet schedules for swim teams, built on Commit Swimming’s 
 
 | Path | Team |
 |------|------|
-| [`/DelmaDolphins`](/DelmaDolphins) | Delma Dolphins |
+| [`/DelmarDolphins`](/DelmarDolphins) | Delmar Dolphins |
 
 Product home (`/`) lists available teams. Each tenant owns its Commit `superTeamId` and its own practice/meet parsers under `src/tenants/<Slug>/`.
 
@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173/DelmaDolphins](http://localhost:5173/DelmaDolphins).
+Open [http://localhost:5173/DelmarDolphins](http://localhost:5173/DelmarDolphins).
 
 ## Build
 

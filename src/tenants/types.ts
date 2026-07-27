@@ -45,8 +45,13 @@ export interface TenantLinks {
  * and register it in `registry.ts`.
  */
 export interface TenantConfig {
-  /** URL path segment, e.g. `DelmaDolphins` → `/DelmaDolphins`. */
+  /** Canonical URL path segment, e.g. `DelmarDolphins` → `/DelmarDolphins`. */
   slug: string
+  /**
+   * Former path segments that should resolve to this tenant
+   * (e.g. typo URLs). Canonical `slug` is preferred in the address bar.
+   */
+  slugAliases?: string[]
   displayName: string
   /** Commit Swimming super-team id used for website-data-2a/2b. */
   superTeamId: string

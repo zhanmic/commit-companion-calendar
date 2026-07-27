@@ -1,6 +1,6 @@
 import type { TenantGroup } from '../types'
 
-/** Delma Dolphins practice groups (Sr / Jr / DEVO / Jr Prep). */
+/** Delmar Dolphins practice groups (Sr / Jr / DEVO / Jr Prep). */
 export const DELMA_GROUPS: TenantGroup[] = [
   { id: 'Sr', label: 'Sr', color: 'var(--team-sr)', alwaysShow: true },
   { id: 'Jr', label: 'Jr', color: 'var(--team-jr)', alwaysShow: true },
@@ -21,7 +21,7 @@ export const DELMA_GROUP_COLORS: Record<string, string> = Object.fromEntries(
   DELMA_GROUPS.map((g) => [g.id, g.color]),
 )
 
-/** Parse a Delma practice title fragment into one or more sub-teams. */
+/** Parse a Delmar practice title fragment into one or more sub-teams. */
 export function parseDelmaSubTeams(name: string): string[] {
   const lower = name.trim().toLowerCase()
 
@@ -56,7 +56,7 @@ const LOCATION_PATTERNS: Array<{ match: RegExp; label: string }> = [
   { match: /\brpi\b/i, label: 'RPI' },
 ]
 
-/** Keyword fallback for Delma pool / venue names in a title. */
+/** Keyword fallback for Delmar pool / venue names in a title. */
 export function parseDelmaLocation(name: string): string | null {
   for (const { match, label } of LOCATION_PATTERNS) {
     if (match.test(name)) return label

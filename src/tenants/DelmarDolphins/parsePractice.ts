@@ -13,7 +13,7 @@ const DELMA_PARSERS: GroupLocationParsers = {
 }
 
 /**
- * Delma titles are typically `Group - Location - Time`.
+ * Delmar titles are typically `Group - Location - Time`.
  * Settings can switch between field-split and keyword scan modes.
  */
 export const parseDelmaPractice: PracticeParser = (

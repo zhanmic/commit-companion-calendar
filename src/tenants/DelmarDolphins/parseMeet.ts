@@ -6,7 +6,7 @@ function parseUtc(iso: string): Date {
 }
 
 /**
- * Default Commit meet shape used by Delma Dolphins.
+ * Default Commit meet shape used by Delmar Dolphins.
  * Other tenants can replace this if their meet payloads differ.
  */
 export const parseDelmaMeet: MeetParser = (

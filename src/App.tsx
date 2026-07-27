@@ -21,6 +21,18 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    if (route.kind !== 'tenant') return
+    const tenant = getTenantBySlug(route.slug)
+    if (!tenant) return
+    // Canonicalize typo / alias paths (e.g. /DelmaDolphins → /DelmarDolphins).
+    if (route.slug.toLowerCase() === tenant.slug.toLowerCase()) return
+    const canonical = `/${tenant.slug}`
+    if (window.location.pathname === canonical) return
+    window.history.replaceState({}, '', canonical)
+    setRoute(readRoute())
+  }, [route])
+
   if (route.kind === 'home') {
     return <HomePage />
   }
