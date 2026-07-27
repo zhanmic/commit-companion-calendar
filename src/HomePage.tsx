@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import homeScreenshot from './assets/home-screenshot.jpg'
 import { ShareButton } from './components/ShareButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
@@ -162,72 +163,14 @@ function PhonePreview() {
   return (
     <div className="phone-preview">
       <div className="phone-preview__bezel">
-        <div className="phone-preview__notch" />
-        <div className="phone-preview__screen">
-          <div className="phone-preview__bar">
-            <span className="phone-preview__team">Your Swim Team</span>
-            <span className="phone-preview__week">This week</span>
-          </div>
-          <div className="phone-preview__chips">
-            <span className="phone-preview__chip is-on">SR</span>
-            <span className="phone-preview__chip">JR</span>
-            <span className="phone-preview__chip is-on">Meet</span>
-          </div>
-          <ul className="phone-preview__days">
-            <li className="phone-preview__day is-today">
-              <div className="phone-preview__when">
-                <span className="phone-preview__weekday">Mon</span>
-                <span className="phone-preview__date">Jul 27</span>
-              </div>
-              <div className="phone-preview__sessions">
-                <span className="phone-preview__session">
-                  <i className="phone-preview__accent" />
-                  SR · Main · 4:30–6:00
-                </span>
-              </div>
-            </li>
-            <li className="phone-preview__day">
-              <div className="phone-preview__when">
-                <span className="phone-preview__weekday">Tue</span>
-                <span className="phone-preview__date">Jul 28</span>
-              </div>
-              <div className="phone-preview__sessions">
-                <span className="phone-preview__session">
-                  <i className="phone-preview__accent" />
-                  JR · AM · 6:00–7:30
-                </span>
-                <span className="phone-preview__session phone-preview__session--meet">
-                  <i className="phone-preview__accent phone-preview__accent--meet" />
-                  Dual Meet · 5:00 PM
-                </span>
-              </div>
-            </li>
-            <li className="phone-preview__day">
-              <div className="phone-preview__when">
-                <span className="phone-preview__weekday">Wed</span>
-                <span className="phone-preview__date">Jul 29</span>
-              </div>
-              <div className="phone-preview__sessions">
-                <span className="phone-preview__session">
-                  <i className="phone-preview__accent" />
-                  SR · Main · 4:30–6:00
-                </span>
-              </div>
-            </li>
-            <li className="phone-preview__day">
-              <div className="phone-preview__when">
-                <span className="phone-preview__weekday">Thu</span>
-                <span className="phone-preview__date">Jul 30</span>
-              </div>
-              <div className="phone-preview__sessions">
-                <span className="phone-preview__session">
-                  <i className="phone-preview__accent" />
-                  JR · PM · 5:00–6:30
-                </span>
-              </div>
-            </li>
-          </ul>
-        </div>
+        <img
+          className="phone-preview__screenshot"
+          src={homeScreenshot}
+          alt=""
+          width={1320}
+          height={2403}
+          decoding="async"
+        />
       </div>
     </div>
   )
