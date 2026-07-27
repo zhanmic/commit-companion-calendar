@@ -5,9 +5,10 @@
  */
 export const TENANTS = [
   {
-    slug: 'DelmaDolphins',
-    displayName: 'Delma Dolphins',
-    path: '/DelmaDolphins',
+    slug: 'DelmarDolphins',
+    displayName: 'Delmar Dolphins',
+    path: '/DelmarDolphins',
+    slugAliases: ['DelmaDolphins'],
   },
 ]
 
@@ -18,5 +19,11 @@ export function listTenants() {
 export function getTenantBySlug(slug) {
   if (!slug || typeof slug !== 'string') return null
   const key = slug.toLowerCase()
-  return TENANTS.find((t) => t.slug.toLowerCase() === key) ?? null
+  return (
+    TENANTS.find(
+      (t) =>
+        t.slug.toLowerCase() === key ||
+        (t.slugAliases ?? []).some((alias) => alias.toLowerCase() === key),
+    ) ?? null
+  )
 }

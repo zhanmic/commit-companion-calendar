@@ -77,7 +77,7 @@ export function settingsStorageKey(tenantSlug: string): string {
   return `${PRODUCT_STORAGE_PREFIX}:${tenantSlug}:settings`
 }
 
-/** Legacy key from the single-tenant Delma app — migrated once. */
+/** Legacy key from the single-tenant Delmar app — migrated once. */
 const LEGACY_SETTINGS_KEY = 'delmar-schedule:settings'
 
 function cloneSettings(settings: ScheduleSettings): ScheduleSettings {
@@ -182,13 +182,22 @@ export function getStoredSettings(tenant: TenantConfig): ScheduleSettings {
   const key = settingsStorageKey(tenant.slug)
   let parsed = readRawSettings(key)
 
-  // One-time migration from the pre-multi-tenant Delma storage key.
-  if (!parsed && tenant.slug === 'DelmaDolphins') {
-    parsed = readRawSettings(LEGACY_SETTINGS_KEY)
-    if (parsed) {
-      const migrated = normalizeSettings(parsed, tenant)
-      setStoredSettings(tenant, migrated)
-      return migrated
+  // One-time migrations from older Delmar storage keys / typo slug.
+  if (!parsed) {
+    const legacyKeys = [
+      ...((tenant.slugAliases ?? []).map((alias) => settingsStorageKey(alias))),
+      ...(tenant.slug === 'DelmarDolphins' ||
+      (tenant.slugAliases ?? []).includes('DelmaDolphins')
+        ? [LEGACY_SETTINGS_KEY]
+        : []),
+    ]
+    for (const legacyKey of legacyKeys) {
+      parsed = readRawSettings(legacyKey)
+      if (parsed) {
+        const migrated = normalizeSettings(parsed, tenant)
+        setStoredSettings(tenant, migrated)
+        return migrated
+      }
     }
   }
 

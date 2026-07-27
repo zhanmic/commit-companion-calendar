@@ -22,11 +22,12 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 
 /**
  * First CommitCompanionCalendar tenant.
- * Path: /DelmaDolphins
+ * Path: /DelmarDolphins
  */
-export const delmaDolphinsTenant: TenantConfig = {
-  slug: 'DelmaDolphins',
-  displayName: 'Delma Dolphins',
+export const delmarDolphinsTenant: TenantConfig = {
+  slug: 'DelmarDolphins',
+  slugAliases: ['DelmaDolphins'],
+  displayName: 'Delmar Dolphins',
   superTeamId: 'g8g7f3rkF8N23vXs4',
   defaultTimeZone: 'America/New_York',
   groups: DELMA_GROUPS,
@@ -35,8 +36,11 @@ export const delmaDolphinsTenant: TenantConfig = {
     officialCalendar: 'https://www.delmardolfins.com/schedule',
     carpool: 'https://swim-carpool.vercel.app',
   },
-  icsFilenamePrefix: 'delma-dolphins',
+  icsFilenamePrefix: 'delmar-dolphins',
   parsePractice: parseDelmaPractice,
   parseMeet: parseDelmaMeet,
   occurrenceMatchesTeams: delmaOccurrenceMatchesTeams,
 }
+
+/** @deprecated Use `delmarDolphinsTenant`. */
+export const delmaDolphinsTenant = delmarDolphinsTenant
