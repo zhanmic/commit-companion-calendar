@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Commit leads tool (local data + secrets)
+tools/commit-leads/data/
+tools/commit-leads/.env
+*.sqlite
