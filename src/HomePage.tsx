@@ -167,8 +167,8 @@ function PhonePreview() {
           className="phone-preview__screenshot"
           src={homeScreenshot}
           alt=""
-          width={1320}
-          height={2403}
+          width={1170}
+          height={2532}
           decoding="async"
         />
       </div>
