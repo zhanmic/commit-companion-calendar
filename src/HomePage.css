@@ -213,6 +213,7 @@
 }
 
 .phone-preview__bezel {
+  position: relative;
   border-radius: 2rem;
   padding: 0.45rem;
   background: linear-gradient(
@@ -228,6 +229,20 @@
   width: 100%;
   height: auto;
   border-radius: 1.55rem;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.phone-preview__screenshot.is-active {
+  opacity: 1;
+}
+
+.phone-preview__screenshot--overlay {
+  position: absolute;
+  inset: 0.45rem;
+  width: calc(100% - 0.9rem);
+  height: auto;
+  pointer-events: none;
 }
 
 .landing-section {

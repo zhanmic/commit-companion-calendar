@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-import homeScreenshot from './assets/home-screenshot.jpg'
+import homeScreenshotDark from './assets/home-screenshot-dark.jpg'
+import homeScreenshotLight from './assets/home-screenshot-light.jpg'
 import { ShareButton } from './components/ShareButton'
+import { useTheme } from './components/ThemeProvider'
 import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
 import {
@@ -160,16 +162,31 @@ export function HomePage() {
 }
 
 function PhonePreview() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <div className="phone-preview">
       <div className="phone-preview__bezel">
         <img
-          className="phone-preview__screenshot"
-          src={homeScreenshot}
+          className={`phone-preview__screenshot${isDark ? '' : ' is-active'}`}
+          src={homeScreenshotLight}
           alt=""
           width={1170}
           height={2532}
           decoding="async"
+          aria-hidden={isDark}
+        />
+        <img
+          className={`phone-preview__screenshot phone-preview__screenshot--overlay${
+            isDark ? ' is-active' : ''
+          }`}
+          src={homeScreenshotDark}
+          alt=""
+          width={1170}
+          height={2532}
+          decoding="async"
+          aria-hidden={!isDark}
         />
       </div>
     </div>
