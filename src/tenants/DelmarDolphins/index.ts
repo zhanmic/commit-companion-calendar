@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 }
 
 /**
- * First CommitCompanionCalendar tenant.
+ * First My Swim Day tenant.
  * Path: /DelmarDolphins
  */
 export const delmarDolphinsTenant: TenantConfig = {
