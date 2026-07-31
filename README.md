@@ -1,6 +1,6 @@
-# Commit Companion Calendar
+# My Swim Day
 
-Weekly practice and meet schedules for swim teams, built on Commit Swimming’s public website API.
+Weekly practice and meet calendars for swim teams (`myswimday.com`), built on Commit Swimming’s public website API.
 
 ## Tenants
 

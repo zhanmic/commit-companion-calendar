@@ -22,7 +22,7 @@ export function HomePage() {
   const demoTenant = tenants[0]
 
   useEffect(() => {
-    document.title = `${PRODUCT_NAME} — Mobile calendars for Commit swim teams`
+    document.title = `${PRODUCT_NAME} — Practice & meet calendars for Commit teams`
   }, [])
 
   return (
@@ -144,7 +144,7 @@ export function HomePage() {
 
       <footer className="landing-footer">
         <p>
-          {PRODUCT_NAME} · Companion calendars for{' '}
+          {PRODUCT_NAME} · Mobile calendars for{' '}
           <a
             href="https://www.commitswimming.com"
             target="_blank"
@@ -152,7 +152,7 @@ export function HomePage() {
           >
             Commit Swimming
           </a>{' '}
-          teams
+          teams · myswimday.com
         </p>
       </footer>
     </div>

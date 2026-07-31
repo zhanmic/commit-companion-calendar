@@ -41,7 +41,7 @@ export default function handler(req, res) {
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8')
   res.setHeader(
     'Content-Disposition',
-    'inline; filename="commitcompanioncalendar.ics"',
+    'inline; filename="myswimday.ics"',
   )
   res.setHeader('Cache-Control', 'no-store')
   res.end(ics)

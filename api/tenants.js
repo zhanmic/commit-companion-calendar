@@ -18,7 +18,7 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=60')
   res.end(
     JSON.stringify({
-      product: 'Commit Companion Calendar',
+      product: 'My Swim Day',
       tenants: listTenants(),
     }),
   )
