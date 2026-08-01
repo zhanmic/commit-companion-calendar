@@ -53,6 +53,8 @@
 }
 
 .hero {
+  position: relative;
+  z-index: 10; /* above .panel so settings/share popovers aren't covered by week view */
   margin-bottom: 1.75rem;
   animation: rise 0.7s ease both;
 }
@@ -226,10 +228,15 @@
   pointer-events: none;
 }
 
+.settings {
+  position: relative;
+}
+
 .settings__panel {
   position: absolute;
   top: calc(100% + 0.55rem);
   left: 0;
+  z-index: 20;
   width: min(18.5rem, calc(100vw - 1.5rem));
   padding: 0.9rem;
   border: 1px solid var(--line);
@@ -571,6 +578,8 @@
 }
 
 .panel {
+  position: relative;
+  z-index: 1;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--line);
   border-radius: 1.25rem;
