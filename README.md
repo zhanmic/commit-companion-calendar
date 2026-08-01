@@ -48,3 +48,7 @@ npm run preview
 1. Add `src/tenants/<Slug>/` with `TenantConfig`, `parsePractice`, and `parseMeet`.
 2. Register it in `src/tenants/registry.ts`.
 3. Mirror slug/displayName in `api/_lib/tenants.js` for `/api/tenants`.
+
+## Local sales tool (not deployed)
+
+`tools/commit-leads` is a **local-only** lead finder / outreach drafter (SQLite + Ollama + Mac Mail). It is not included in the Vercel build. See [`tools/commit-leads/README.md`](tools/commit-leads/README.md).
