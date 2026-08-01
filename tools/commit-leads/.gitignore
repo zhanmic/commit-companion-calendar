@@ -1,0 +1,9 @@
+# Local-only secrets and runtime data (never deploy this tool)
+.env
+node_modules/
+dist/
+data/
+*.sqlite
+.DS_Store
+playwright-report/
+test-results/

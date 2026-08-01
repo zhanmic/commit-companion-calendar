@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Commit Leads</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <p class="brand">Commit Leads</p>
+        <p class="sub" id="meta">Loading…</p>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <main class="layout">
+      <section class="panel discover">
+        <h2>1 · Discover leads</h2>
+        <p class="hint">
+          Add clubs to the database via USA Swimming or one-off entry. Process them in
+          the next section.
+        </p>
+        <div class="discover-grid">
+          <div class="discover-col">
+            <h3>USA Swimming</h3>
+            <p class="hint" id="usas-progress">
+              One-shot import of the full Find a Team directory (~2,400 clubs with
+              websites). Download cached ~24h. Already-imported websites are skipped.
+            </p>
+            <form id="usas-form">
+              <label
+                class="check has-tip"
+                data-tip="Import USA Swimming contact email/phone (often registrar). Enrich later prefers Commit office contacts when found."
+              >
+                <input name="includeContacts" type="checkbox" checked />
+                Include USA Swimming contacts
+              </label>
+              <label
+                class="check has-tip"
+                data-tip="Re-download the ~4MB club directory instead of using the 24h cache."
+              >
+                <input name="forceRefresh" type="checkbox" />
+                Refresh directory cache
+              </label>
+              <label
+                class="check has-tip"
+                data-tip="By default, clubs already in your DB (same website) are skipped. Check this to update them again."
+              >
+                <input name="forceReimport" type="checkbox" />
+                Force re-import existing clubs
+              </label>
+              <details class="filters">
+                <summary>Optional filters (leave closed for full list)</summary>
+                <div class="row-2">
+                  <label class="has-tip" data-tip="Optional two-letter state filter.">
+                    State
+                    <input name="state" placeholder="e.g. NY" maxlength="2" />
+                  </label>
+                  <label class="has-tip" data-tip="Optional name / city / website substring.">
+                    Name filter
+                    <input name="query" placeholder="e.g. Delmar" />
+                  </label>
+                </div>
+                <div class="row-2">
+                  <label class="has-tip" data-tip="Optional ZIP prefix.">
+                    ZIP <input name="zip" placeholder="optional" maxlength="10" />
+                  </label>
+                  <label class="has-tip" data-tip="Cap how many clubs to import. Default is full list.">
+                    Limit
+                    <input name="limit" type="number" placeholder="all" min="1" max="5000" />
+                  </label>
+                </div>
+              </details>
+              <div class="step-row">
+                <button
+                  type="submit"
+                  class="has-tip"
+                  data-tip="Import all USA Swimming clubs with websites into SQLite (~2400). Skips ones you already have unless Force re-import is checked."
+                >
+                  Import all clubs
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="discover-col">
+            <h3>Manually</h3>
+            <p class="hint">One-off website / known superTeamId, or import a CSV seed file.</p>
+            <form id="add-form">
+              <label class="has-tip" data-tip="Optional display name.">
+                Team name <input name="team_name" placeholder="Hilton Area Swim" />
+              </label>
+              <label class="has-tip" data-tip="Public website for Fingerprint.">
+                Website URL
+                <input name="website_url" type="url" placeholder="https://…" />
+              </label>
+              <label class="has-tip" data-tip="Optional if Fingerprint will find it.">
+                superTeamId
+                <input name="super_team_id" placeholder="optional if known" />
+              </label>
+              <label class="has-tip" data-tip="Free notes.">
+                Notes <input name="region_notes" placeholder="LSC / source" />
+              </label>
+              <div class="step-row">
+                <button type="submit">Add to DB</button>
+                <button
+                  type="button"
+                  class="secondary has-tip"
+                  data-action="seed"
+                  data-tip="Import data/seeds.csv (manual list)."
+                >
+                  Seed CSV
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="log-wrap">
+          <div class="log-head">
+            <span>Discover log</span>
+            <button type="button" class="ghost clear-log" data-log="log-discover">
+              Clear
+            </button>
+          </div>
+          <pre id="log-discover" aria-live="polite"></pre>
+        </div>
+      </section>
+
+      <section class="panel process">
+        <h2>2 · Process</h2>
+        <p class="hint">
+          Pipeline: fingerprint → enrich → <strong>researched</strong> → generate
+          3-touch drafts → <strong>drafted</strong> → send →
+          <strong>contacted</strong>.
+        </p>
+        <div class="process-grid">
+          <div class="process-col">
+            <h3>Pending queue</h3>
+            <p class="hint">
+              Auto-picks leads that still need fingerprint, enrich, or score.
+            </p>
+            <label
+              class="has-tip"
+              data-tip="How many pending leads to handle per step in this run."
+            >
+              Batch size
+              <input id="process-limit" type="number" value="25" min="1" max="1000" />
+            </label>
+            <label
+              class="check has-tip"
+              data-tip="Re-run steps even if already fingerprinted / enriched / scored."
+            >
+              <input id="process-force-queue" type="checkbox" />
+              Force reprocess
+            </label>
+            <div class="step-row">
+              <button
+                type="button"
+                class="has-tip"
+                id="btn-process-queue"
+                data-tip="Fingerprint → enrich → score on the next N pending leads."
+              >
+                Run queue
+              </button>
+              <button
+                type="button"
+                id="stop-process"
+                class="danger has-tip"
+                data-tip="Stop after the current lead finishes."
+                disabled
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+
+          <div class="process-col">
+            <h3>Draft outreach (bulk)</h3>
+            <p class="hint">
+              For <strong>researched</strong> leads with email + Commit ID: load
+              ~1 month of calendar, ask Ollama for touches 1→2→3, set status
+              <strong>drafted</strong>. Uses batch size above.
+            </p>
+            <label
+              class="check has-tip"
+              data-tip="Regenerate all three touches even if drafts already exist."
+            >
+              <input id="draft-force-queue" type="checkbox" />
+              Force regenerate
+            </label>
+            <div class="step-row">
+              <button
+                type="button"
+                class="primary has-tip"
+                id="btn-draft-queue"
+                data-tip="Bulk-generate 3-touch drafts for the next N researched leads."
+              >
+                Generate drafts
+              </button>
+            </div>
+          </div>
+
+          <div class="process-col">
+            <h3>One lead</h3>
+            <p class="hint">
+              Pick a lead for pipeline steps or draft regenerate. Batch size does
+              not apply.
+            </p>
+            <label
+              class="has-tip"
+              data-tip="Lead to process. Also used by the single-step buttons below."
+            >
+              Lead
+              <select id="target">
+                <option value="">Select a lead…</option>
+              </select>
+            </label>
+            <label
+              class="check has-tip"
+              data-tip="Re-run fingerprint / enrich / score even if already done for this lead."
+            >
+              <input id="process-force-one" type="checkbox" />
+              Force reprocess
+            </label>
+            <div class="step-row">
+              <button
+                type="button"
+                class="has-tip"
+                id="btn-process-one"
+                data-tip="Fingerprint → enrich → score for the selected lead only."
+              >
+                Run this lead
+              </button>
+            </div>
+            <div class="step-row step-row-tight">
+              <button
+                type="button"
+                class="has-tip secondary"
+                data-action="fingerprint"
+                data-tip="Fingerprint only for the selected lead."
+              >
+                Fingerprint
+              </button>
+              <button
+                type="button"
+                class="has-tip secondary"
+                data-action="enrich"
+                data-tip="Enrich only for the selected lead."
+              >
+                Enrich
+              </button>
+              <button
+                type="button"
+                class="has-tip secondary"
+                data-action="score"
+                data-tip="Score only for the selected lead."
+              >
+                Score
+              </button>
+            </div>
+            <label
+              class="has-tip"
+              data-tip="Which outreach touch(es) to regenerate for this lead."
+            >
+              Draft touch
+              <select id="draft-touch-one">
+                <option value="all">All 1 → 2 → 3</option>
+                <option value="1">Touch 1 (first email)</option>
+                <option value="2">Touch 2 (follow-up)</option>
+                <option value="3">Touch 3 (close loop)</option>
+              </select>
+            </label>
+            <div class="step-row">
+              <button
+                type="button"
+                class="has-tip"
+                id="btn-draft-one"
+                data-tip="Regenerate selected touch(es) for this lead via Ollama + calendar."
+              >
+                Regenerate draft(s)
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="log-wrap">
+          <div class="log-head">
+            <span>Process log</span>
+            <button type="button" class="ghost clear-log" data-log="log-process">
+              Clear
+            </button>
+          </div>
+          <pre id="log-process" aria-live="polite"></pre>
+        </div>
+      </section>
+
+      <section class="panel results">
+        <div class="results-head">
+          <h2>3 · Leads</h2>
+          <button
+            type="button"
+            class="has-tip"
+            data-action="export"
+            data-tip="Write all leads to data/leads-export.csv."
+          >
+            Export CSV
+          </button>
+          <a class="download has-tip" href="/api/export.csv" data-tip="Download current leads as CSV.">
+            Download CSV
+          </a>
+          <span id="export-status" class="hint export-status" aria-live="polite"></span>
+        </div>
+        <div id="status-counts" class="status-counts" aria-label="Lead counts by status"></div>
+        <div class="leads-toolbar">
+          <input id="search" type="search" placeholder="Search name, email, state, id…" />
+          <label class="filter-label">
+            Status
+            <select id="filter-status">
+              <option value="">All</option>
+            </select>
+          </label>
+          <label class="filter-label">
+            State
+            <select id="filter-state">
+              <option value="">All</option>
+            </select>
+          </label>
+          <label class="filter-label">
+            Commit
+            <select id="filter-commit">
+              <option value="">All</option>
+              <option value="yes">Has Commit ID</option>
+              <option value="no">No Commit ID</option>
+            </select>
+          </label>
+          <span id="leads-count" class="hint leads-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table id="leads-table">
+            <thead>
+              <tr>
+                <th data-sort="id" class="sortable" scope="col">ID</th>
+                <th data-sort="team" class="sortable" scope="col">Team</th>
+                <th data-sort="state" class="sortable" scope="col">State</th>
+                <th data-sort="size" class="sortable" scope="col">Size</th>
+                <th data-sort="status" class="sortable" scope="col">Status</th>
+                <th data-sort="fit" class="sortable" scope="col">Fit</th>
+                <th data-sort="email" class="sortable" scope="col">Email</th>
+                <th data-sort="commit" class="sortable" scope="col">Commit ID</th>
+              </tr>
+            </thead>
+            <tbody id="leads-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div id="lead-modal" class="modal" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-head">
+          <h2 id="modal-title">Lead detail</h2>
+          <button type="button" class="ghost" data-close-modal aria-label="Close">Close</button>
+        </div>
+        <div id="detail-body"></div>
+      </div>
+    </div>
+
+    <div id="floating-tip" class="floating-tip" hidden role="tooltip"></div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
