@@ -44,7 +44,8 @@ npm run preview
 | `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
 | `POST /api/subscribe` | Start / update email subscription (double opt-in) |
 | `GET /api/confirm?token=…` | Confirm subscription |
-| `GET /api/unsubscribe?token=…` | Unsubscribe |
+| `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
+| `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
 | `GET /api/cron/send-daily` | Cron — send daily digests |
 | `GET /api/cron/send-weekly` | Cron — send weekly digests (Sundays) |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |

@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { groupOrder } from '../lib/groups'
+import { PRODUCT_STORAGE_PREFIX } from '../product'
 import { useTenant } from '../tenants/TenantContext'
 
 type Frequency = 'daily' | 'weekly'
+type PanelMode = 'subscribe' | 'unsubscribe'
 
 interface SubscribeButtonProps {
   className?: string
@@ -10,6 +12,10 @@ interface SubscribeButtonProps {
   selectedGroups: Set<string>
   showEvents: boolean
   showMeets: boolean
+}
+
+function emailStorageKey(tenantSlug: string) {
+  return `${PRODUCT_STORAGE_PREFIX}:${tenantSlug}:subscribe-email`
 }
 
 export function SubscribeButton({
@@ -21,6 +27,7 @@ export function SubscribeButton({
   const tenant = useTenant()
   const groups = groupOrder(tenant)
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<PanelMode>('subscribe')
   const [email, setEmail] = useState('')
   const [frequency, setFrequency] = useState<Frequency>('weekly')
   const [picked, setPicked] = useState<Set<string>>(() => new Set(selectedGroups))
@@ -31,6 +38,16 @@ export function SubscribeButton({
   const [error, setError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const saved = localStorage.getItem(emailStorageKey(tenant.slug))
+      if (saved) setEmail(saved)
+    } catch {
+      // ignore
+    }
+  }, [tenant.slug])
 
   useEffect(() => {
     if (!open) return
@@ -62,6 +79,14 @@ export function SubscribeButton({
     }
   }, [open])
 
+  function rememberEmail(value: string) {
+    try {
+      localStorage.setItem(emailStorageKey(tenant.slug), value)
+    } catch {
+      // ignore
+    }
+  }
+
   function toggleGroup(team: string) {
     setPicked((prev) => {
       const next = new Set(prev)
@@ -79,7 +104,7 @@ export function SubscribeButton({
     setPicked(new Set())
   }
 
-  async function onSubmit(event: FormEvent) {
+  async function onSubscribe(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
     setMessage(null)
@@ -111,7 +136,40 @@ export function SubscribeButton({
         setError(data.error || 'Could not subscribe')
         return
       }
+      rememberEmail(email.trim().toLowerCase())
       setMessage(data.message || 'Check your email to confirm.')
+    } catch {
+      setError('Network error — try again')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function onUnsubscribe(event: FormEvent) {
+    event.preventDefault()
+    setSubmitting(true)
+    setMessage(null)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          tenantSlug: tenant.slug,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string
+        error?: string
+      }
+      if (!res.ok) {
+        setError(data.error || 'Could not unsubscribe')
+        return
+      }
+      rememberEmail(email.trim().toLowerCase())
+      setMessage(data.message || 'Unsubscribed.')
     } catch {
       setError('Network error — try again')
     } finally {
@@ -122,7 +180,7 @@ export function SubscribeButton({
   return (
     <div
       ref={rootRef}
-      className={`subscribe${className ? ` ${className}` : ''}`}
+      className={`subscribe subscribe--weeknav${className ? ` ${className}` : ''}`}
     >
       <button
         type="button"
@@ -156,12 +214,53 @@ export function SubscribeButton({
           className="subscribe__panel"
           role="dialog"
           aria-label="Email schedule subscription"
-          onSubmit={(e) => void onSubmit(e)}
+          onSubmit={(e) =>
+            void (mode === 'subscribe' ? onSubscribe(e) : onUnsubscribe(e))
+          }
         >
           <p className="subscribe__heading">Email schedule</p>
+
+          <div
+            className="subscribe__mode"
+            role="tablist"
+            aria-label="Subscribe or unsubscribe"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'subscribe'}
+              className={`subscribe__mode-btn${
+                mode === 'subscribe' ? ' subscribe__mode-btn--active' : ''
+              }`}
+              onClick={() => {
+                setMode('subscribe')
+                setMessage(null)
+                setError(null)
+              }}
+            >
+              Subscribe
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'unsubscribe'}
+              className={`subscribe__mode-btn${
+                mode === 'unsubscribe' ? ' subscribe__mode-btn--active' : ''
+              }`}
+              onClick={() => {
+                setMode('unsubscribe')
+                setMessage(null)
+                setError(null)
+              }}
+            >
+              Unsubscribe
+            </button>
+          </div>
+
           <p className="subscribe__hint">
-            Get a {frequency} digest for {tenant.displayName}. Confirm via email
-            before anything is sent.
+            {mode === 'subscribe'
+              ? `Get a ${frequency} digest for ${tenant.displayName}. Confirm via email before anything is sent.`
+              : `Stop schedule emails for ${tenant.displayName}.`}
           </p>
 
           <label className="subscribe__field">
@@ -177,104 +276,128 @@ export function SubscribeButton({
             />
           </label>
 
-          <p className="subscribe__field-label">Frequency</p>
-          <div
-            className="subscribe__freq"
-            role="radiogroup"
-            aria-label="Email frequency"
-          >
-            {(
-              [
-                { value: 'weekly', label: 'Weekly', hint: 'Sunday evening' },
-                { value: 'daily', label: 'Daily', hint: 'Each morning' },
-              ] as const
-            ).map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={frequency === option.value}
-                className={`subscribe__choice${
-                  frequency === option.value ? ' subscribe__choice--active' : ''
-                }`}
-                onClick={() => setFrequency(option.value)}
+          {mode === 'subscribe' ? (
+            <>
+              <p className="subscribe__field-label">Frequency</p>
+              <div
+                className="subscribe__freq"
+                role="radiogroup"
+                aria-label="Email frequency"
               >
-                <span className="subscribe__choice-label">{option.label}</span>
-                <span className="subscribe__choice-hint">{option.hint}</span>
-              </button>
-            ))}
-          </div>
+                {(
+                  [
+                    { value: 'weekly', label: 'Weekly', hint: 'Sunday evening' },
+                    { value: 'daily', label: 'Daily', hint: 'Each morning' },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={frequency === option.value}
+                    className={`subscribe__choice${
+                      frequency === option.value
+                        ? ' subscribe__choice--active'
+                        : ''
+                    }`}
+                    onClick={() => setFrequency(option.value)}
+                  >
+                    <span className="subscribe__choice-label">
+                      {option.label}
+                    </span>
+                    <span className="subscribe__choice-hint">{option.hint}</span>
+                  </button>
+                ))}
+              </div>
 
-          <div className="subscribe__groups-head">
-            <p className="subscribe__field-label">Groups</p>
-            <div className="subscribe__group-actions">
-              <button type="button" className="subscribe__text-btn" onClick={selectAll}>
-                All
-              </button>
-              <button type="button" className="subscribe__text-btn" onClick={clearGroups}>
-                Clear
-              </button>
-            </div>
-          </div>
-          <p className="subscribe__hint">
-            Empty or all = every group. Prefills from your current filters.
-          </p>
-          <div
-            className="subscribe__groups"
-            role="group"
-            aria-label="Practice groups"
-          >
-            {groups.map((team) => {
-              const active = picked.has(team)
-              return (
+              <div className="subscribe__groups-head">
+                <p className="subscribe__field-label">Groups</p>
+                <div className="subscribe__group-actions">
+                  <button
+                    type="button"
+                    className="subscribe__text-btn"
+                    onClick={selectAll}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    className="subscribe__text-btn"
+                    onClick={clearGroups}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <p className="subscribe__hint">
+                Empty or all = every group. Prefills from your current filters.
+              </p>
+              <div
+                className="subscribe__groups"
+                role="group"
+                aria-label="Practice groups"
+              >
+                {groups.map((team) => {
+                  const active = picked.has(team)
+                  return (
+                    <button
+                      key={team}
+                      type="button"
+                      className={`subscribe__group-chip${
+                        active ? ' subscribe__group-chip--active' : ''
+                      }`}
+                      aria-pressed={active}
+                      onClick={() => toggleGroup(team)}
+                    >
+                      {team}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div
+                className="subscribe__groups"
+                role="group"
+                aria-label="Include events and meets"
+              >
                 <button
-                  key={team}
                   type="button"
                   className={`subscribe__group-chip${
-                    active ? ' subscribe__group-chip--active' : ''
+                    includeEvents ? ' subscribe__group-chip--active' : ''
                   }`}
-                  aria-pressed={active}
-                  onClick={() => toggleGroup(team)}
+                  aria-pressed={includeEvents}
+                  onClick={() => setIncludeEvents((v) => !v)}
                 >
-                  {team}
+                  Event
                 </button>
-              )
-            })}
-          </div>
-
-          <div
-            className="subscribe__groups"
-            role="group"
-            aria-label="Include events and meets"
-          >
-            <button
-              type="button"
-              className={`subscribe__group-chip${
-                includeEvents ? ' subscribe__group-chip--active' : ''
-              }`}
-              aria-pressed={includeEvents}
-              onClick={() => setIncludeEvents((v) => !v)}
-            >
-              Event
-            </button>
-            <button
-              type="button"
-              className={`subscribe__group-chip${
-                includeMeets ? ' subscribe__group-chip--active' : ''
-              }`}
-              aria-pressed={includeMeets}
-              onClick={() => setIncludeMeets((v) => !v)}
-            >
-              Meet
-            </button>
-          </div>
+                <button
+                  type="button"
+                  className={`subscribe__group-chip${
+                    includeMeets ? ' subscribe__group-chip--active' : ''
+                  }`}
+                  aria-pressed={includeMeets}
+                  onClick={() => setIncludeMeets((v) => !v)}
+                >
+                  Meet
+                </button>
+              </div>
+            </>
+          ) : null}
 
           <button
             type="submit"
-            className="subscribe__submit"
+            className={`subscribe__submit${
+              mode === 'unsubscribe' ? ' subscribe__submit--muted' : ''
+            }`}
             disabled={submitting}
           >
-            {submitting ? 'Sending…' : 'Subscribe'}
+            {submitting
+              ? mode === 'subscribe'
+                ? 'Sending…'
+                : 'Working…'
+              : mode === 'subscribe'
+                ? 'Subscribe'
+                : 'Unsubscribe'}
           </button>
 
           {message ? (
@@ -283,7 +406,10 @@ export function SubscribeButton({
             </p>
           ) : null}
           {error ? (
-            <p className="subscribe__status subscribe__status--error" role="alert">
+            <p
+              className="subscribe__status subscribe__status--error"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}

@@ -198,11 +198,6 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
-            <SubscribeButton
-              selectedGroups={selected}
-              showEvents={showEvents}
-              showMeets={showMeets}
-            />
             <ShareButton
               title={`${tenant.displayName} · ${PRODUCT_NAME}`}
               text={`Weekly swim schedule for ${tenant.displayName}`}
@@ -243,6 +238,13 @@ export function TenantSchedule() {
           onPrev={() => setAnchor((d) => shiftWeek(d, -1))}
           onNext={() => setAnchor((d) => shiftWeek(d, 1))}
           onToday={() => setAnchor(new Date())}
+          trailing={
+            <SubscribeButton
+              selectedGroups={selected}
+              showEvents={showEvents}
+              showMeets={showMeets}
+            />
+          }
         />
 
         {loading ? (

@@ -144,12 +144,27 @@ export async function confirmSubscription(token) {
 export async function unsubscribeByToken(token) {
   const subscription = await getSubscriptionByUnsubToken(token)
   if (!subscription) return { ok: false, reason: 'invalid' }
+  return finalizeUnsubscribe(subscription)
+}
+
+/** Unsubscribe (or cancel pending) by email + tenant. */
+export async function unsubscribeByEmail(tenantSlug, email) {
+  const subscription = await getSubscription(tenantSlug, email)
+  if (!subscription) return { ok: false, reason: 'not_found' }
+  return finalizeUnsubscribe(subscription)
+}
+
+async function finalizeUnsubscribe(subscription) {
   if (subscription.status === 'unsubscribed') {
     return { ok: true, subscription, already: true }
   }
 
   const previous = { ...subscription }
+  if (subscription.confirmToken) {
+    await redisCommand('DEL', confirmKey(subscription.confirmToken))
+  }
   subscription.status = 'unsubscribed'
+  subscription.confirmToken = null
   subscription.updatedAt = new Date().toISOString()
   await saveSubscription(subscription, previous)
   return { ok: true, subscription, already: false }
