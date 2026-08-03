@@ -3,6 +3,7 @@ import { fetchScheduleData, fetchTeamConfig } from './api/commit'
 import { GroupFilters } from './components/GroupFilters'
 import { SettingsButton } from './components/SettingsButton'
 import { ShareButton } from './components/ShareButton'
+import { SubscribeButton } from './components/SubscribeButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { WeekNav } from './components/WeekNav'
 import { WeekSchedule } from './components/WeekSchedule'
@@ -197,6 +198,11 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
+            <SubscribeButton
+              selectedGroups={selected}
+              showEvents={showEvents}
+              showMeets={showMeets}
+            />
             <ShareButton
               title={`${tenant.displayName} · ${PRODUCT_NAME}`}
               text={`Weekly swim schedule for ${tenant.displayName}`}
