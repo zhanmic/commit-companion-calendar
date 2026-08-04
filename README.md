@@ -48,7 +48,26 @@ npm run preview
 | `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
 | `GET /api/cron/send-daily` | Cron — send daily digests |
 | `GET /api/cron/send-weekly` | Cron — send weekly digests (Sundays) |
+| `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
+
+## Contact inbox (`sales@myswimday.com` → Gmail)
+
+Landing-page Contact / CTA links use `mailto:sales@myswimday.com`. Resend **Receiving** accepts that mail (MX), fires `email.received`, and `/api/inbound` re-sends it to your Gmail.
+
+### One-time setup
+
+1. **Resend domain receiving** — [Domains](https://resend.com/domains) → `myswimday.com` → enable **Receiving** → copy the MX record.
+2. **DNS (Namecheap / registrar)** — add that MX on the root (`@` / `myswimday.com`), priority as shown (usually `10`). There is currently no other MX, so this is safe on the apex.
+3. **Vercel env** (Production):
+   - `RESEND_API_KEY` (full access — needed to read received mail)
+   - `RESEND_FROM_EMAIL` (e.g. `My Swim Day <schedule@myswimday.com>`)
+   - `RESEND_WEBHOOK_SECRET` (from the webhook below)
+   - `CONTACT_FORWARD_TO=zhanmic@gmail.com`
+4. **Resend webhook** — [Webhooks](https://resend.com/webhooks) → Add → URL `https://myswimday.com/api/inbound` → event `email.received` → copy signing secret into `RESEND_WEBHOOK_SECRET`.
+5. **Test** — email `sales@myswimday.com` from another account; check Resend → Emails → Receiving, then your Gmail. Reply from Gmail uses Reply-To (original sender).
+
+Optional: `CONTACT_INBOUND_ADDRESSES` (comma-separated) to allow more than `sales@myswimday.com`.
 
 ## Email digests
 
@@ -57,6 +76,7 @@ Subscribers pick **daily** or **weekly**, plus tenant-specific group filters (De
 Requires env vars from [`.env.example`](.env.example):
 
 - **Resend** — `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (verified domain)
+- **Inbound → Gmail** — `RESEND_WEBHOOK_SECRET`, `CONTACT_FORWARD_TO` (see Contact inbox above)
 - **Upstash Redis** — `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 - **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-daily` and `/api/cron/send-weekly`)
 - **Links** — `APP_BASE_URL` (e.g. `https://myswimday.com`)
