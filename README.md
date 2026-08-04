@@ -57,8 +57,12 @@ Landing-page Contact / CTA links use `mailto:sales@myswimday.com`. Resend **Rece
 
 ### One-time setup
 
-1. **Resend domain receiving** — [Domains](https://resend.com/domains) → `myswimday.com` → enable **Receiving** → copy the MX record.
-2. **DNS (Namecheap / registrar)** — add that MX on the root (`@` / `myswimday.com`), priority as shown (usually `10`). There is currently no other MX, so this is safe on the apex.
+1. **Resend domain receiving** — [Domains](https://resend.com/domains) → `myswimday.com` → enable **Receiving**.
+2. **DNS (Namecheap / registrar)** — add Resend’s receiving MX on the root (no other MX today, so apex is fine):
+
+   | Type | Host | Value | Priority |
+   |------|------|-------|----------|
+   | MX | `@` | `inbound-smtp.us-east-1.amazonaws.com` | `10` |
 3. **Vercel env** (Production):
    - `RESEND_API_KEY` (full access — needed to read received mail)
    - `RESEND_FROM_EMAIL` (e.g. `My Swim Day <schedule@myswimday.com>`)

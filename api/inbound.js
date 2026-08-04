@@ -6,9 +6,10 @@
  * original sender so replies go to the right person.
  *
  * Dashboard setup:
- * 1. Resend Domains → enable Receiving → add the MX record for myswimday.com
- * 2. Resend Webhooks → URL https://myswimday.com/api/inbound → email.received
- * 3. Copy signing secret → RESEND_WEBHOOK_SECRET on Vercel
+ * 1. Resend Domains → enable Receiving
+ * 2. DNS MX @ → inbound-smtp.us-east-1.amazonaws.com (priority 10)
+ * 3. Resend Webhooks → URL https://myswimday.com/api/inbound → email.received
+ * 4. Copy signing secret → RESEND_WEBHOOK_SECRET on Vercel
  *
  * Env: RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_WEBHOOK_SECRET,
  *      CONTACT_FORWARD_TO, optional CONTACT_INBOUND_ADDRESSES
