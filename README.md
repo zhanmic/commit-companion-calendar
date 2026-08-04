@@ -51,27 +51,27 @@ npm run preview
 | `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
 
-## Contact inbox (`sales@myswimday.com` → Gmail)
+## Contact inbox (`sales@mail.myswimday.com` → Gmail)
 
-Landing-page Contact / CTA links use `mailto:sales@myswimday.com`. Resend **Receiving** accepts that mail (MX), fires `email.received`, and `/api/inbound` re-sends it to your Gmail.
+Landing-page Contact / CTA links use `mailto:sales@mail.myswimday.com`. Resend **Receiving** uses the `mail` subdomain MX (apex `@` would conflict with other mail DNS), fires `email.received`, and `/api/inbound` re-sends it to your Gmail.
 
 ### One-time setup
 
-1. **Resend domain receiving** — [Domains](https://resend.com/domains) → `myswimday.com` → enable **Receiving**.
-2. **DNS (Namecheap / registrar)** — add Resend’s receiving MX on the root (no other MX today, so apex is fine):
+1. **Resend domain receiving** — [Domains](https://resend.com/domains) → `myswimday.com` → enable **Receiving** (MX host shown as `mail`).
+2. **DNS (Namecheap / Advanced DNS)** — receiving MX on host `mail` (keep `send.mail` for Resend sending; do **not** put inbound MX on `@`):
 
    | Type | Host | Value | Priority |
    |------|------|-------|----------|
-   | MX | `@` | `inbound-smtp.us-east-1.amazonaws.com` | `10` |
+   | MX | `mail` | `inbound-smtp.us-east-1.amazonaws.com` | `10` |
 3. **Vercel env** (Production):
    - `RESEND_API_KEY` (full access — needed to read received mail)
    - `RESEND_FROM_EMAIL` (e.g. `My Swim Day <schedule@myswimday.com>`)
    - `RESEND_WEBHOOK_SECRET` (from the webhook below)
    - `CONTACT_FORWARD_TO=zhanmic@gmail.com`
 4. **Resend webhook** — [Webhooks](https://resend.com/webhooks) → Add → URL `https://myswimday.com/api/inbound` → event `email.received` → copy signing secret into `RESEND_WEBHOOK_SECRET`.
-5. **Test** — email `sales@myswimday.com` from another account; check Resend → Emails → Receiving, then your Gmail. Reply from Gmail uses Reply-To (original sender).
+5. **Test** — email `sales@mail.myswimday.com` from another account; check Resend → Emails → Receiving, then your Gmail. Reply from Gmail uses Reply-To (original sender).
 
-Optional: `CONTACT_INBOUND_ADDRESSES` (comma-separated) to allow more than `sales@myswimday.com`.
+Optional: `CONTACT_INBOUND_ADDRESSES` (comma-separated) to allow more than `sales@mail.myswimday.com`.
 
 ## Email digests
 
