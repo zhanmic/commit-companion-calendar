@@ -6,8 +6,8 @@
  * original sender so replies go to the right person.
  *
  * Dashboard setup:
- * 1. Resend Domains → enable Receiving
- * 2. DNS MX @ → inbound-smtp.us-east-1.amazonaws.com (priority 10)
+ * 1. Resend Domains → enable Receiving (MX host: mail)
+ * 2. DNS MX mail → inbound-smtp.us-east-1.amazonaws.com (priority 10)
  * 3. Resend Webhooks → URL https://myswimday.com/api/inbound → email.received
  * 4. Copy signing secret → RESEND_WEBHOOK_SECRET on Vercel
  *
@@ -17,7 +17,7 @@
 import { Resend } from 'resend'
 import { sendJson } from './_lib/http.js'
 
-const DEFAULT_INBOUND = 'sales@myswimday.com'
+const DEFAULT_INBOUND = 'sales@mail.myswimday.com'
 
 /** Keep the raw body for Svix signature verification. */
 export const config = {
