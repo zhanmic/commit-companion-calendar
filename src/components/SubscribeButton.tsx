@@ -274,11 +274,11 @@ export function SubscribeButton({
             </button>
           </div>
 
-          <p className="subscribe__hint">
-            {mode === 'subscribe'
-              ? `Get a ${frequency} digest for ${tenant.displayName} (${frequencyHints[frequency]}). Confirm via email before anything is sent.`
-              : `Stop schedule emails for ${tenant.displayName}.`}
-          </p>
+          {mode === 'unsubscribe' ? (
+            <p className="subscribe__hint">
+              Stop schedule emails for {tenant.displayName}.
+            </p>
+          ) : null}
 
           <label className="subscribe__field">
             <span className="subscribe__field-label">Email</span>
@@ -334,6 +334,11 @@ export function SubscribeButton({
                   </button>
                 ))}
               </div>
+              <p className="subscribe__hint">
+                Get a {frequency} digest for {tenant.displayName} (
+                {frequencyHints[frequency]}). Confirm via email before anything
+                is sent.
+              </p>
 
               <div className="subscribe__groups-head">
                 <p className="subscribe__field-label">Groups</p>
