@@ -11,6 +11,7 @@ import { expandEvents, expandMeets, expandPractices } from './lib/expand'
 import { alwaysShowGroups, groupOrder } from './lib/groups'
 import { navigate } from './lib/routing'
 import {
+  applyPublicScheduleLocks,
   getStoredSettings,
   setStoredSettings,
   type ScheduleSettings,
@@ -57,7 +58,15 @@ export function TenantSchedule() {
   }, [])
 
   useEffect(() => {
-    setStoredSettings(tenant, settings)
+    const locked = applyPublicScheduleLocks(settings)
+    if (
+      locked.includeTeamEvents !== settings.includeTeamEvents ||
+      locked.queryMeets !== settings.queryMeets
+    ) {
+      setSettings(locked)
+      return
+    }
+    setStoredSettings(tenant, locked)
   }, [tenant, settings])
 
   useEffect(() => {
