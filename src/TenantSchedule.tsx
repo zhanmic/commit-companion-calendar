@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchScheduleData, fetchTeamConfig } from './api/commit'
 import { GroupFilters } from './components/GroupFilters'
 import { SettingsButton } from './components/SettingsButton'
-import { ShareButton } from './components/ShareButton'
 import { SubscribeButton } from './components/SubscribeButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { WeekNav } from './components/WeekNav'
@@ -16,6 +15,7 @@ import {
   setStoredSettings,
   type ScheduleSettings,
 } from './lib/settings'
+import { sharePage } from './lib/share'
 import { getWeekModel, shiftWeek } from './lib/week'
 import { PRODUCT_NAME } from './product'
 import { useTenant } from './tenants/TenantContext'
@@ -44,10 +44,26 @@ export function TenantSchedule() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = `${tenant.displayName} · ${PRODUCT_NAME}`
   }, [tenant])
+
+  useEffect(() => {
+    if (!shareFeedback) return
+    const id = window.setTimeout(() => setShareFeedback(null), 1800)
+    return () => window.clearTimeout(id)
+  }, [shareFeedback])
+
+  async function shareTeamLink() {
+    const result = await sharePage({
+      title: `${tenant.displayName} · ${PRODUCT_NAME}`,
+      text: `Weekly swim schedule for ${tenant.displayName}`,
+    })
+    if (result === 'copied') setShareFeedback('Link copied')
+    else if (result === 'failed') setShareFeedback('Could not copy')
+  }
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 720px)')
@@ -207,9 +223,10 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
-            <ShareButton
-              title={`${tenant.displayName} · ${PRODUCT_NAME}`}
-              text={`Weekly swim schedule for ${tenant.displayName}`}
+            <SubscribeButton
+              selectedGroups={selected}
+              showEvents={showEvents}
+              showMeets={showMeets}
             />
           </div>
           <div className="hero__brand-block">
@@ -220,7 +237,20 @@ export function TenantSchedule() {
             >
               {PRODUCT_NAME}
             </button>
-            <h1 className="hero__brand">{tenant.displayName}</h1>
+            <button
+              type="button"
+              className="hero__brand"
+              onClick={() => void shareTeamLink()}
+              aria-label={`Share ${tenant.displayName} schedule link`}
+              title="Share schedule link"
+            >
+              {tenant.displayName}
+            </button>
+            {shareFeedback ? (
+              <span className="hero__share-toast" role="status" aria-live="polite">
+                {shareFeedback}
+              </span>
+            ) : null}
           </div>
           <div className="hero__actions">
             {tenant.links.carpool ? (
@@ -247,13 +277,6 @@ export function TenantSchedule() {
           onPrev={() => setAnchor((d) => shiftWeek(d, -1))}
           onNext={() => setAnchor((d) => shiftWeek(d, 1))}
           onToday={() => setAnchor(new Date())}
-          trailing={
-            <SubscribeButton
-              selectedGroups={selected}
-              showEvents={showEvents}
-              showMeets={showMeets}
-            />
-          }
         />
 
         {loading ? (

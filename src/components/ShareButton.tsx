@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { sharePage } from '../lib/share'
 
 interface ShareButtonProps {
   className?: string
@@ -25,30 +26,10 @@ export function ShareButton({
     return () => window.clearTimeout(id)
   }, [feedback])
 
-  async function shareSite() {
-    const shareUrl =
-      url ?? (typeof window !== 'undefined' ? window.location.href : '')
-
-    try {
-      if (typeof navigator.share === 'function') {
-        await navigator.share({
-          title,
-          text,
-          url: shareUrl,
-        })
-        return
-      }
-    } catch (err) {
-      // User canceled the share sheet — don't treat as an error.
-      if (err instanceof DOMException && err.name === 'AbortError') return
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      setFeedback('Link copied')
-    } catch {
-      setFeedback('Could not copy')
-    }
+  async function onShare() {
+    const result = await sharePage({ title, text, url })
+    if (result === 'copied') setFeedback('Link copied')
+    else if (result === 'failed') setFeedback('Could not copy')
   }
 
   return (
@@ -60,7 +41,7 @@ export function ShareButton({
         title="Share"
         onClick={(event) => {
           event.stopPropagation()
-          void shareSite()
+          void onShare()
         }}
       >
         <svg

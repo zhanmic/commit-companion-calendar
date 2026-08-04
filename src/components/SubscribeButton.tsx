@@ -180,8 +180,9 @@ export function SubscribeButton({
   return (
     <div
       ref={rootRef}
-      className={`subscribe subscribe--weeknav${className ? ` ${className}` : ''}`}
+      className={`subscribe${className ? ` ${className}` : ''}`}
     >
+
       <button
         type="button"
         className="subscribe__button"
