@@ -113,19 +113,22 @@ export function HomePage() {
           <li>
             <span className="landing-audience__role">Coach</span>
             <span className="landing-audience__line">
-              Stop fielding “what time is practice?” texts.
+              Update Commit once — practice groups stay filtered and in sync
+              on My Swim Day, so families see the right week without the texts.
             </span>
           </li>
           <li>
             <span className="landing-audience__role">Team admin</span>
             <span className="landing-audience__line">
-              One shared link instead of screenshots and group chats.
+              Share one link that stays in sync with Commit — coaches and
+              families always open the same live schedule.
             </span>
           </li>
           <li>
             <span className="landing-audience__role">Parent</span>
             <span className="landing-audience__line">
-              Open the week on your phone between carpools.
+              Open the week on your phone — or subscribe so a morning digest
+              catches last-night coach changes before practice.
             </span>
           </li>
         </ul>
