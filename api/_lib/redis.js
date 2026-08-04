@@ -1,6 +1,10 @@
 /**
  * Minimal Upstash Redis REST client (no SDK).
  * Requires UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.
+ *
+ * Docs: https://upstash.com/docs/redis/features/restapi
+ * - Single command: POST /  body ["CMD", ...args]
+ * - Pipeline:       POST /pipeline  body [["CMD", ...], ...]
  */
 
 function redisConfig() {
@@ -14,39 +18,36 @@ function redisConfig() {
   return { url: url.replace(/\/$/, ''), token }
 }
 
-/** Run one Redis command via Upstash REST. */
-export async function redisCommand(command, ...args) {
+async function redisPost(path, body) {
   const { url, token } = redisConfig()
-  const path = [command, ...args.map(String)]
-    .map(encodeURIComponent)
-    .join('/')
-  const res = await fetch(`${url}/${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Redis ${command} failed (${res.status}): ${text}`)
-  }
-  const data = await res.json()
-  return data.result
-}
-
-/** Run a pipeline of Redis commands. Each entry is [command, ...args]. */
-export async function redisPipeline(commands) {
-  const { url, token } = redisConfig()
-  const res = await fetch(url, {
+  const res = await fetch(`${url}${path}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(commands),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`Redis pipeline failed (${res.status}): ${text}`)
+    throw new Error(`Redis request failed (${res.status}): ${text}`)
   }
-  const data = await res.json()
+  return res.json()
+}
+
+/** Run one Redis command via Upstash REST. */
+export async function redisCommand(command, ...args) {
+  const data = await redisPost('/', [command, ...args.map(String)])
+  return data.result
+}
+
+/** Run a pipeline of Redis commands. Each entry is [command, ...args]. */
+export async function redisPipeline(commands) {
+  const payload = commands.map((cmd) => cmd.map(String))
+  const data = await redisPost('/pipeline', payload)
+  if (!Array.isArray(data)) {
+    throw new Error('Redis pipeline returned unexpected response')
+  }
   return data.map((row) => row.result)
 }
 
