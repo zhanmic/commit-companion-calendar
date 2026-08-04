@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { isScheduleAdmin } from '../lib/admin'
 import { groupOrder } from '../lib/groups'
 import {
   NAME_FIELD_OPTIONS,
@@ -23,9 +24,14 @@ export function SettingsButton({
   const tenant = useTenant()
   const groups = groupOrder(tenant)
   const [open, setOpen] = useState(false)
+  const [admin, setAdmin] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const format = settings.practiceNameFormat
+
+  useEffect(() => {
+    setAdmin(isScheduleAdmin())
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -115,37 +121,47 @@ export function SettingsButton({
           role="dialog"
           aria-label="Settings"
         >
-          <p className="settings__heading">Schedule</p>
+          {admin ? (
+            <>
+              <p className="settings__heading">Schedule</p>
 
-          <label className="settings__switch">
-            <input
-              type="checkbox"
-              checked={settings.includeTeamEvents}
-              onChange={(e) => patch({ includeTeamEvents: e.target.checked })}
-            />
-            <span>
-              <span className="settings__switch-label">Include team events</span>
-              <span className="settings__switch-hint">
-                Calendar items like meetings, breaks, and cancellations
-              </span>
-            </span>
-          </label>
+              <label className="settings__switch">
+                <input
+                  type="checkbox"
+                  checked={settings.includeTeamEvents}
+                  onChange={(e) =>
+                    patch({ includeTeamEvents: e.target.checked })
+                  }
+                />
+                <span>
+                  <span className="settings__switch-label">
+                    Include team events
+                  </span>
+                  <span className="settings__switch-hint">
+                    Calendar items like meetings, breaks, and cancellations
+                  </span>
+                </span>
+              </label>
 
-          <label className="settings__switch">
-            <input
-              type="checkbox"
-              checked={settings.queryMeets}
-              onChange={(e) => patch({ queryMeets: e.target.checked })}
-            />
-            <span>
-              <span className="settings__switch-label">Query meets</span>
-              <span className="settings__switch-hint">
-                Fetch Commit meet entries and show them on the week
-              </span>
-            </span>
-          </label>
+              <label className="settings__switch">
+                <input
+                  type="checkbox"
+                  checked={settings.queryMeets}
+                  onChange={(e) => patch({ queryMeets: e.target.checked })}
+                />
+                <span>
+                  <span className="settings__switch-label">Query meets</span>
+                  <span className="settings__switch-hint">
+                    Fetch Commit meet entries and show them on the week
+                  </span>
+                </span>
+              </label>
+            </>
+          ) : null}
 
-          <p className="settings__heading settings__heading--spaced">
+          <p
+            className={`settings__heading${admin ? ' settings__heading--spaced' : ''}`}
+          >
             Defaults on load
           </p>
           <p className="settings__switch-hint">

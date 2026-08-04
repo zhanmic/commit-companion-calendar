@@ -1,3 +1,4 @@
+import { isScheduleAdmin } from './admin'
 import { PRODUCT_STORAGE_PREFIX } from '../product'
 import type { TenantConfig } from '../tenants/types'
 
@@ -88,6 +89,21 @@ function cloneSettings(settings: ScheduleSettings): ScheduleSettings {
       ...settings.practiceNameFormat,
       fields: [...settings.practiceNameFormat.fields],
     },
+  }
+}
+
+/**
+ * Non-admins always fetch/include team events and meets.
+ * Advanced toggles are admin-only in the settings UI.
+ */
+export function applyPublicScheduleLocks(
+  settings: ScheduleSettings,
+): ScheduleSettings {
+  if (isScheduleAdmin()) return settings
+  return {
+    ...settings,
+    includeTeamEvents: true,
+    queryMeets: true,
   }
 }
 
@@ -194,15 +210,19 @@ export function getStoredSettings(tenant: TenantConfig): ScheduleSettings {
     for (const legacyKey of legacyKeys) {
       parsed = readRawSettings(legacyKey)
       if (parsed) {
-        const migrated = normalizeSettings(parsed, tenant)
+        const migrated = applyPublicScheduleLocks(
+          normalizeSettings(parsed, tenant),
+        )
         setStoredSettings(tenant, migrated)
         return migrated
       }
     }
   }
 
-  if (!parsed) return cloneSettings(tenant.defaultSettings)
-  return normalizeSettings(parsed, tenant)
+  if (!parsed) {
+    return applyPublicScheduleLocks(cloneSettings(tenant.defaultSettings))
+  }
+  return applyPublicScheduleLocks(normalizeSettings(parsed, tenant))
 }
 
 export function setStoredSettings(
@@ -210,8 +230,9 @@ export function setStoredSettings(
   settings: ScheduleSettings,
 ): void {
   if (typeof window === 'undefined') return
+  const locked = applyPublicScheduleLocks(settings)
   localStorage.setItem(
     settingsStorageKey(tenant.slug),
-    JSON.stringify(settings),
+    JSON.stringify(locked),
   )
 }
