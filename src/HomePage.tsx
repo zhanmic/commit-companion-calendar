@@ -119,7 +119,8 @@ export function HomePage() {
           <li>
             <span className="landing-audience__role">Team admin</span>
             <span className="landing-audience__line">
-              One shared link instead of screenshots and group chats.
+              Share one link that stays in sync with Commit — coaches and
+              families always open the same live schedule.
             </span>
           </li>
           <li>
