@@ -11,6 +11,7 @@ export const TENANTS = [
     path: '/DelmarDolphins',
     slugAliases: ['DelmaDolphins'],
     superTeamId: 'g8g7f3rkF8N23vXs4',
+    /** IANA zone — digests fire at dailySendHour / weeklySendHour in this zone. */
     defaultTimeZone: 'America/New_York',
     /** Filter chips offered on subscribe (tenant-customized). */
     groups: [

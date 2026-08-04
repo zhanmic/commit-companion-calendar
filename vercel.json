@@ -8,12 +8,8 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/send-daily",
-      "schedule": "0 11 * * *"
-    },
-    {
-      "path": "/api/cron/send-weekly",
-      "schedule": "0 22 * * 0"
+      "path": "/api/cron/send-digests",
+      "schedule": "0 * * * *"
     }
   ]
 }

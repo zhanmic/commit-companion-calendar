@@ -29,6 +29,7 @@ export const delmarDolphinsTenant: TenantConfig = {
   slugAliases: ['DelmaDolphins'],
   displayName: 'Delmar Dolphins',
   superTeamId: 'g8g7f3rkF8N23vXs4',
+  /** New York — daily digests ~7am ET, weekly Sunday ~6pm ET. */
   defaultTimeZone: 'America/New_York',
   groups: DELMA_GROUPS,
   defaultSettings: DEFAULT_SETTINGS,

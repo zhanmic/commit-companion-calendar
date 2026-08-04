@@ -1,11 +1,15 @@
 /**
  * GET /api/cron/send-digests
  *
- * Vercel Cron entrypoints (see vercel.json):
- * - ?mode=daily  — ~07:00 America/New_York (11:00 UTC)
- * - ?mode=weekly — Sunday ~18:00 America/New_York (22:00 UTC)
+ * Hourly Vercel Cron (see vercel.json). For each tenant, sends digests only
+ * when that tenant’s local clock matches its send hour:
+ * - daily  → local hour === dailySendHour (default 7)
+ * - weekly → Sunday + local hour === weeklySendHour (default 18)
  *
- * Without mode, falls back to local-hour matching (useful for manual runs).
+ * Query:
+ * - frequency=daily|weekly — only consider that frequency
+ * - force=1 — ignore local hour (manual backfill; still respects already-sent)
+ *
  * Auth: Authorization: Bearer $CRON_SECRET
  */
 import { digestEmailContent } from '../_lib/email.js'
@@ -24,13 +28,25 @@ import {
 import { listDigestTenants } from '../_lib/tenants.js'
 
 export default async function handler(req, res) {
-  const mode =
-    typeof req.query?.mode === 'string' ? req.query.mode : ''
-  return runSendDigests(req, res, mode)
+  const frequency =
+    typeof req.query?.frequency === 'string'
+      ? req.query.frequency
+      : typeof req.query?.mode === 'string'
+        ? req.query.mode
+        : ''
+  const force =
+    req.query?.force === '1' ||
+    req.query?.force === 'true' ||
+    req.query?.force === true
+  return runSendDigests(req, res, { frequency, force })
 }
 
-/** Shared entry for /api/cron/send-daily and /api/cron/send-weekly. */
-export async function runSendDigests(req, res, mode = '') {
+/** Shared entry for cron tick + legacy /api/cron/send-daily|weekly. */
+export async function runSendDigests(
+  req,
+  res,
+  { frequency = '', force = false } = {},
+) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.statusCode = 405
     res.setHeader('Allow', 'GET, POST')
@@ -50,35 +66,47 @@ export async function runSendDigests(req, res, mode = '') {
 
   const now = new Date()
   const base = appBaseUrl(req)
+  const freq =
+    frequency === 'daily' || frequency === 'weekly' ? frequency : ''
   const summary = {
     checkedAt: now.toISOString(),
-    mode: mode || 'auto',
+    frequency: freq || 'all',
+    force: Boolean(force),
     tenants: [],
     sent: 0,
     skipped: 0,
     errors: [],
   }
 
-
   for (const tenant of listDigestTenants()) {
     const tz = tenant.defaultTimeZone || 'America/New_York'
     const clock = localClock(now, tz)
+    const dailyHour = tenant.dailySendHour ?? 7
+    const weeklyHour = tenant.weeklySendHour ?? 18
     const tenantSummary = {
       slug: tenant.slug,
+      timeZone: tz,
       localHour: clock.hour,
       weekday: clock.weekday,
+      dailyHour,
+      weeklyHour,
       daily: 0,
       weekly: 0,
+      dailyDue: false,
+      weeklyDue: false,
     }
 
+    const wantDaily = !freq || freq === 'daily'
+    const wantWeekly = !freq || freq === 'weekly'
+
     const dailyDue =
-      mode === 'daily' ||
-      (!mode && clock.hour === (tenant.dailySendHour ?? 7))
+      wantDaily && (force || clock.hour === dailyHour)
     const weeklyDue =
-      mode === 'weekly' ||
-      (!mode &&
-        clock.weekday === 0 &&
-        clock.hour === (tenant.weeklySendHour ?? 18))
+      wantWeekly &&
+      (force || (clock.weekday === 0 && clock.hour === weeklyHour))
+
+    tenantSummary.dailyDue = dailyDue
+    tenantSummary.weeklyDue = weeklyDue
 
     if (dailyDue) {
       const result = await sendForFrequency({
