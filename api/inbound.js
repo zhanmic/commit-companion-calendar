@@ -194,6 +194,93 @@ async function authenticate(reqOrRequest, payload) {
   return { event, auth: 'query_secret' }
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function displayFrom(event, email) {
+  const headerFrom = email?.headers?.from
+  if (typeof headerFrom === 'string' && headerFrom.trim()) return headerFrom.trim()
+  return event.data?.from || '(unknown sender)'
+}
+
+function forwardSubject(subject, originalFrom) {
+  const base = (subject || '').trim() || '(no subject)'
+  const tagged = base.toLowerCase().startsWith('fwd:') ? base : `Fwd: ${base}`
+  const addr = normalizeAddress(originalFrom)
+  return addr ? `${tagged} — from ${addr}` : tagged
+}
+
+function buildForwardBodies({ event, email, matched, originalFrom }) {
+  const subject = event.data?.subject || email?.subject || '(no subject)'
+  const originalTo = matched.join(', ')
+  const metaLines = [
+    '---------- Forwarded message ----------',
+    `From: ${originalFrom}`,
+    `To: ${originalTo}`,
+    `Subject: ${subject}`,
+    '',
+  ]
+
+  const textBody = [
+    ...metaLines,
+    email?.text ||
+      '(No plain-text body — see HTML part or open in Resend Receiving.)',
+  ].join('\n')
+
+  const htmlBody = `
+    <div style="margin:0 0 1rem;padding:0.75rem 1rem;border-left:3px solid #0b6e7a;
+      background:#f4f7f8;color:#163239;font-family:ui-sans-serif,system-ui,sans-serif;
+      font-size:0.9rem;line-height:1.45">
+      <div style="font-weight:700;margin-bottom:0.35rem">Forwarded message</div>
+      <div><strong>From:</strong> ${escapeHtml(originalFrom)}</div>
+      <div><strong>To:</strong> ${escapeHtml(originalTo)}</div>
+      <div><strong>Subject:</strong> ${escapeHtml(subject)}</div>
+      <div style="margin-top:0.5rem;font-size:0.8rem;color:#6a8086">
+        Reply in Gmail to respond to the original sender (Reply-To).
+      </div>
+    </div>
+    ${email?.html || `<pre style="white-space:pre-wrap;font-family:inherit">${escapeHtml(email?.text || '')}</pre>`}
+  `
+
+  return { textBody, htmlBody, subject }
+}
+
+async function loadAttachments(resend, emailId) {
+  const { data, error } = await resend.emails.receiving.attachments.list({
+    emailId,
+  })
+  if (error) {
+    throw new Error(`Failed to list attachments: ${error.message}`)
+  }
+
+  const items = data?.data ?? []
+  if (!items.length) return undefined
+
+  const attachments = []
+  for (const attachment of items) {
+    if (!attachment.download_url) continue
+    const response = await fetch(attachment.download_url)
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download attachment ${attachment.filename || attachment.id}`,
+      )
+    }
+    const buffer = Buffer.from(await response.arrayBuffer())
+    attachments.push({
+      filename: attachment.filename || 'attachment',
+      content: buffer.toString('base64'),
+      contentType: attachment.content_type || undefined,
+      contentId: attachment.content_id || undefined,
+    })
+  }
+  return attachments.length ? attachments : undefined
+}
+
 async function forwardReceivedEmail(event) {
   const emailId = event.data?.email_id
   if (!emailId) {
@@ -221,10 +308,32 @@ async function forwardReceivedEmail(event) {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  const { data, error } = await resend.emails.receiving.forward({
-    emailId,
-    to: forwardTo,
+  const { data: email, error: emailError } =
+    await resend.emails.receiving.get(emailId)
+  if (emailError) {
+    const e = new Error(`Failed to fetch email: ${emailError.message}`)
+    e.status = 500
+    throw e
+  }
+
+  const originalFrom = displayFrom(event, email)
+  const { textBody, htmlBody, subject } = buildForwardBodies({
+    event,
+    email,
+    matched,
+    originalFrom,
+  })
+  const attachments = await loadAttachments(resend, emailId)
+
+  const { data, error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL,
+    to: [forwardTo],
+    // So Gmail Reply goes to the real sender, not sales@mail…
+    replyTo: fromAddr || undefined,
+    subject: forwardSubject(subject, originalFrom),
+    text: textBody,
+    html: htmlBody,
+    attachments,
   })
 
   if (error) {
@@ -236,6 +345,7 @@ async function forwardReceivedEmail(event) {
   console.info('inbound forwarded', {
     emailId,
     forwardedTo: forwardTo,
+    originalFrom,
     originalTo: matched,
     resendId: data?.id ?? null,
   })
@@ -243,6 +353,7 @@ async function forwardReceivedEmail(event) {
   return {
     ok: true,
     forwardedTo: forwardTo,
+    originalFrom,
     originalTo: matched,
     resendId: data?.id ?? null,
   }
