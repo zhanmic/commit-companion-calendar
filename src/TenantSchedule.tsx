@@ -3,6 +3,7 @@ import { fetchScheduleData, fetchTeamConfig } from './api/commit'
 import { GroupFilters } from './components/GroupFilters'
 import { SettingsButton } from './components/SettingsButton'
 import { ShareButton } from './components/ShareButton'
+import { SubscribeButton } from './components/SubscribeButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { WeekNav } from './components/WeekNav'
 import { WeekSchedule } from './components/WeekSchedule'
@@ -237,6 +238,13 @@ export function TenantSchedule() {
           onPrev={() => setAnchor((d) => shiftWeek(d, -1))}
           onNext={() => setAnchor((d) => shiftWeek(d, 1))}
           onToday={() => setAnchor(new Date())}
+          trailing={
+            <SubscribeButton
+              selectedGroups={selected}
+              showEvents={showEvents}
+              showMeets={showMeets}
+            />
+          }
         />
 
         {loading ? (

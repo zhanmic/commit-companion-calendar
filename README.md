@@ -18,6 +18,7 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 - Recurring practices expanded with cancel/override support
 - Optional meets & team events toggle
 - Per-tenant practice title parsing (field split or keywords)
+- Optional daily/weekly schedule email digests (Resend + Upstash Redis)
 
 ## Develop
 
@@ -41,7 +42,31 @@ npm run preview
 |----------|---------|
 | `GET /api/tenants` | Public tenant catalog |
 | `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
+| `POST /api/subscribe` | Start / update email subscription (double opt-in) |
+| `GET /api/confirm?token=…` | Confirm subscription |
+| `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
+| `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
+| `GET /api/cron/send-daily` | Cron — send daily digests |
+| `GET /api/cron/send-weekly` | Cron — send weekly digests (Sundays) |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
+
+## Email digests
+
+Subscribers pick **daily** or **weekly**, plus tenant-specific group filters (Delmar: Sr / Jr / Jr Prep / DEVO / …). Empty or all groups = full schedule. Meets and team events are optional.
+
+Requires env vars from [`.env.example`](.env.example):
+
+- **Resend** — `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (verified domain)
+- **Upstash Redis** — `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+- **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-daily` and `/api/cron/send-weekly`)
+- **Links** — `APP_BASE_URL` (e.g. `https://myswimday.com`)
+
+Send windows (UTC crons chosen for Eastern):
+
+| Digest | Path | Schedule | Approx. local (ET) |
+|--------|------|----------|--------------------|
+| Daily | `/api/cron/send-daily` | `0 11 * * *` | ~7:00am |
+| Weekly | `/api/cron/send-weekly` | `0 22 * * 0` | Sunday ~6:00pm |
 
 ## Adding a tenant
 
