@@ -424,6 +424,12 @@
   margin: 0;
 }
 
+.landing-footer__note {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+}
+
 .landing-footer a {
   color: var(--cyan-soft);
   text-decoration: none;

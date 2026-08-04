@@ -195,6 +195,9 @@ export function HomePage() {
           </a>{' '}
           teams · myswimday.com
         </p>
+        <p className="landing-footer__note">
+          Not affiliated with Commit Swimming.
+        </p>
       </footer>
     </div>
   )
