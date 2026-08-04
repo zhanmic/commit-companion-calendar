@@ -2,7 +2,7 @@
  * Manual / legacy entry: daily digests only.
  * Still gated by each tenant’s local dailySendHour unless ?force=1.
  *
- * Prefer the hourly /api/cron/send-digests tick in production.
+ * Prefer the /api/cron/send-digests UTC-hour ticks in production.
  */
 import { runSendDigests } from './send-digests.js'
 

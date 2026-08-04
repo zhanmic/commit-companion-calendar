@@ -46,7 +46,7 @@ npm run preview
 | `GET /api/confirm?token=…` | Confirm subscription |
 | `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
 | `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
-| `GET /api/cron/send-digests` | Hourly cron — send digests due in each tenant’s local time |
+| `GET /api/cron/send-digests` | Cron tick — send digests due in each tenant’s local time |
 | `GET /api/cron/send-daily` | Manual — daily digests only (`?force=1` to ignore local hour) |
 | `GET /api/cron/send-weekly` | Manual — weekly digests only (`?force=1` to ignore local hour) |
 | `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
@@ -89,19 +89,19 @@ Requires env vars from [`.env.example`](.env.example):
 - **Resend** — `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (verified domain)
 - **Inbound → Gmail** — `RESEND_WEBHOOK_SECRET`, `CONTACT_FORWARD_TO` (see Contact inbox above)
 - **Upstash Redis** — `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-digests` hourly)
+- **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-digests`)
 - **Links** — `APP_BASE_URL` (e.g. `https://myswimday.com`)
 
 ### Digest send times (per tenant timezone)
 
-An **hourly** cron checks each tenant’s local clock:
+Vercel **Hobby** only allows cron expressions that run once per day, so `vercel.json` registers **24 daily jobs** (`0 0` … `0 23` UTC), each hitting `/api/cron/send-digests`. That endpoint checks every tenant’s **local** clock and only sends when it matches:
 
 | Digest | When (tenant local time) | Delmar (`America/New_York`) |
 |--------|--------------------------|-----------------------------|
 | Daily | `dailySendHour` (default **7**) | ~7:00am ET |
 | Weekly | Sunday at `weeklySendHour` (default **18**) | Sunday ~6:00pm ET |
 
-Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so hourly ticks are safe.
+Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so repeated hourly UTC ticks are safe.
 
 ## Adding a tenant
 
