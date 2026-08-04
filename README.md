@@ -71,7 +71,9 @@ Landing-page Contact / CTA links use `mailto:sales@mail.myswimday.com`. Resend *
 4. **Resend webhook** — [Webhooks](https://resend.com/webhooks) → Add → URL `https://myswimday.com/api/inbound` → event `email.received` → copy signing secret into `RESEND_WEBHOOK_SECRET`.
 5. **Test** — email `sales@mail.myswimday.com` from another account; check Resend → Emails → Receiving, then your Gmail. Reply from Gmail uses Reply-To (original sender).
 
-Optional: `CONTACT_INBOUND_ADDRESSES` (comma-separated) to allow more than `sales@mail.myswimday.com`.
+By default any address `@mail.myswimday.com` is forwarded. Optional: `CONTACT_INBOUND_ADDRESSES` / `CONTACT_INBOUND_DOMAIN` to tighten or change that.
+
+If Resend shows the message under **Receiving** but Gmail stays empty, open **Webhooks** → delivery log for `https://myswimday.com/api/inbound` (`email.received`). Failed signature / 4xx / 5xx there means the forward never completed.
 
 ## Email digests
 
