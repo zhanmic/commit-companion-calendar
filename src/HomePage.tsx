@@ -113,7 +113,8 @@ export function HomePage() {
           <li>
             <span className="landing-audience__role">Coach</span>
             <span className="landing-audience__line">
-              Stop fielding “what time is practice?” texts.
+              Update Commit once — practice groups stay filtered and in sync
+              on My Swim Day, so families see the right week without the texts.
             </span>
           </li>
           <li>
