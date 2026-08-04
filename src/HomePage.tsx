@@ -125,7 +125,8 @@ export function HomePage() {
           <li>
             <span className="landing-audience__role">Parent</span>
             <span className="landing-audience__line">
-              Open the week on your phone between carpools.
+              Open the week on your phone — or subscribe so a morning digest
+              catches last-night coach changes before practice.
             </span>
           </li>
         </ul>
