@@ -74,9 +74,9 @@ export function HomePage() {
       </section>
 
       <section className="landing-section landing-section--why">
-        <h2 className="landing-section__title">Built for teams already on Commit</h2>
+        <h2 className="landing-section__title">Does your swim team use Commit?</h2>
         <p className="landing-section__lede">
-          No new scheduling system — a cleaner weekly view for coaches and families.
+          If yes — My Swim Day turns that schedule into a mobile week view coaches and families actually open. No new system to learn.
         </p>
         <ul className="landing-points">
           <li className="landing-point">
