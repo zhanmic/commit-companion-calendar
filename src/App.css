@@ -283,16 +283,6 @@
   animation: rise 0.2s ease both;
 }
 
-.subscribe--weeknav .subscribe__panel {
-  /* Escape .panel overflow:hidden on mobile fit layout */
-  position: fixed;
-  top: max(0.75rem, var(--safe-top, 0px));
-  left: auto;
-  right: 0.75rem;
-  max-height: min(75vh, 34rem);
-  overflow-y: auto;
-}
-
 .subscribe__heading {
   margin: 0 0 0.35rem;
   font-size: 0.72rem;
@@ -718,6 +708,7 @@
 }
 
 .hero__brand-block {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -752,6 +743,10 @@
 
 .hero__brand {
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 4.5vw, 2.75rem);
   font-weight: 800;
@@ -759,6 +754,35 @@
   line-height: 1.05;
   text-align: center;
   color: var(--ink);
+  cursor: pointer;
+}
+
+.hero__brand:hover {
+  color: color-mix(in srgb, var(--cyan) 55%, var(--ink));
+}
+
+.hero__brand:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 0.25rem;
+}
+
+.hero__share-toast {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 0.3rem 0.65rem;
+  box-shadow: var(--panel-shadow);
+  pointer-events: none;
 }
 
 .hero__sub {
@@ -882,29 +906,6 @@
 
 .week-nav__center {
   text-align: center;
-}
-
-.week-nav__end {
-  position: relative;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-}
-
-.week-nav .subscribe__button {
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 0.85rem;
-  background: var(--surface-2);
-  border-color: var(--line);
-  color: var(--ink);
-  backdrop-filter: none;
-}
-
-.week-nav .subscribe__button:hover {
-  background: var(--surface-3);
 }
 
 .week-nav__label {
@@ -2107,18 +2108,12 @@
     white-space: nowrap;
   }
 
-  .app--fit .nav-btn,
-  .app--fit .week-nav .subscribe__button {
+  .app--fit .nav-btn {
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 0.7rem;
     font-size: 1rem;
     flex-shrink: 0;
-  }
-
-  .app--fit .week-nav .subscribe__icon {
-    width: 1.05rem;
-    height: 1.05rem;
   }
 
   .app--fit .text-btn {
