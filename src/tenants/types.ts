@@ -56,6 +56,10 @@ export interface TenantConfig {
   /** Commit Swimming super-team id used for website-data-2a/2b. */
   superTeamId: string
   defaultTimeZone: string
+  /** Local hour (0–23) for daily digest emails. Default 7. */
+  dailySendHour?: number
+  /** Local hour (0–23) on Sunday for weekly digest emails. Default 18. */
+  weeklySendHour?: number
   groups: TenantGroup[]
   /** Default schedule settings for first-time visitors. */
   defaultSettings: ScheduleSettings

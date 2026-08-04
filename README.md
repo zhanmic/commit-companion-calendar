@@ -46,8 +46,9 @@ npm run preview
 | `GET /api/confirm?token=…` | Confirm subscription |
 | `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
 | `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
-| `GET /api/cron/send-daily` | Cron — send daily digests |
-| `GET /api/cron/send-weekly` | Cron — send weekly digests (Sundays) |
+| `GET /api/cron/send-digests` | Hourly cron — send digests due in each tenant’s local time |
+| `GET /api/cron/send-daily` | Manual — daily digests only (`?force=1` to ignore local hour) |
+| `GET /api/cron/send-weekly` | Manual — weekly digests only (`?force=1` to ignore local hour) |
 | `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
 
@@ -88,21 +89,26 @@ Requires env vars from [`.env.example`](.env.example):
 - **Resend** — `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (verified domain)
 - **Inbound → Gmail** — `RESEND_WEBHOOK_SECRET`, `CONTACT_FORWARD_TO` (see Contact inbox above)
 - **Upstash Redis** — `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-daily` and `/api/cron/send-weekly`)
+- **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-digests` hourly)
 - **Links** — `APP_BASE_URL` (e.g. `https://myswimday.com`)
 
-Send windows (UTC crons chosen for Eastern):
+### Digest send times (per tenant timezone)
 
-| Digest | Path | Schedule | Approx. local (ET) |
-|--------|------|----------|--------------------|
-| Daily | `/api/cron/send-daily` | `0 11 * * *` | ~7:00am |
-| Weekly | `/api/cron/send-weekly` | `0 22 * * 0` | Sunday ~6:00pm |
+An **hourly** cron checks each tenant’s local clock:
+
+| Digest | When (tenant local time) | Delmar (`America/New_York`) |
+|--------|--------------------------|-----------------------------|
+| Daily | `dailySendHour` (default **7**) | ~7:00am ET |
+| Weekly | Sunday at `weeklySendHour` (default **18**) | Sunday ~6:00pm ET |
+
+Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so hourly ticks are safe.
 
 ## Adding a tenant
 
 1. Add `src/tenants/<Slug>/` with `TenantConfig`, `parsePractice`, and `parseMeet`.
-2. Register it in `src/tenants/registry.ts`.
-3. Mirror slug/displayName in `api/_lib/tenants.js` for `/api/tenants`.
+2. Set `defaultTimeZone` (IANA, e.g. `America/Chicago`) so digests land in that team’s morning.
+3. Register it in `src/tenants/registry.ts`.
+4. Mirror slug/displayName/`defaultTimeZone`/`dailySendHour`/`weeklySendHour` in `api/_lib/tenants.js` for `/api/tenants` + digests.
 
 ## Local sales tool (not deployed)
 

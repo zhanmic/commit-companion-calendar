@@ -1,4 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import {
+  dailyDigestHint,
+  DEFAULT_DAILY_SEND_HOUR,
+  DEFAULT_WEEKLY_SEND_HOUR,
+  weeklyDigestHint,
+} from '../lib/digestSchedule'
 import { groupOrder } from '../lib/groups'
 import { PRODUCT_STORAGE_PREFIX } from '../product'
 import { useTenant } from '../tenants/TenantContext'
@@ -26,6 +32,16 @@ export function SubscribeButton({
 }: SubscribeButtonProps) {
   const tenant = useTenant()
   const groups = groupOrder(tenant)
+  const frequencyHints = {
+    weekly: weeklyDigestHint(
+      tenant.weeklySendHour ?? DEFAULT_WEEKLY_SEND_HOUR,
+      tenant.defaultTimeZone,
+    ),
+    daily: dailyDigestHint(
+      tenant.dailySendHour ?? DEFAULT_DAILY_SEND_HOUR,
+      tenant.defaultTimeZone,
+    ),
+  }
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<PanelMode>('subscribe')
   const [email, setEmail] = useState('')
@@ -260,7 +276,7 @@ export function SubscribeButton({
 
           <p className="subscribe__hint">
             {mode === 'subscribe'
-              ? `Get a ${frequency} digest for ${tenant.displayName}. Confirm via email before anything is sent.`
+              ? `Get a ${frequency} digest for ${tenant.displayName} (${frequencyHints[frequency]}). Confirm via email before anything is sent.`
               : `Stop schedule emails for ${tenant.displayName}.`}
           </p>
 
@@ -287,8 +303,16 @@ export function SubscribeButton({
               >
                 {(
                   [
-                    { value: 'weekly', label: 'Weekly', hint: 'Sunday evening' },
-                    { value: 'daily', label: 'Daily', hint: 'Each morning' },
+                    {
+                      value: 'weekly' as const,
+                      label: 'Weekly',
+                      hint: frequencyHints.weekly,
+                    },
+                    {
+                      value: 'daily' as const,
+                      label: 'Daily',
+                      hint: frequencyHints.daily,
+                    },
                   ] as const
                 ).map((option) => (
                   <button

@@ -1,9 +1,15 @@
 /**
- * Vercel Cron: daily digests.
- * Schedule: 0 11 * * * (≈ 7am Eastern)
+ * Manual / legacy entry: daily digests only.
+ * Still gated by each tenant’s local dailySendHour unless ?force=1.
+ *
+ * Prefer the hourly /api/cron/send-digests tick in production.
  */
 import { runSendDigests } from './send-digests.js'
 
 export default async function handler(req, res) {
-  return runSendDigests(req, res, 'daily')
+  const force =
+    req.query?.force === '1' ||
+    req.query?.force === 'true' ||
+    req.query?.force === true
+  return runSendDigests(req, res, { frequency: 'daily', force })
 }
