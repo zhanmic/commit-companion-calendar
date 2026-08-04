@@ -68,12 +68,16 @@ Landing-page Contact / CTA links use `mailto:sales@mail.myswimday.com`. Resend *
    - `RESEND_FROM_EMAIL` (e.g. `My Swim Day <schedule@myswimday.com>`)
    - `RESEND_WEBHOOK_SECRET` (from the webhook below)
    - `CONTACT_FORWARD_TO=zhanmic@gmail.com`
-4. **Resend webhook** — [Webhooks](https://resend.com/webhooks) → Add → URL `https://myswimday.com/api/inbound` → event `email.received` → copy signing secret into `RESEND_WEBHOOK_SECRET`.
-5. **Test** — email `sales@mail.myswimday.com` from another account; check Resend → Emails → Receiving, then your Gmail. Reply from Gmail uses Reply-To (original sender).
+4. **Resend webhook** — [Webhooks](https://resend.com/webhooks) → Add/edit → event `email.received` → URL **must include the secret**:
 
-By default any address `@mail.myswimday.com` is forwarded. Optional: `CONTACT_INBOUND_ADDRESSES` / `CONTACT_INBOUND_DOMAIN` to tighten or change that.
+   `https://myswimday.com/api/inbound?secret=whsec_xxxxxxxx`
 
-If Resend shows the message under **Receiving** but Gmail stays empty, open **Webhooks** → delivery log for `https://myswimday.com/api/inbound` (`email.received`). Failed signature / 4xx / 5xx there means the forward never completed.
+   Use the same value as Vercel `RESEND_WEBHOOK_SECRET`. (Query auth is required because Vite’s Node runtime often breaks Svix raw-body verify.)
+5. **Test** — email `sales@mail.myswimday.com`; check Resend → Receiving, webhook delivery log (200), then Gmail.
+
+Health check: `GET https://myswimday.com/api/inbound` (shows which env vars are set, no secrets).
+
+By default any address `@mail.myswimday.com` is forwarded. Optional: `CONTACT_INBOUND_ADDRESSES` / `CONTACT_INBOUND_DOMAIN`.
 
 ## Email digests
 
