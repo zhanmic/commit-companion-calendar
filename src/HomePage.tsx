@@ -49,22 +49,22 @@ export function HomePage() {
         <div className="landing-hero__copy">
           <h1 className="landing-hero__brand">{PRODUCT_NAME}</h1>
           <p className="landing-hero__headline">
-            The mobile calendar your Commit swim team actually opens.
+            Stop texting the schedule. Let families open it.
           </p>
           <p className="landing-hero__sub">{PRODUCT_DESCRIPTION}</p>
           <div className="landing-hero__cta">
-            <a className="landing-cta landing-cta--primary" href={CONTACT_HREF}>
-              Get your team calendar
-            </a>
             {demoTenant ? (
               <button
                 type="button"
-                className="landing-cta landing-cta--ghost"
+                className="landing-cta landing-cta--primary"
                 onClick={() => navigate(demoTenant.path)}
               >
                 See a live schedule
               </button>
             ) : null}
+            <a className="landing-cta landing-cta--ghost" href={CONTACT_HREF}>
+              Get your team calendar
+            </a>
           </div>
         </div>
 
@@ -76,34 +76,69 @@ export function HomePage() {
       <section className="landing-section landing-section--why">
         <h2 className="landing-section__title">Does your swim team use Commit?</h2>
         <p className="landing-section__lede">
-          If yes — My Swim Day turns that schedule into a mobile week view coaches and families actually open. No new system to learn.
+          If yes — My Swim Day turns that schedule into a mobile week view
+          coaches and families actually open. No new system to learn.
         </p>
         <ul className="landing-points">
           <li className="landing-point">
             <h3 className="landing-point__title">Pulls from Commit</h3>
             <p className="landing-point__text">
-              Practices, meets, and team events stay in sync with your Commit schedule.
+              Practices, meets, and team events stay in sync with your Commit
+              schedule.
             </p>
           </li>
           <li className="landing-point">
             <h3 className="landing-point__title">Mobile-first week view</h3>
             <p className="landing-point__text">
-              A phone-optimized calendar parents can check in seconds between carpools.
+              A phone-optimized calendar parents can check in seconds between
+              carpools.
             </p>
           </li>
           <li className="landing-point">
             <h3 className="landing-point__title">Filter, share, and email</h3>
             <p className="landing-point__text">
-              Group filters, one-tap share links, and daily or weekly email digests keep every swimmer’s week clear.
+              Group filters, one-tap share links, and daily or weekly email
+              digests keep every swimmer’s week clear.
             </p>
           </li>
         </ul>
       </section>
 
-      <section className="landing-section landing-section--teams">
-        <h2 className="landing-section__title">Live team calendars</h2>
+      <section className="landing-section landing-section--audience">
+        <h2 className="landing-section__title">Who it’s for</h2>
         <p className="landing-section__lede">
-          Open a schedule, or share the link with coaches and families.
+          Built for the people who live in the swim week.
+        </p>
+        <ul className="landing-audience">
+          <li>
+            <span className="landing-audience__role">Coach</span>
+            <span className="landing-audience__line">
+              Stop fielding “what time is practice?” texts.
+            </span>
+          </li>
+          <li>
+            <span className="landing-audience__role">Team admin</span>
+            <span className="landing-audience__line">
+              One shared link instead of screenshots and group chats.
+            </span>
+          </li>
+          <li>
+            <span className="landing-audience__role">Parent</span>
+            <span className="landing-audience__line">
+              Open the week on your phone between carpools.
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section className="landing-section landing-section--teams">
+        <h2 className="landing-section__title">
+          {demoTenant
+            ? `Try ${demoTenant.displayName}`
+            : 'Try a live team calendar'}
+        </h2>
+        <p className="landing-section__lede">
+          Open the schedule, or share the link with coaches and families.
         </p>
         <ul className="landing-tenants">
           {tenants.map((tenant) => {
@@ -135,12 +170,13 @@ export function HomePage() {
       </section>
 
       <section className="landing-section landing-section--close">
-        <h2 className="landing-section__title">Ready for your team?</h2>
+        <h2 className="landing-section__title">Want this for your team?</h2>
         <p className="landing-section__lede">
-          Tell us your Commit team and we’ll set up a mobile calendar your families will use.
+          Tell us your Commit team and we’ll set up a mobile calendar your
+          families will use.
         </p>
         <a className="landing-cta landing-cta--primary" href={CONTACT_HREF}>
-          Request access
+          Get your team calendar
         </a>
       </section>
 
