@@ -1,8 +1,9 @@
 /**
  * GET /api/cron/send-digests
  *
- * Hourly Vercel Cron (see vercel.json). For each tenant, sends digests only
- * when that tenant’s local clock matches its send hour:
+ * Vercel Cron tick (see vercel.json). Hobby forbids true hourly expressions, so
+ * production registers 24 once-daily jobs (one per UTC hour). Each tick sends
+ * digests only when that tenant’s local clock matches its send hour:
  * - daily  → local hour === dailySendHour (default 7)
  * - weekly → Sunday + local hour === weeklySendHour (default 18)
  *
