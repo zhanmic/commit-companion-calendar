@@ -92,9 +92,9 @@ export function HomePage() {
             </p>
           </li>
           <li className="landing-point">
-            <h3 className="landing-point__title">Filter and share</h3>
+            <h3 className="landing-point__title">Filter, share, and email</h3>
             <p className="landing-point__text">
-              Group filters and one-tap share links keep every swimmer’s week clear.
+              Group filters, one-tap share links, and daily or weekly email digests keep every swimmer’s week clear.
             </p>
           </li>
         </ul>
