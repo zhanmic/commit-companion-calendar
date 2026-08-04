@@ -2,7 +2,7 @@
 export const PRODUCT_NAME = 'My Swim Day'
 export const PRODUCT_SHORT = 'MSD'
 export const PRODUCT_DESCRIPTION =
-  'A mobile-optimized practice and meet calendar for swim teams on Commit — filter by group, share the week, subscribe to email digests, and keep families aligned.'
+  'Syncs with Commit. A mobile week view plus daily and weekly email digests keep coaches and parents aligned.'
 /** Resend Receiving MX is on the `mail` subdomain (not apex). */
 export const PRODUCT_CONTACT_EMAIL = 'sales@mail.myswimday.com'
 /** Keep legacy prefix so existing local settings/theme survive the rebrand. */
