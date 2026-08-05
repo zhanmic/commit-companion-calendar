@@ -1,5 +1,28 @@
 /** Shared helpers for Vercel Node serverless handlers. */
 
+/**
+ * Read a query string param from either Vercel’s req.query helper or the raw URL.
+ * Vite / some Node runtimes leave req.query empty — always fall back to URL parse.
+ */
+export function queryParam(req, name) {
+  if (!req || !name) return ''
+  const fromQuery = req.query?.[name]
+  if (typeof fromQuery === 'string') return fromQuery
+  if (Array.isArray(fromQuery) && typeof fromQuery[0] === 'string') {
+    return fromQuery[0]
+  }
+  const rawUrl = typeof req.url === 'string' ? req.url : ''
+  if (!rawUrl) return ''
+  try {
+    const url = rawUrl.includes('://')
+      ? new URL(rawUrl)
+      : new URL(rawUrl, 'https://myswimday.com')
+    return url.searchParams.get(name) || ''
+  } catch {
+    return ''
+  }
+}
+
 export function sendJson(res, status, body) {
   res.statusCode = status
   res.setHeader('Content-Type', 'application/json; charset=utf-8')

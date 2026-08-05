@@ -3,9 +3,12 @@
  *
  * Vercel Cron tick (see vercel.json). Hobby forbids true hourly expressions, so
  * production registers 24 once-daily jobs (one per UTC hour). Each tick sends
- * digests only when that tenant’s local clock matches its send hour:
- * - daily  → local hour === dailySendHour (default 7)
- * - weekly → Sunday + local hour === weeklySendHour (default 18)
+ * digests when that tenant’s local clock is at or past its send hour (same day):
+ * - daily  → local hour >= dailySendHour (default 7)
+ * - weekly → Sunday + local hour >= weeklySendHour (default 18)
+ *
+ * Using >= (not ===) catches Hobby ±hour jitter and missed ticks; per-subscriber
+ * lastDailySentOn / lastWeeklySentOn still prevent double sends.
  *
  * Query:
  * - frequency=daily|weekly — only consider that frequency
@@ -13,32 +16,17 @@
  *
  * Auth: Authorization: Bearer $CRON_SECRET
  */
-import { digestEmailContent } from '../_lib/email.js'
-import { appBaseUrl, sendJson } from '../_lib/http.js'
+import { appBaseUrl, queryParam, sendJson } from '../_lib/http.js'
 import { isRedisConfigured } from '../_lib/redis.js'
-import { isResendConfigured, sendEmail } from '../_lib/resend.js'
-import {
-  filterDigest,
-  loadScheduleWindow,
-} from '../_lib/schedule/digest.js'
+import { isResendConfigured } from '../_lib/resend.js'
+import { sendDigestsForTenantFrequency } from '../_lib/sendDigest.js'
 import { localClock } from '../_lib/schedule/week.js'
-import {
-  listActiveByFrequency,
-  markSent,
-} from '../_lib/subscribeStore.js'
 import { listDigestTenants } from '../_lib/tenants.js'
 
 export default async function handler(req, res) {
-  const frequency =
-    typeof req.query?.frequency === 'string'
-      ? req.query.frequency
-      : typeof req.query?.mode === 'string'
-        ? req.query.mode
-        : ''
+  const frequency = queryParam(req, 'frequency') || queryParam(req, 'mode')
   const force =
-    req.query?.force === '1' ||
-    req.query?.force === 'true' ||
-    req.query?.force === true
+    queryParam(req, 'force') === '1' || queryParam(req, 'force') === 'true'
   return runSendDigests(req, res, { frequency, force })
 }
 
@@ -100,17 +88,19 @@ export async function runSendDigests(
     const wantDaily = !freq || freq === 'daily'
     const wantWeekly = !freq || freq === 'weekly'
 
+    // Catch-up: any tick at or after the send hour (same local day) may send.
+    // Already-sent markers make repeated ticks safe.
     const dailyDue =
-      wantDaily && (force || clock.hour === dailyHour)
+      wantDaily && (force || clock.hour >= dailyHour)
     const weeklyDue =
       wantWeekly &&
-      (force || (clock.weekday === 0 && clock.hour === weeklyHour))
+      (force || (clock.weekday === 0 && clock.hour >= weeklyHour))
 
     tenantSummary.dailyDue = dailyDue
     tenantSummary.weeklyDue = weeklyDue
 
     if (dailyDue) {
-      const result = await sendForFrequency({
+      const result = await sendDigestsForTenantFrequency({
         tenant,
         frequency: 'daily',
         now,
@@ -123,7 +113,7 @@ export async function runSendDigests(
     }
 
     if (weeklyDue) {
-      const result = await sendForFrequency({
+      const result = await sendDigestsForTenantFrequency({
         tenant,
         frequency: 'weekly',
         now,
@@ -146,82 +136,7 @@ function authorize(req) {
   if (!secret) {
     return process.env.NODE_ENV !== 'production'
   }
-  const header = req.headers.authorization || ''
+  const header = req.headers.authorization || req.headers.Authorization || ''
   if (header === `Bearer ${secret}`) return true
-  const querySecret =
-    typeof req.query?.secret === 'string' ? req.query.secret : ''
-  return querySecret === secret
-}
-
-async function sendForFrequency({ tenant, frequency, now, base }) {
-  const subs = await listActiveByFrequency(frequency, tenant.slug)
-  let sent = 0
-  let skipped = 0
-  const errors = []
-
-  if (subs.length === 0) return { sent, skipped, errors }
-
-  let window
-  try {
-    window = await loadScheduleWindow(tenant, {
-      frequency,
-      now,
-      includeMeets: true,
-    })
-  } catch (err) {
-    errors.push({
-      tenant: tenant.slug,
-      frequency,
-      error: err instanceof Error ? err.message : 'schedule load failed',
-    })
-    return { sent, skipped, errors }
-  }
-
-  for (const sub of subs) {
-    try {
-      const digest = filterDigest(tenant, sub, window)
-      const already =
-        frequency === 'daily'
-          ? sub.lastDailySentOn === digest.rangeKey
-          : sub.lastWeeklySentOn === digest.rangeKey
-      if (already) {
-        skipped += 1
-        continue
-      }
-
-      const unsubscribeUrl = `${base}/api/unsubscribe?token=${encodeURIComponent(sub.unsubscribeToken)}`
-      const scheduleUrl = `${base}${tenant.path}`
-      const content = digestEmailContent({
-        digest,
-        tenantName: tenant.displayName,
-        scheduleUrl,
-        unsubscribeUrl,
-        frequency,
-      })
-
-      await sendEmail({
-        to: sub.email,
-        subject: content.subject,
-        html: content.html,
-        text: content.text,
-        headers: content.headers,
-      })
-
-      await markSent(sub, {
-        dailyOn: frequency === 'daily' ? digest.rangeKey : undefined,
-        weeklyOn: frequency === 'weekly' ? digest.rangeKey : undefined,
-      })
-      sent += 1
-    } catch (err) {
-      console.error('digest send failed', tenant.slug, sub.email, err)
-      errors.push({
-        email: sub.email,
-        tenant: tenant.slug,
-        frequency,
-        error: err instanceof Error ? err.message : 'send failed',
-      })
-    }
-  }
-
-  return { sent, skipped, errors }
+  return queryParam(req, 'secret') === secret
 }

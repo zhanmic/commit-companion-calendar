@@ -1,15 +1,14 @@
 /**
  * Manual / legacy entry: daily digests only.
- * Still gated by each tenant’s local dailySendHour unless ?force=1.
+ * Gated by local hour >= dailySendHour unless ?force=1.
  *
  * Prefer the /api/cron/send-digests UTC-hour ticks in production.
  */
+import { queryParam } from '../_lib/http.js'
 import { runSendDigests } from './send-digests.js'
 
 export default async function handler(req, res) {
   const force =
-    req.query?.force === '1' ||
-    req.query?.force === 'true' ||
-    req.query?.force === true
+    queryParam(req, 'force') === '1' || queryParam(req, 'force') === 'true'
   return runSendDigests(req, res, { frequency: 'daily', force })
 }

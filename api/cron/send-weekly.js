@@ -1,15 +1,14 @@
 /**
  * Manual / legacy entry: weekly digests only.
- * Still gated by Sunday + each tenant’s local weeklySendHour unless ?force=1.
+ * Gated by Sunday + local hour >= weeklySendHour unless ?force=1.
  *
  * Prefer the /api/cron/send-digests UTC-hour ticks in production.
  */
+import { queryParam } from '../_lib/http.js'
 import { runSendDigests } from './send-digests.js'
 
 export default async function handler(req, res) {
   const force =
-    req.query?.force === '1' ||
-    req.query?.force === 'true' ||
-    req.query?.force === true
+    queryParam(req, 'force') === '1' || queryParam(req, 'force') === 'true'
   return runSendDigests(req, res, { frequency: 'weekly', force })
 }
