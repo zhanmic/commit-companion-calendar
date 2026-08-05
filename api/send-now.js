@@ -1,9 +1,10 @@
 /**
  * POST /api/send-now
- * Body: { email, tenantSlug }
+ * Body: { email, tenantSlug, frequency? }
  *
- * Immediately emails the current digest for an *active* subscription so the
- * subscriber can preview what daily/weekly mail looks like.
+ * Immediately emails a digest for an *active* subscription so the subscriber
+ * can preview what mail looks like. Optional `frequency` (daily|weekly) uses
+ * the UI selection instead of only the saved subscription frequency.
  * Rate-limited to once per 2 minutes per subscription.
  */
 import { appBaseUrl, readJsonBody, sendJson } from './_lib/http.js'
@@ -78,9 +79,14 @@ export default async function handler(req, res) {
       return
     }
 
+    const frequency =
+      body.frequency === 'daily' || body.frequency === 'weekly'
+        ? body.frequency
+        : subscription.frequency
+
     const result = await sendDigestToSubscription(subscription, {
       base: appBaseUrl(req),
-      frequency: subscription.frequency,
+      frequency,
       force: true,
     })
 
@@ -98,13 +104,14 @@ export default async function handler(req, res) {
       manualAt: new Date().toISOString(),
     })
 
+    const sentFrequency = result.frequency || frequency
     sendJson(res, 200, {
       ok: true,
-      frequency: subscription.frequency,
+      frequency: sentFrequency,
       empty: Boolean(result.empty),
       message: result.empty
         ? `Sent — no sessions for your filters right now. Check ${email}.`
-        : `Sent — check ${email} for your ${subscription.frequency} digest.`,
+        : `Sent — check ${email} for your ${sentFrequency} digest.`,
     })
   } catch (err) {
     console.error('send-now failed', err)

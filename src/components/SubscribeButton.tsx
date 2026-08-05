@@ -209,6 +209,7 @@ export function SubscribeButton({
         body: JSON.stringify({
           email,
           tenantSlug: tenant.slug,
+          frequency,
         }),
       })
       const data = (await res.json().catch(() => ({}))) as {
@@ -472,14 +473,16 @@ export function SubscribeButton({
               disabled={submitting || sendingNow || !email.trim()}
               onClick={() => void onSendNow()}
             >
-              {sendingNow ? 'Sending digest…' : 'Email me now'}
+              {sendingNow
+                ? `Sending ${frequency} digest…`
+                : `Email me now (${frequency})`}
             </button>
           ) : null}
 
           {mode === 'subscribe' ? (
             <p className="subscribe__hint">
-              After you confirm, Email me now sends your saved digest right
-              away (so you can see what it looks like).
+              After you confirm, Email me now sends the selected {frequency}{' '}
+              digest right away (full week when Weekly is selected).
             </p>
           ) : null}
 
