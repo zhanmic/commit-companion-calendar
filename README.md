@@ -44,6 +44,7 @@ npm run preview
 | `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
 | `POST /api/subscribe` | Start / update email subscription (double opt-in) |
 | `GET /api/confirm?token=…` | Confirm subscription |
+| `POST /api/send-now` | Email current digest now (active subscribers only) |
 | `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
 | `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
 | `GET /api/cron/send-digests` | Cron tick — send digests due in each tenant’s local time |
