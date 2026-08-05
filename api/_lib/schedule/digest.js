@@ -74,12 +74,22 @@ function resolveKindFlags(subscription) {
   }
 }
 
-/** Filter a preloaded window for one subscription. */
-export function filterDigest(tenant, subscription, window) {
+/**
+ * Filter a preloaded window for one subscription.
+ * Pass `frequency` when the loaded window may differ from subscription.frequency
+ * (e.g. Email me now previewing Weekly while the saved sub is still daily).
+ */
+export function filterDigest(
+  tenant,
+  subscription,
+  window,
+  { frequency } = {},
+) {
   const { parsers, range, occurrences, tz } = window
   const selectedGroups = resolveSelectedGroups(tenant, subscription.groups)
   const selected = new Set(selectedGroups)
   const { includeEvents, includeMeets } = resolveKindFlags(subscription)
+  const freq = resolveFrequency(frequency || subscription.frequency, range)
 
   const filtered = occurrences.filter((occ) => {
     if (occ.label === 'meet') return includeMeets
@@ -104,7 +114,7 @@ export function filterDigest(tenant, subscription, window) {
     }
   })
 
-  const periodLabel = subscription.frequency === 'daily' ? 'Daily' : 'Weekly'
+  const periodLabel = freq === 'daily' ? 'Daily' : 'Weekly'
   const groupLabel =
     selectedGroups.length === groupIds(tenant).length
       ? 'all groups'
@@ -118,24 +128,25 @@ export function filterDigest(tenant, subscription, window) {
   return {
     title: `${tenant.displayName} · ${periodLabel} schedule`,
     subtitle: `${range.label} · ${groupLabel}${kindLabel}`,
+    frequency: freq,
     rows,
     empty: rows.length === 0,
-    rangeKey:
-      subscription.frequency === 'daily' ? range.dayKey : range.weekStartKey,
+    rangeKey: freq === 'daily' ? range.dayKey : range.weekStartKey,
   }
 }
 
 export async function buildDigest(
   tenant,
   subscription,
-  { now = new Date() } = {},
+  { now = new Date(), frequency } = {},
 ) {
+  const freq = frequency || subscription.frequency
   const window = await loadScheduleWindow(tenant, {
-    frequency: subscription.frequency,
+    frequency: freq,
     now,
     includeMeets: true,
   })
-  return filterDigest(tenant, subscription, window)
+  return filterDigest(tenant, subscription, window, { frequency: freq })
 }
 
 function resolveSelectedGroups(tenant, groups) {
@@ -156,4 +167,10 @@ function kindTitle(kind) {
   if (kind === 'meet') return 'Meet'
   if (kind === 'event') return 'Event'
   return 'Practice'
+}
+
+function resolveFrequency(frequency, range) {
+  if (frequency === 'daily' || frequency === 'weekly') return frequency
+  if (range?.weekStartKey) return 'weekly'
+  return 'daily'
 }

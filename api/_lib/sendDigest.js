@@ -107,9 +107,10 @@ export async function sendDigestsForTenantFrequency({
 }
 
 async function deliverOne({ tenant, sub, window, frequency, base, force = false }) {
-  const digest = filterDigest(tenant, sub, window)
+  const digest = filterDigest(tenant, sub, window, { frequency })
+  const freq = digest.frequency || frequency
   const already =
-    frequency === 'daily'
+    freq === 'daily'
       ? sub.lastDailySentOn === digest.rangeKey
       : sub.lastWeeklySentOn === digest.rangeKey
   if (already && !force) {
@@ -123,7 +124,7 @@ async function deliverOne({ tenant, sub, window, frequency, base, force = false 
     tenantName: tenant.displayName,
     scheduleUrl,
     unsubscribeUrl,
-    frequency,
+    frequency: freq,
   })
 
   await sendEmail({
@@ -135,9 +136,14 @@ async function deliverOne({ tenant, sub, window, frequency, base, force = false 
   })
 
   await markSent(sub, {
-    dailyOn: frequency === 'daily' ? digest.rangeKey : undefined,
-    weeklyOn: frequency === 'weekly' ? digest.rangeKey : undefined,
+    dailyOn: freq === 'daily' ? digest.rangeKey : undefined,
+    weeklyOn: freq === 'weekly' ? digest.rangeKey : undefined,
   })
 
-  return { sent: true, rangeKey: digest.rangeKey, empty: digest.empty }
+  return {
+    sent: true,
+    rangeKey: digest.rangeKey,
+    empty: digest.empty,
+    frequency: freq,
+  }
 }
