@@ -77,7 +77,8 @@ export function HomePage() {
         <h2 className="landing-section__title">Does your swim team use Commit?</h2>
         <p className="landing-section__lede">
           If yes — My Swim Day turns that schedule into a mobile week view
-          coaches and families actually open. No new system to learn.
+          coaches and families actually open. No login, no app to install — just
+          open the link.
         </p>
         <ul className="landing-points">
           <li className="landing-point">
