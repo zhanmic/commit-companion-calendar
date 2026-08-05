@@ -12,11 +12,12 @@ import { getTenantBySlug } from './tenants.js'
 
 /**
  * Send one digest to an active subscription if not already sent for the range.
+ * Pass `force: true` to resend even when already marked sent (Email me now).
  * Returns { sent, skipped?, rangeKey?, empty?, error? }
  */
 export async function sendDigestToSubscription(
   subscription,
-  { now = new Date(), base, frequency } = {},
+  { now = new Date(), base, frequency, force = false } = {},
 ) {
   const freq = frequency || subscription.frequency
   if (freq !== 'daily' && freq !== 'weekly') {
@@ -42,6 +43,7 @@ export async function sendDigestToSubscription(
     window,
     frequency: freq,
     base,
+    force,
   })
 }
 
@@ -86,6 +88,7 @@ export async function sendDigestsForTenantFrequency({
         window,
         frequency,
         base,
+        force: false,
       })
       if (result.sent) sent += 1
       else skipped += 1
@@ -103,13 +106,13 @@ export async function sendDigestsForTenantFrequency({
   return { sent, skipped, errors }
 }
 
-async function deliverOne({ tenant, sub, window, frequency, base }) {
+async function deliverOne({ tenant, sub, window, frequency, base, force = false }) {
   const digest = filterDigest(tenant, sub, window)
   const already =
     frequency === 'daily'
       ? sub.lastDailySentOn === digest.rangeKey
       : sub.lastWeeklySentOn === digest.rangeKey
-  if (already) {
+  if (already && !force) {
     return { sent: false, skipped: 'already_sent', rangeKey: digest.rangeKey }
   }
 

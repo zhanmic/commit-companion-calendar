@@ -50,6 +50,7 @@ export function SubscribeButton({
   const [includeEvents, setIncludeEvents] = useState(showEvents)
   const [includeMeets, setIncludeMeets] = useState(showMeets)
   const [submitting, setSubmitting] = useState(false)
+  const [sendingNow, setSendingNow] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -190,6 +191,37 @@ export function SubscribeButton({
       setError('Network error — try again')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function onSendNow() {
+    setSendingNow(true)
+    setMessage(null)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/send-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          tenantSlug: tenant.slug,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string
+        error?: string
+      }
+      if (!res.ok) {
+        setError(data.error || 'Could not send email')
+        return
+      }
+      rememberEmail(email.trim().toLowerCase())
+      setMessage(data.message || 'Digest sent — check your inbox.')
+    } catch {
+      setError('Network error — try again')
+    } finally {
+      setSendingNow(false)
     }
   }
 
@@ -419,7 +451,7 @@ export function SubscribeButton({
             className={`subscribe__submit${
               mode === 'unsubscribe' ? ' subscribe__submit--muted' : ''
             }`}
-            disabled={submitting}
+            disabled={submitting || sendingNow}
           >
             {submitting
               ? mode === 'subscribe'
@@ -429,6 +461,24 @@ export function SubscribeButton({
                 ? 'Subscribe'
                 : 'Unsubscribe'}
           </button>
+
+          {mode === 'subscribe' ? (
+            <button
+              type="button"
+              className="subscribe__send-now"
+              disabled={submitting || sendingNow || !email.trim()}
+              onClick={() => void onSendNow()}
+            >
+              {sendingNow ? 'Sending digest…' : 'Email me now'}
+            </button>
+          ) : null}
+
+          {mode === 'subscribe' ? (
+            <p className="subscribe__hint">
+              After you confirm, Email me now sends your saved digest right
+              away (so you can see what it looks like).
+            </p>
+          ) : null}
 
           {message ? (
             <p className="subscribe__status" role="status">

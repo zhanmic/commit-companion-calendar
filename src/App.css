@@ -489,6 +489,35 @@
   outline-offset: 2px;
 }
 
+.subscribe__send-now {
+  width: 100%;
+  margin-top: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+.subscribe__send-now:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--cyan) 55%, transparent);
+  color: var(--cyan);
+}
+
+.subscribe__send-now:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.subscribe__send-now:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
 .subscribe__status {
   margin: 0.55rem 0 0;
   font-size: 0.78rem;

@@ -181,10 +181,11 @@ export async function listActiveByFrequency(frequency, tenantSlug) {
     .filter((sub) => sub && sub.status === 'active' && sub.frequency === frequency)
 }
 
-export async function markSent(subscription, { dailyOn, weeklyOn }) {
+export async function markSent(subscription, { dailyOn, weeklyOn, manualAt } = {}) {
   const previous = { ...subscription }
   if (dailyOn) subscription.lastDailySentOn = dailyOn
   if (weeklyOn) subscription.lastWeeklySentOn = weeklyOn
+  if (manualAt) subscription.lastManualSentAt = manualAt
   subscription.updatedAt = new Date().toISOString()
   await saveSubscription(subscription, previous)
   return subscription
