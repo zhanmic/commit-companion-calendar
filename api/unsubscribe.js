@@ -3,6 +3,7 @@
  * POST /api/unsubscribe          — { email, tenantSlug } from the week-view UI
  */
 import {
+  queryParam,
   readJsonBody,
   sendHtml,
   sendJson,
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
     return
   }
 
-  const token = typeof req.query?.token === 'string' ? req.query.token : ''
+  const token = queryParam(req, 'token')
   if (!token) {
     sendHtml(
       res,

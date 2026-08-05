@@ -5,6 +5,8 @@
  * Query: ?d=<base64url of utf-8 ics>
  * Product: CommitCompanionCalendar (tenant-agnostic payload transport)
  */
+import { queryParam } from './_lib/http.js'
+
 export default function handler(req, res) {
   if (req.method !== 'GET') {
     res.statusCode = 405
@@ -13,7 +15,7 @@ export default function handler(req, res) {
     return
   }
 
-  const raw = typeof req.query?.d === 'string' ? req.query.d : ''
+  const raw = queryParam(req, 'd')
   if (!raw) {
     res.statusCode = 400
     res.end('Missing calendar payload')
