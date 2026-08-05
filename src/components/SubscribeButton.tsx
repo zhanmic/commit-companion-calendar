@@ -27,8 +27,8 @@ function emailStorageKey(tenantSlug: string) {
 export function SubscribeButton({
   className = '',
   selectedGroups,
-  showEvents,
-  showMeets,
+  showEvents: _showEvents,
+  showMeets: _showMeets,
 }: SubscribeButtonProps) {
   const tenant = useTenant()
   const groups = groupOrder(tenant)
@@ -47,8 +47,9 @@ export function SubscribeButton({
   const [email, setEmail] = useState('')
   const [frequency, setFrequency] = useState<Frequency>('weekly')
   const [picked, setPicked] = useState<Set<string>>(() => new Set(selectedGroups))
-  const [includeEvents, setIncludeEvents] = useState(showEvents)
-  const [includeMeets, setIncludeMeets] = useState(showMeets)
+  // Digests should include team events/meets by default (page chips often start off).
+  const [includeEvents, setIncludeEvents] = useState(true)
+  const [includeMeets, setIncludeMeets] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [sendingNow, setSendingNow] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -69,11 +70,13 @@ export function SubscribeButton({
   useEffect(() => {
     if (!open) return
     setPicked(new Set(selectedGroups))
-    setIncludeEvents(showEvents)
-    setIncludeMeets(showMeets)
+    // Always start with Event + Meet on for digests (page filter chips often
+    // default off and previously caused empty summer digests).
+    setIncludeEvents(true)
+    setIncludeMeets(true)
     setMessage(null)
     setError(null)
-  }, [open, selectedGroups, showEvents, showMeets])
+  }, [open, selectedGroups])
 
   useEffect(() => {
     if (!open) return

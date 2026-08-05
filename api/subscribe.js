@@ -72,8 +72,11 @@ export default async function handler(req, res) {
     ? body.groups.filter((g) => typeof g === 'string' && allowedSet.has(g))
     : [...(tenant.defaultGroups ?? [])]
 
-  const includeEvents = Boolean(body.includeEvents)
-  const includeMeets = Boolean(body.includeMeets)
+  // Default ON — digests should include team events/meets unless opted out.
+  const includeEvents =
+    body.includeEvents === undefined ? true : Boolean(body.includeEvents)
+  const includeMeets =
+    body.includeMeets === undefined ? true : Boolean(body.includeMeets)
 
   try {
     const { subscription, confirmToken } = await upsertSubscription({

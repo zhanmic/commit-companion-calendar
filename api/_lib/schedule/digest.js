@@ -57,15 +57,33 @@ export async function loadScheduleWindow(
   }
 }
 
+/**
+ * Meets/events are team-wide. Older subscribe UI defaulted both chips off
+ * (page filter defaults), so many subs stored false/false unintentionally —
+ * treat that legacy pair as "include both". Explicit mixed prefs are honored.
+ */
+function resolveKindFlags(subscription) {
+  const events = subscription?.includeEvents
+  const meets = subscription?.includeMeets
+  if (events === false && meets === false) {
+    return { includeEvents: true, includeMeets: true }
+  }
+  return {
+    includeEvents: events !== false,
+    includeMeets: meets !== false,
+  }
+}
+
 /** Filter a preloaded window for one subscription. */
 export function filterDigest(tenant, subscription, window) {
   const { parsers, range, occurrences, tz } = window
   const selectedGroups = resolveSelectedGroups(tenant, subscription.groups)
   const selected = new Set(selectedGroups)
+  const { includeEvents, includeMeets } = resolveKindFlags(subscription)
 
   const filtered = occurrences.filter((occ) => {
-    if (occ.label === 'meet') return Boolean(subscription.includeMeets)
-    if (occ.label === 'event') return Boolean(subscription.includeEvents)
+    if (occ.label === 'meet') return includeMeets
+    if (occ.label === 'event') return includeEvents
     return parsers.occurrenceMatchesTeams(occ.subTeams ?? [], selected)
   })
 
@@ -83,10 +101,15 @@ export function filterDigest(tenant, subscription, window) {
     selectedGroups.length === groupIds(tenant).length
       ? 'all groups'
       : selectedGroups.join(', ')
+  const kindBits = [
+    includeEvents ? 'events' : null,
+    includeMeets ? 'meets' : null,
+  ].filter(Boolean)
+  const kindLabel = kindBits.length ? ` · ${kindBits.join(' + ')}` : ''
 
   return {
     title: `${tenant.displayName} · ${periodLabel} schedule`,
-    subtitle: `${range.label} · ${groupLabel}`,
+    subtitle: `${range.label} · ${groupLabel}${kindLabel}`,
     rows,
     empty: rows.length === 0,
     rangeKey:
