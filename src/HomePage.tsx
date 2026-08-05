@@ -49,7 +49,7 @@ export function HomePage() {
         <div className="landing-hero__copy">
           <h1 className="landing-hero__brand">{PRODUCT_NAME}</h1>
           <p className="landing-hero__headline">
-            Stop texting the schedule. Let families open it.
+            View and share practice schedule in seconds.
           </p>
           <p className="landing-hero__sub">{PRODUCT_DESCRIPTION}</p>
           <div className="landing-hero__cta">
