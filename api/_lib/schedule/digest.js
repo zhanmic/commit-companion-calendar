@@ -87,14 +87,22 @@ export function filterDigest(tenant, subscription, window) {
     return parsers.occurrenceMatchesTeams(occ.subTeams ?? [], selected)
   })
 
-  const rows = filtered.map((occ) => ({
-    day: formatOccDay(occ.start, tz),
-    time: formatTimeRange(occ.start, occ.end, tz),
-    name: occ.name,
-    location: occ.location,
-    groups: (occ.subTeams ?? []).join(', '),
-    kind: occ.label || 'practice',
-  }))
+  const rows = filtered.map((occ) => {
+    const kind = normalizeKind(occ.label)
+    const groups = Array.isArray(occ.subTeams)
+      ? occ.subTeams.filter((g) => typeof g === 'string' && g.trim())
+      : []
+    return {
+      day: formatOccDay(occ.start, tz),
+      time: formatTimeRange(occ.start, occ.end, tz),
+      name: occ.name,
+      location: kind === 'event' ? null : occ.location,
+      groups,
+      groupsLabel: groups.join(', '),
+      kind,
+      kindLabel: kindTitle(kind),
+    }
+  })
 
   const periodLabel = subscription.frequency === 'daily' ? 'Daily' : 'Weekly'
   const groupLabel =
@@ -136,4 +144,16 @@ function resolveSelectedGroups(tenant, groups) {
   const allowed = new Set(all)
   const selected = groups.filter((g) => allowed.has(g))
   return selected.length ? selected : all
+}
+
+function normalizeKind(label) {
+  if (label === 'meet') return 'meet'
+  if (label === 'event') return 'event'
+  return 'practice'
+}
+
+function kindTitle(kind) {
+  if (kind === 'meet') return 'Meet'
+  if (kind === 'event') return 'Event'
+  return 'Practice'
 }

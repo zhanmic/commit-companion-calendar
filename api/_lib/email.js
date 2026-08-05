@@ -54,10 +54,14 @@ export function digestEmailContent({
     : digest.title
 
   const lines = digest.rows.map((row) => {
+    const kind = row.kindLabel || kindTitle(row.kind)
+    const groups =
+      row.groupsLabel ||
+      (Array.isArray(row.groups) ? row.groups.join(', ') : row.groups) ||
+      ''
     const loc = row.location ? ` @ ${row.location}` : ''
-    const groups = row.groups ? ` [${row.groups}]` : ''
-    const kind = row.kind !== 'practice' ? ` (${row.kind})` : ''
-    return `${row.day} ${row.time} — ${row.name}${loc}${groups}${kind}`
+    const groupPart = groups ? ` · ${groups}` : ''
+    return `${row.day} · ${kind}${groupPart} — ${row.name}${loc} · ${row.time}`
   })
 
   const text = [
@@ -75,32 +79,7 @@ export function digestEmailContent({
   const rowsHtml = digest.empty
     ? `<p style="margin:0;line-height:1.5;color:#3d5a62">No sessions for your selected filters.</p>`
     : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">
-        ${digest.rows
-          .map((row, index) => {
-            const border =
-              index === 0 ? '' : 'border-top:1px solid rgba(22,50,57,.1);'
-            const meta = [
-              row.kind !== 'practice' ? row.kind : null,
-              row.groups || null,
-              row.location || null,
-            ]
-              .filter(Boolean)
-              .join(' · ')
-            return `<tr>
-              <td style="padding:0.75rem 0;${border};vertical-align:top">
-                <div style="font-size:0.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6a8086">
-                  ${escapeHtml(row.day)}
-                </div>
-                <div style="margin-top:0.2rem;font-weight:700;color:#163239">
-                  ${escapeHtml(row.name)}
-                </div>
-                <div style="margin-top:0.15rem;color:#3d5a62;font-size:0.92rem">
-                  ${escapeHtml(row.time)}${meta ? ` · ${escapeHtml(meta)}` : ''}
-                </div>
-              </td>
-            </tr>`
-          })
-          .join('')}
+        ${digest.rows.map((row, index) => digestRowHtml(row, index)).join('')}
       </table>`
 
   const html = baseLayout({
@@ -131,6 +110,78 @@ export function digestEmailContent({
       'List-Unsubscribe': `<${unsubscribeUrl}>`,
     },
   }
+}
+
+function digestRowHtml(row, index) {
+  const border = index === 0 ? '' : 'border-top:1px solid rgba(22,50,57,.1);'
+  const kind = row.kind || 'practice'
+  const kindLabel = row.kindLabel || kindTitle(kind)
+  const groups = Array.isArray(row.groups)
+    ? row.groups
+    : row.groupsLabel
+      ? String(row.groupsLabel)
+          .split(',')
+          .map((g) => g.trim())
+          .filter(Boolean)
+      : []
+  const badges = [
+    kindBadgeHtml(kind, kindLabel),
+    ...groups.map((group) => groupBadgeHtml(group)),
+  ].join(' ')
+
+  const details = [row.time, row.location].filter(Boolean).join(' · ')
+
+  return `<tr>
+    <td style="padding:0.85rem 0;${border};vertical-align:top">
+      <div style="font-size:0.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6a8086">
+        ${escapeHtml(row.day)}
+      </div>
+      <div style="margin-top:0.35rem;line-height:1.6">
+        ${badges}
+      </div>
+      <div style="margin-top:0.35rem;font-weight:700;color:#163239;font-size:1.02rem">
+        ${escapeHtml(row.name)}
+      </div>
+      ${
+        details
+          ? `<div style="margin-top:0.2rem;color:#3d5a62;font-size:0.92rem">
+              ${escapeHtml(details)}
+            </div>`
+          : ''
+      }
+    </td>
+  </tr>`
+}
+
+function kindTitle(kind) {
+  if (kind === 'meet') return 'Meet'
+  if (kind === 'event') return 'Event'
+  return 'Practice'
+}
+
+function kindBadgeHtml(kind, label) {
+  const colors =
+    kind === 'meet'
+      ? { bg: '#fae8ff', fg: '#a21caf', border: '#e879f9' }
+      : kind === 'event'
+        ? { bg: '#e0e7ff', fg: '#4338ca', border: '#818cf8' }
+        : { bg: '#dff5f7', fg: '#0b6e7a', border: '#5ec4cf' }
+  return badgeHtml(label, colors)
+}
+
+function groupBadgeHtml(group) {
+  return badgeHtml(group, {
+    bg: '#eef3f5',
+    fg: '#163239',
+    border: 'rgba(22,50,57,.18)',
+  })
+}
+
+function badgeHtml(label, { bg, fg, border }) {
+  return `<span style="display:inline-block;margin:0 0.25rem 0.2rem 0;padding:0.15rem 0.5rem;
+    border:1px solid ${border};border-radius:999px;background:${bg};color:${fg};
+    font-size:0.72rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    font-family:ui-sans-serif,system-ui,-apple-system,sans-serif">${escapeHtml(label)}</span>`
 }
 
 function baseLayout({ heading, subheading, bodyHtml }) {
