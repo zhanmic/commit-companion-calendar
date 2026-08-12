@@ -1,5 +1,14 @@
 import { execFile } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { mkdtemp, writeFile, unlink, rmdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { promisify } from 'node:util'
+import {
+  htmlToPlainText,
+  looksLikeHtml,
+  wrapEmailHtmlDocument,
+} from './emailHtml.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -36,10 +45,17 @@ export async function openMailDraft(
   }
 
   const subject = escapeAppleScript(input.subject || '')
-  const body = escapeAppleScript(input.body || '')
+  const rawBody = input.body || ''
+  const isHtml = looksLikeHtml(rawBody)
+  const plainBody = escapeAppleScript(
+    isHtml ? htmlToPlainText(rawBody) : rawBody,
+  )
+  const htmlDoc = escapeAppleScript(
+    wrapEmailHtmlDocument(isHtml ? rawBody : rawBody.replace(/\n/g, '<br>\n')),
+  )
   const to = (input.to || '').trim()
 
-  const recipientLine = to
+  const recipientBlock = to
     ? `tell newMessage
       make new to recipient at end of to recipients with properties {address:"${escapeAppleScript(to)}"}
     end tell`
@@ -47,23 +63,29 @@ export async function openMailDraft(
 
   const script = `
 tell application "Mail"
-  set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${body}", visible:true}
-  ${recipientLine}
+  set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${plainBody}", visible:true}
+  ${recipientBlock}
+  try
+    set html content of newMessage to "${htmlDoc}"
+  end try
   activate
 end tell
 `
 
+  const dir = await mkdtemp(join(tmpdir(), 'commit-leads-mail-'))
+  const scriptPath = join(dir, `${randomUUID()}.applescript`)
   try {
-    await execFileAsync('osascript', ['-e', script], {
+    await writeFile(scriptPath, script, 'utf8')
+    await execFileAsync('osascript', [scriptPath], {
       timeout: 15_000,
-      maxBuffer: 1024 * 1024,
+      maxBuffer: 2 * 1024 * 1024,
     })
     return {
       ok: true,
       method: 'mail_app',
       message: to
-        ? `Opened Mail draft to ${to}`
-        : 'Opened Mail draft (add recipient manually)',
+        ? `Opened Mail draft to ${to} (HTML)`
+        : 'Opened Mail draft (HTML; add recipient manually)',
     }
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
@@ -72,18 +94,23 @@ end tell
       method: 'none',
       message: `Could not open Mail.app: ${detail.slice(0, 240)}`,
     }
+  } finally {
+    await unlink(scriptPath).catch(() => {})
+    await rmdir(dir).catch(() => {})
   }
 }
 
-/** Browser-safe mailto URL (length-limited; prefer Mail.app for long bodies). */
+/** Browser-safe mailto URL (plain text only; HTML is stripped). */
 export function buildMailtoUrl(input: OpenMailInput): string | null {
   const to = (input.to || '').trim()
   if (!to || !to.includes('@')) return null
   const params = new URLSearchParams()
   if (input.subject) params.set('subject', input.subject)
-  if (input.body) params.set('body', input.body)
+  const plain = looksLikeHtml(input.body)
+    ? htmlToPlainText(input.body)
+    : input.body
+  if (plain) params.set('body', plain)
   const url = `mailto:${to}?${params.toString()}`
-  // Practical client limit; UI can still copy body if too long
   if (url.length > 1800) return null
   return url
 }

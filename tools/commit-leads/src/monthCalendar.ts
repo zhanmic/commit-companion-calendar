@@ -359,7 +359,7 @@ function pitchAngles(
   }
   if (summary.cancellationCount > 0) {
     angles.push(
-      `${summary.cancellationCount} cancel/break signal(s) in-window — changes are hard to catch in Commit alone.`,
+      `${summary.cancellationCount} cancel/break signal(s) in-window — good pitch for morning email digests catching overnight Commit changes.`,
     )
   }
   if (summary.upcomingMeets.length > 0) {
@@ -378,7 +378,7 @@ function pitchAngles(
   }
   if (!angles.length) {
     angles.push(
-      'Team publishes on Commit — MySwimDay can mirror that for a mobile week view.',
+      'Team publishes on Commit — My Swim Day can mirror that as a mobile week view plus optional daily/weekly email digests (no login/app).',
     )
   }
   return angles.slice(0, 5)

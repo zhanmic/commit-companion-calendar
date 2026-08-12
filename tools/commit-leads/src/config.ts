@@ -33,6 +33,11 @@ export const DEMO_CALENDAR_URL =
 export const SENDER_NAME =
   process.env.SENDER_NAME ?? 'Mic Zhan from MySwimDay'
 
+/** One-line peer credibility for outreach (swim parent angle). */
+export const SENDER_CONTEXT =
+  process.env.SENDER_CONTEXT ??
+  'I am a parent of four swimmers at Delmar Dolphins.'
+
 /** Headless Chromium network capture (DevTools-style). Set FINGERPRINT_NETWORK=0 to disable. */
 export const FINGERPRINT_NETWORK = !['0', 'false', 'no'].includes(
   (process.env.FINGERPRINT_NETWORK ?? '1').toLowerCase(),

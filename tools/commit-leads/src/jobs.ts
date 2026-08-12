@@ -769,6 +769,7 @@ export async function runDraftPending(
           touches: force ? [1, 2, 3] : missing.length ? missing : [1, 2, 3],
           force,
           onProgress: log,
+          signal,
         })
         log(
           `  generated touches: [${result.generated.join(', ') || 'none'}] → status ${result.status}`,
@@ -823,6 +824,7 @@ export async function runDraftOne(
     touches,
     force,
     onProgress: log,
+    signal,
   })
   log(
     `  generated: [${result.generated.join(', ') || 'none'}] → status ${result.status}`,

@@ -1,4 +1,8 @@
-import { OLLAMA_BASE_URL, OLLAMA_MODEL } from './config.js'
+import {
+  JobStoppedError,
+  OLLAMA_BASE_URL,
+  OLLAMA_MODEL,
+} from './config.js'
 
 export class OllamaUnavailableError extends Error {
   constructor(message: string) {
@@ -10,7 +14,10 @@ export class OllamaUnavailableError extends Error {
 export async function chatJson<T>(
   system: string,
   user: string,
+  signal?: AbortSignal,
 ): Promise<T> {
+  if (signal?.aborted) throw new JobStoppedError()
+
   let res: Response
   try {
     res = await fetch(`${OLLAMA_BASE_URL}/chat/completions`, {
@@ -24,8 +31,15 @@ export async function chatJson<T>(
           { role: 'user', content: user },
         ],
       }),
+      signal,
     })
   } catch (err) {
+    if (
+      signal?.aborted ||
+      (err instanceof Error && err.name === 'AbortError')
+    ) {
+      throw new JobStoppedError()
+    }
     throw new OllamaUnavailableError(
       `Ollama unreachable at ${OLLAMA_BASE_URL}: ${err instanceof Error ? err.message : String(err)}`,
     )

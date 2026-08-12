@@ -23,13 +23,41 @@ import {
   type OutreachTouch,
 } from './draftEmail.js'
 import { saveOutreachDrafts, setTouchDraft } from './outreachDrafts.js'
+import { ensureHtmlDraftBody } from './emailHtml.js'
 import { buildMailtoUrl, openMailDraft } from './openMail.js'
 import { OllamaUnavailableError } from './ollama.js'
-import { EXPORT_PATH, HOST, OLLAMA_MODEL, PORT, TOOL_ROOT } from './config.js'
+import {
+  EXPORT_PATH,
+  HOST,
+  JobStoppedError,
+  OLLAMA_MODEL,
+  PORT,
+  TOOL_ROOT,
+} from './config.js'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { networkInterfaces } from 'node:os'
 import { readFileSync, existsSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import { readFile } from 'node:fs/promises'
+
+/** Prefer private LAN IPv4s (en0/Wi‑Fi first) for phone access URLs. */
+function lanIpv4Addresses(): string[] {
+  const nets = networkInterfaces()
+  const preferred: string[] = []
+  const others: string[] = []
+  for (const [name, entries] of Object.entries(nets)) {
+    if (!entries) continue
+    for (const e of entries) {
+      if (e.family !== 'IPv4' || e.internal) continue
+      if (name.startsWith('en') || name.includes('Wi-Fi') || name.includes('wlan')) {
+        preferred.push(e.address)
+      } else {
+        others.push(e.address)
+      }
+    }
+  }
+  return [...new Set([...preferred, ...others])]
+}
 
 const PUBLIC_DIR = join(TOOL_ROOT, 'public')
 
@@ -318,6 +346,12 @@ async function handleApi(
       sendJson(res, 404, { error: 'Not found' })
       return true
     }
+    if (processBusy) {
+      sendJson(res, 409, {
+        error: 'Process lane busy — stop the current job or wait',
+      })
+      return true
+    }
     const raw = await readBody(req)
     let body: { touch?: number; all?: boolean; force?: boolean } = {}
     try {
@@ -325,6 +359,11 @@ async function handleApi(
     } catch {
       body = {}
     }
+
+    processBusy = true
+    processAbort = new AbortController()
+    const signal = processAbort.signal
+
     try {
       // Explicit all:true, or no touch field → full 1→2→3 sequence.
       // touch:1|2|3 alone regenerates that one email.
@@ -333,6 +372,7 @@ async function handleApi(
         const seq = await draftOutreachSequence(lead, {
           touches: [1, 2, 3],
           force: body.force !== false,
+          signal,
         })
         const t1 = seq.drafts['1']
         const ready = (['1', '2', '3'] as const).filter((k) =>
@@ -361,6 +401,7 @@ async function handleApi(
                 body: t1.body,
               })
             : null,
+          busy: { discover: discoverBusy, process: false },
         })
       } else {
         const touch = Number(body.touch) as OutreachTouch
@@ -368,7 +409,7 @@ async function handleApi(
           sendJson(res, 400, { error: 'touch must be 1, 2, or 3' })
           return true
         }
-        const draft = await draftOutreachEmail(lead, touch)
+        const draft = await draftOutreachEmail(lead, touch, signal)
         sendJson(res, 200, {
           ok: true,
           draft,
@@ -378,12 +419,27 @@ async function handleApi(
             subject: draft.subject,
             body: draft.body,
           }),
+          busy: { discover: discoverBusy, process: false },
         })
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      const status = err instanceof OllamaUnavailableError ? 503 : 500
-      sendJson(res, status, { error: message })
+      if (err instanceof JobStoppedError) {
+        sendJson(res, 200, {
+          ok: false,
+          stopped: true,
+          error: err.message,
+          lead: getLead(id),
+          drafts: getOutreachDrafts(getLead(id)!),
+          busy: { discover: discoverBusy, process: false },
+        })
+      } else {
+        const message = err instanceof Error ? err.message : String(err)
+        const status = err instanceof OllamaUnavailableError ? 503 : 500
+        sendJson(res, status, { error: message })
+      }
+    } finally {
+      processBusy = false
+      processAbort = null
     }
     return true
   }
@@ -410,7 +466,7 @@ async function handleApi(
     const prev = existing[String(touch) as '1' | '2' | '3']
     const next = setTouchDraft(existing, touch, {
       subject: (body.subject ?? prev?.subject ?? '').trim(),
-      body: (body.body ?? prev?.body ?? '').trim(),
+      body: ensureHtmlDraftBody((body.body ?? prev?.body ?? '').trim()),
       hooks: prev?.hooks ?? [],
     })
     saveOutreachDrafts(id, next, {
@@ -458,12 +514,9 @@ async function handleApi(
       lead.draft_subject ??
       ''
     ).trim()
-    const emailBody = (
-      body.body ??
-      fromTouch?.body ??
-      lead.draft_email ??
-      ''
-    ).trim()
+    const emailBody = ensureHtmlDraftBody(
+      (body.body ?? fromTouch?.body ?? lead.draft_email ?? '').trim(),
+    )
     if (!emailBody) {
       sendJson(res, 400, {
         error: 'No draft body — generate a draft first',
@@ -564,7 +617,11 @@ async function handleApi(
       return true
     }
     processAbort.abort()
-    sendJson(res, 200, { ok: true, stopped: true, message: 'Stop requested' })
+    sendJson(res, 200, {
+      ok: true,
+      stopped: true,
+      message: 'Stop requested — finishes after the current Ollama call if one is in flight',
+    })
     return true
   }
 
@@ -624,15 +681,20 @@ const server = createServer(async (req, res) => {
 })
 
 server.listen(PORT, HOST, () => {
-  const lan =
-    HOST === '0.0.0.0' || HOST === '::'
-      ? `http://<mac-lan-ip>:${PORT}`
-      : `http://${HOST}:${PORT}`
   console.log(`Commit Leads UI → http://127.0.0.1:${PORT}`)
   if (HOST === '0.0.0.0' || HOST === '::') {
-    console.log(`LAN (phone)   → ${lan}  (same Wi‑Fi; find IP: ipconfig getifaddr en0)`)
+    const ips = lanIpv4Addresses()
+    if (ips.length === 0) {
+      console.log(
+        `LAN (phone)   → (no LAN IPv4 found — run: ipconfig getifaddr en0)`,
+      )
+    } else {
+      for (const ip of ips) {
+        console.log(`LAN (phone)   → http://${ip}:${PORT}  (same Wi‑Fi)`)
+      }
+    }
   } else {
-    console.log(`Bound          → ${lan}`)
+    console.log(`Bound          → http://${HOST}:${PORT}`)
   }
   console.log(`Model: ${OLLAMA_MODEL}  |  leads: ${listLeads().length}`)
 })

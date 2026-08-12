@@ -9,8 +9,9 @@ export interface ScoreResult {
   objections: string[]
 }
 
-const SYSTEM = `You are a B2B sales researcher for Commit Companion Calendar (CCC),
-a mobile-first weekly practice/meet calendar for swim teams already using Commit Swimming.
+const SYSTEM = `You are a B2B sales researcher for My Swim Day (MySwimDay),
+a Commit-synced mobile week view plus daily/weekly email digests for swim teams
+already using Commit Swimming (no login or app — just a link).
 Return ONLY valid JSON with keys:
 fit_score (0-100), fit_notes (string), buyer_guess (string),
 objections (string array).
@@ -18,7 +19,7 @@ Prefer team/office contacts. Do not invent email addresses.
 Do not write outreach email copy — drafting is a separate step.`
 
 export async function scoreLead(lead: Lead): Promise<ScoreResult | null> {
-  const user = `Score this Commit swim team lead for CCC outreach.
+  const user = `Score this Commit swim team lead for My Swim Day outreach.
 
 Team name: ${lead.team_name ?? 'unknown'}
 Website: ${lead.website_url ?? 'unknown'}
@@ -30,7 +31,8 @@ Evidence they use Commit: ${lead.evidence ?? 'unknown'}
 Confidence: ${lead.confidence ?? 'unknown'}
 Region notes: ${lead.region_notes ?? 'none'}
 
-Product angle: They already run Commit — CCC gives families a mobile-first week view.
+Product angle: They already run Commit — My Swim Day gives families a mobile week view
+plus optional daily/weekly email digests. No login or app. Not affiliated with Commit.
 Proof: live Delmar Dolphins calendar. Offer a free pilot for one team.
 Target buyer priority: team admin/office, head coach, website coordinator, board president.
 

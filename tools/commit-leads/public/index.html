@@ -143,9 +143,9 @@
             </p>
             <label
               class="has-tip"
-              data-tip="How many pending leads to handle per step in this run."
+              data-tip="How many pending leads to fingerprint/enrich/score in this run. Does not affect draft generation."
             >
-              Batch size
+              Process batch size
               <input id="process-limit" type="number" value="25" min="1" max="1000" />
             </label>
             <label
@@ -181,8 +181,15 @@
             <p class="hint">
               For <strong>researched</strong> leads with email + Commit ID: load
               ~1 month of calendar, ask Ollama for touches 1→2→3, set status
-              <strong>drafted</strong>. Uses batch size above.
+              <strong>drafted</strong>.
             </p>
+            <label
+              class="has-tip"
+              data-tip="How many researched leads to draft in this run (each lead = touches 1→2→3). Separate from process batch size."
+            >
+              Draft batch size
+              <input id="draft-limit" type="number" value="10" min="1" max="1000" />
+            </label>
             <label
               class="check has-tip"
               data-tip="Regenerate all three touches even if drafts already exist."
@@ -195,9 +202,18 @@
                 type="button"
                 class="primary has-tip"
                 id="btn-draft-queue"
-                data-tip="Bulk-generate 3-touch drafts for the next N researched leads."
+                data-tip="Bulk-generate 3-touch drafts for the next N researched leads (N = Draft batch size)."
               >
                 Generate drafts
+              </button>
+              <button
+                type="button"
+                id="stop-draft"
+                class="danger has-tip"
+                data-tip="Stop draft generation after the current Ollama call."
+                disabled
+              >
+                Stop drafts
               </button>
             </div>
           </div>
@@ -205,7 +221,7 @@
           <div class="process-col">
             <h3>One lead</h3>
             <p class="hint">
-              Pick a lead for pipeline steps or draft regenerate. Batch size does
+              Pick a lead for pipeline steps or draft regenerate. Batch sizes do
               not apply.
             </p>
             <label

@@ -1,5 +1,6 @@
 import type { Lead } from './db.js'
 import { updateLead } from './db.js'
+import { ensureHtmlDraftBody } from './emailHtml.js'
 
 export type OutreachTouch = 1 | 2 | 3
 
@@ -22,12 +23,25 @@ export function parseOutreachDrafts(raw: string | null | undefined): OutreachDra
   }
 }
 
+function withHtmlBodies(drafts: OutreachDrafts): OutreachDrafts {
+  const out: OutreachDrafts = {}
+  for (const key of ['1', '2', '3'] as const) {
+    const d = drafts[key]
+    if (!d) continue
+    out[key] = {
+      ...d,
+      body: d.body?.trim() ? ensureHtmlDraftBody(d.body) : d.body,
+    }
+  }
+  return out
+}
+
 /** Prefer JSON sequence; fall back to legacy draft_* columns as touch 1. */
 export function getOutreachDrafts(lead: Lead): OutreachDrafts {
   const fromJson = parseOutreachDrafts(lead.outreach_drafts)
-  if (fromJson['1']?.body) return fromJson
+  if (fromJson['1']?.body) return withHtmlBodies(fromJson)
   if (lead.draft_email?.trim()) {
-    return {
+    return withHtmlBodies({
       ...fromJson,
       '1': {
         subject: lead.draft_subject?.trim() || '',
@@ -35,9 +49,9 @@ export function getOutreachDrafts(lead: Lead): OutreachDrafts {
         hooks: parseHooks(lead.draft_hooks),
         generatedAt: lead.updated_at,
       },
-    }
+    })
   }
-  return fromJson
+  return withHtmlBodies(fromJson)
 }
 
 function parseHooks(raw: string | null | undefined): string[] {

@@ -120,7 +120,15 @@ function setBusyUi() {
   if (draftQueueBtn) draftQueueBtn.disabled = processBusy
   if (draftOneBtn) draftOneBtn.disabled = processBusy
   const stopBtn = document.getElementById('stop-process')
+  const stopDraftBtn = document.getElementById('stop-draft')
+  const stopOutreach = document.getElementById('btn-stop-outreach')
   if (stopBtn) stopBtn.disabled = !processBusy
+  if (stopDraftBtn) stopDraftBtn.disabled = !processBusy
+  if (stopOutreach) stopOutreach.disabled = !processBusy
+  const genAll = document.getElementById('btn-gen-all')
+  const genOne = document.getElementById('btn-gen-draft')
+  if (genAll) genAll.disabled = processBusy
+  if (genOne) genOne.disabled = processBusy
   const addBtn = document.querySelector('#add-form button[type="submit"]')
   if (addBtn) addBtn.disabled = discoverBusy
 }
@@ -498,14 +506,24 @@ async function showDetail(id, opts = {}) {
         <span>Subject</span>
         <input id="draft-subject" type="text" value="" placeholder="Email subject" />
       </label>
-      <label class="field">
+      <div class="field draft-body-field">
         <span>Body</span>
-        <textarea id="draft-body" rows="12" placeholder="Generate drafts, then edit before opening Mail."></textarea>
-      </label>
+        <div class="draft-body-split">
+          <label class="draft-pane">
+            <span class="draft-pane-label">HTML</span>
+            <textarea id="draft-body" rows="14" placeholder="&lt;p&gt;…&lt;/p&gt; with &lt;a href&gt; links"></textarea>
+          </label>
+          <div class="draft-pane">
+            <span class="draft-pane-label">Preview</span>
+            <div id="draft-body-preview" class="draft-html-preview" aria-label="Email preview"></div>
+          </div>
+        </div>
+      </div>
       <div id="draft-hooks" class="hooks"></div>
       <div class="outreach-actions">
         <button type="button" class="primary" id="btn-gen-all" data-tip="Generate / regenerate all 3 touches.">Generate all 3</button>
         <button type="button" id="btn-gen-draft" data-tip="Regenerate the selected touch only.">Regenerate this touch</button>
+        <button type="button" class="danger" id="btn-stop-outreach" data-tip="Stop draft generation (same as Stop drafts)." disabled>Stop</button>
         <button type="button" class="ghost" id="btn-save-draft" data-tip="Save subject/body edits for this touch.">Save edits</button>
         <button type="button" id="btn-open-mail" data-tip="Open this touch in Mac Mail.app.">Open in Mail</button>
         <button type="button" id="btn-open-mail-sent" data-tip="Open Mail and mark contacted (use for touch 1 send).">Open Mail + contacted</button>
@@ -554,6 +572,25 @@ function renderHooks(hooks) {
   `
 }
 
+function looksLikeHtml(body) {
+  return /<\/?(?:p|br|a|div|ul|ol|li|strong|em|b|i|h[1-6])\b/i.test(body || '')
+}
+
+function htmlToPlainText(html) {
+  return String(html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 function updateMailtoFallback(to, subject, body) {
   const a = document.getElementById('mailto-fallback')
   if (!a) return
@@ -562,9 +599,10 @@ function updateMailtoFallback(to, subject, body) {
     a.textContent = 'no contact email'
     return
   }
+  const plain = looksLikeHtml(body) ? htmlToPlainText(body) : body
   const params = new URLSearchParams()
   if (subject) params.set('subject', subject)
-  if (body) params.set('body', body)
+  if (plain) params.set('body', plain)
   const url = `mailto:${to}?${params.toString()}`
   if (url.length > 1800) {
     a.removeAttribute('href')
@@ -591,7 +629,20 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
   let touch = initialTouch
   const subjectEl = document.getElementById('draft-subject')
   const bodyElDraft = document.getElementById('draft-body')
+  const previewEl = document.getElementById('draft-body-preview')
   const metaEl = document.getElementById('touch-meta')
+
+  const syncPreview = () => {
+    if (!previewEl) return
+    const html = bodyElDraft?.value?.trim() || ''
+    if (!html) {
+      previewEl.innerHTML =
+        '<p class="hint">Generate a draft — HTML edits show here live.</p>'
+      return
+    }
+    // Trusted local drafts only — render as email HTML
+    previewEl.innerHTML = html
+  }
 
   const paintTabLabels = () => {
     document.querySelectorAll('#touch-tabs button').forEach((btn) => {
@@ -612,6 +663,7 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     const d = drafts[String(t)] || {}
     if (subjectEl) subjectEl.value = d.subject || ''
     if (bodyElDraft) bodyElDraft.value = d.body || ''
+    syncPreview()
     renderHooks(d.hooks || [])
     updateMailtoFallback(lead.contact_email, d.subject || '', d.body || '')
     if (metaEl) {
@@ -632,11 +684,29 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     body: bodyElDraft?.value?.trim() || '',
   })
 
+  const beginDraftBusy = () => {
+    processBusy = true
+    setBusyUi()
+    syncBusyPolling()
+  }
+  const endDraftBusy = () => {
+    processBusy = false
+    setBusyUi()
+    syncBusyPolling()
+  }
+
+  document.getElementById('btn-stop-outreach')?.addEventListener('click', () => {
+    requestStopProcess('Stopped draft generation.')
+  })
+
   document.getElementById('btn-gen-all')?.addEventListener('click', async () => {
-    const btn = document.getElementById('btn-gen-all')
-    if (btn) btn.disabled = true
+    if (processBusy) {
+      setOutreachStatus('Process lane busy — stop the current job first.')
+      return
+    }
+    beginDraftBusy()
     setOutreachStatus(
-      'Generating touches 1→2→3 (calendar + Ollama). This can take a few minutes — wait for all three ✓ on the tabs.',
+      'Generating touches 1→2→3… Use Stop to cancel after the current Ollama call.',
     )
     try {
       const res = await fetchJson(`/api/leads/${id}/draft`, {
@@ -644,6 +714,15 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ all: true, force: true }),
       })
+      if (res.stopped) {
+        drafts = res.drafts || drafts
+        setOutreachStatus(
+          `Stopped. Partial touches kept: ${touchReadyLabel(drafts)}.`,
+        )
+        showTouch(touch)
+        await refresh()
+        return
+      }
       drafts = res.sequence?.drafts || res.draft?.drafts || drafts
       const ready = res.readyTouches || [1, 2, 3].filter((t) => drafts[String(t)]?.body)
       const failed = res.sequence?.failed || []
@@ -663,20 +742,28 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     } catch (err) {
       setOutreachStatus(err.message || String(err))
     } finally {
-      if (btn) btn.disabled = false
+      endDraftBusy()
     }
   })
 
   document.getElementById('btn-gen-draft')?.addEventListener('click', async () => {
-    const btn = document.getElementById('btn-gen-draft')
-    if (btn) btn.disabled = true
-    setOutreachStatus(`Regenerating touch ${touch}…`)
+    if (processBusy) {
+      setOutreachStatus('Process lane busy — stop the current job first.')
+      return
+    }
+    beginDraftBusy()
+    setOutreachStatus(`Regenerating touch ${touch}… (Stop cancels)`)
     try {
       const res = await fetchJson(`/api/leads/${id}/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ touch, force: true }),
       })
+      if (res.stopped) {
+        setOutreachStatus('Stopped before this touch finished.')
+        await refresh()
+        return
+      }
       if (res.draft?.drafts) drafts = res.draft.drafts
       else if (res.draft) {
         drafts = {
@@ -695,7 +782,7 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     } catch (err) {
       setOutreachStatus(err.message || String(err))
     } finally {
-      if (btn) btn.disabled = false
+      endDraftBusy()
     }
   })
 
@@ -775,7 +862,10 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     updateMailtoFallback(lead.contact_email, subject, body)
   }
   subjectEl?.addEventListener('input', syncMailto)
-  bodyElDraft?.addEventListener('input', syncMailto)
+  bodyElDraft?.addEventListener('input', () => {
+    syncMailto()
+    syncPreview()
+  })
 }
 
 function actionLane(action) {
@@ -925,7 +1015,7 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
     'draft',
     {
       target: 'all',
-      limit: Number(document.getElementById('process-limit').value || 25),
+      limit: Number(document.getElementById('draft-limit')?.value || 10),
       forceReprocess:
         document.getElementById('draft-force-queue')?.checked === true,
     },
@@ -974,23 +1064,31 @@ document.querySelectorAll('[data-action]').forEach((btn) => {
   })
 })
 
-document.getElementById('stop-process')?.addEventListener('click', async () => {
+async function requestStopProcess(outreachMsg) {
   appendLog(logProcess, 'Stop requested…')
+  if (outreachMsg) setOutreachStatus(outreachMsg)
   try {
     const res = await fetchJson('/api/stop', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lane: 'process' }),
     })
-    appendLog(
-      logProcess,
-      res.stopped
-        ? 'Stopping after current lead…'
-        : res.message || 'Process not running',
-    )
+    const line = res.stopped
+      ? 'Stopping after current Ollama/lead step…'
+      : res.message || 'Process not running'
+    appendLog(logProcess, line)
+    if (outreachMsg) setOutreachStatus(line)
   } catch (err) {
     appendLog(logProcess, `Stop failed: ${err.message}`)
+    if (outreachMsg) setOutreachStatus(`Stop failed: ${err.message}`)
   }
+}
+
+document.getElementById('stop-process')?.addEventListener('click', () => {
+  requestStopProcess()
+})
+document.getElementById('stop-draft')?.addEventListener('click', () => {
+  requestStopProcess('Stopping draft generation…')
 })
 
 async function runExportAction() {

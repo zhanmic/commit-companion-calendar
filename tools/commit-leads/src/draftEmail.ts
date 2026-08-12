@@ -1,6 +1,13 @@
 import type { Lead } from './db.js'
 import { getLead } from './db.js'
-import { DEMO_CALENDAR_URL, SENDER_NAME, SITE_URL } from './config.js'
+import {
+  DEMO_CALENDAR_URL,
+  JobStoppedError,
+  SENDER_CONTEXT,
+  SENDER_NAME,
+  SITE_URL,
+} from './config.js'
+import { ensureHtmlDraftBody } from './emailHtml.js'
 import { chatJson, OllamaUnavailableError } from './ollama.js'
 import {
   getOutreachDrafts,
@@ -45,19 +52,32 @@ interface LlmDraft {
 
 const TOUCH_BRIEF: Record<OutreachTouch, string> = {
   1: `TOUCH 1 — first outreach (Day 0).
-Introduce MySwimDay briefly. Use 1–2 real calendar facts. Soft CTA for a free pilot / quick look.
-Do not mention prior emails.`,
+Introduce My Swim Day in 1–2 sentences using the product facts below (do not paste a feature list).
+Early in the email, include ONE short peer line from sender context (Delmar Dolphins parent of four)
+to relate — not a biography. Use 1–2 real calendar facts.
+Soft CTA for a free pilot / quick look at their Commit schedule. Do not mention prior emails.`,
   2: `TOUCH 2 — follow-up (~5–7 days after touch 1 if no reply).
-Assume they may have seen touch 1. New angle (parent chaos / meet week / multi-group schedule) — not "just bumping".
+Assume they may have seen touch 1. New angle — not "just bumping". Prefer one of:
+  - email digests (daily morning / weekly) so parents catch last-night coach changes before practice
+  - multi-group filter chaos / meet week / share-one-link for admins
+You may briefly allude to being a swim parent if natural; do not repeat the full Delmar/four-swimmers line.
 Shorter than touch 1. Soft CTA.`,
   3: `TOUCH 3 — close-the-loop (~10–14 days after touch 2 if no reply).
 Final polite note. "Happy to shelve if timing is bad." Leave door open for fall. Very short.
-No guilt, no pressure.`,
+Do not re-introduce the parent bio or re-pitch every feature. No guilt, no pressure.`,
 }
 
 function systemForTouch(touch: OutreachTouch): string {
-  return `You write short, personalized cold outreach for MySwimDay.
-Product: mobile-first weekly practice/meet calendar for swim teams already on Commit Swimming.
+  return `You write short, personalized cold outreach for My Swim Day (MySwimDay).
+
+Product facts (match current homepage — pick 1–2 per email, do not dump all):
+- Headline idea: view and share the practice schedule in seconds.
+- Syncs with Commit Swimming (practices, meets, team events stay in sync). Not a new scheduling system.
+- Mobile week view coaches and families actually open. No login, no app — just open the link.
+- Group filters + one-tap share links.
+- NEW: parents/coaches can subscribe to daily or weekly email digests (morning digest catches overnight Commit changes before practice).
+- Built for Commit teams: coaches update Commit once; admins share one live link; parents open the week or subscribe.
+- Not affiliated with Commit Swimming — do not claim partnership/official status.
 
 You will receive an expanded Commit calendar review (past ~30 days + next ~14 days).
 Study that window, then write ONE email for the specified touch in a 3-email sequence.
@@ -66,19 +86,23 @@ ${TOUCH_BRIEF[touch]}
 
 Return ONLY valid JSON with keys:
 - subject (string, specific, under 70 chars)
-- body (string, plain text, touch 1: 90–160 words; touch 2: 70–120; touch 3: 50–90)
+- body (string, HTML email fragment — NOT plain text; touch 1: 90–160 words; touch 2: 70–120; touch 3: 50–90)
 - customization_hooks (string array, 2–4 concrete ideas citing real calendar facts when possible)
 
-Rules:
+HTML body rules:
+- Use simple tags only: <p>, <br>, <a href="...">, <strong>, <em>. No <html>/<body>, no CSS, no tables, no images.
+- Wrap paragraphs in <p>…</p>. Use <br> sparingly inside a paragraph.
+- Product links MUST be real anchors, e.g. <a href="${SITE_URL}">Product overview</a> and <a href="${DEMO_CALENDAR_URL}">Live Delmar demo</a>.
+- Mentioning "MySwimDay" or "Delmar demo" without an <a href> is not enough.
+
+Other rules:
 - Open with the team name. Do NOT invent a person's first name from an email local-part.
 - Do not invent contacts, meets, or practice groups.
 - Use real calendar details when available; if forward calendar is empty (common mid-summer), use recent activity + fall framing, and lean on the product screenshots + live Delmar demo links.
-- Include BOTH links exactly once each, with a short label for each:
-  1) Main site (screenshots / product overview)
-  2) Live Delmar Dolphins demo (may still show a fuller schedule than a typical mid-summer week)
-- Sign off as the provided sender name (include "from MySwimDay" in the sign-off if not already in the name).
+- Sign off as the provided sender name (include "from MySwimDay" in the sign-off if not already in the name). Put the sign-off in its own <p>.
+- Use the provided sender context exactly once in touch 1 (peer credibility as a Delmar Dolphins parent). Keep it to one sentence; do not invent kids' names, ages, or group placements.
 - Contact email is ONLY the message To: address (already set when opening Mail). NEVER paste it into the body. NEVER tell them to email their own address, "reply to [their email]", or "email …@… with questions." CTA is simply reply to this email.
-- No emojis. Peer tone to office/admin.`
+- No emojis. Peer tone to office/admin / fellow swim parents.`
 }
 
 function parseRegionBits(regionNotes: string | null): string {
@@ -100,12 +124,14 @@ function userPrompt(
   return `Draft outreach TOUCH ${touch} for this Commit swim team lead.
 
 Sender sign-off (use exactly): ${SENDER_NAME}
+Sender context (peer line — use in touch 1 once; paraphrase lightly only if needed): ${SENDER_CONTEXT}
 
-Links to include (both, once each, with a short plain-text label):
-1) Main site / screenshots: ${SITE_URL}
-   — for product overview and screenshots (useful when live calendars are quiet mid-summer)
-2) Live Delmar demo: ${DEMO_CALENDAR_URL}
-   — clickable week view so they can experience the product live
+REQUIRED HTML links — include both as <a href> anchors (exact URLs):
+1) Main site / screenshots: <a href="${SITE_URL}">Product overview</a>
+2) Live Delmar demo: <a href="${DEMO_CALENDAR_URL}">Live Delmar Dolphins demo</a>
+Example paragraph:
+<p>Product overview: <a href="${SITE_URL}">${SITE_URL}</a><br>
+Live Delmar demo: <a href="${DEMO_CALENDAR_URL}">${DEMO_CALENDAR_URL}</a></p>
 
 Team name: ${lead.team_name ?? 'unknown'}
 Website: ${lead.website_url ?? 'unknown'}
@@ -166,14 +192,19 @@ async function generateOneTouch(
   touch: OutreachTouch,
   schedule: ScheduleContext | null,
   prior: OutreachDrafts,
+  signal?: AbortSignal,
 ): Promise<TouchDraft> {
+  if (signal?.aborted) throw new JobStoppedError()
   const result = await chatJson<LlmDraft>(
     systemForTouch(touch),
     userPrompt(lead, touch, schedule, prior),
+    signal,
   )
-  const body = scrubLeadEmailFromBody(
-    (result.body || result.draft_email || '').trim(),
-    lead.contact_email,
+  const body = ensureHtmlDraftBody(
+    scrubLeadEmailFromBody(
+      (result.body || result.draft_email || '').trim(),
+      lead.contact_email,
+    ),
   )
   const subject =
     (result.subject || '').trim() || defaultSubject(lead, touch)
@@ -185,6 +216,11 @@ async function generateOneTouch(
     hooks,
     generatedAt: new Date().toISOString(),
   }
+}
+
+/** @deprecated use ensureHtmlDraftBody — kept for backfill scripts */
+export function ensureProductLinks(body: string): string {
+  return ensureHtmlDraftBody(body)
 }
 
 /** Model sometimes pastes the To: address into the body — strip that. */
@@ -216,12 +252,19 @@ function scrubLeadEmailFromBody(
 export async function draftOutreachEmail(
   lead: Lead,
   touch: OutreachTouch = 1,
+  signal?: AbortSignal,
 ): Promise<DraftResult> {
   const { schedule, scheduleError } = await loadSchedule(lead)
   let drafts = getOutreachDrafts(lead)
 
   try {
-    const generated = await generateOneTouch(lead, touch, schedule, drafts)
+    const generated = await generateOneTouch(
+      lead,
+      touch,
+      schedule,
+      drafts,
+      signal,
+    )
     drafts = setTouchDraft(drafts, touch, generated)
     saveOutreachDrafts(lead.id, drafts, {
       markDrafted: true,
@@ -254,14 +297,18 @@ export async function draftOutreachSequence(
     touches?: OutreachTouch[]
     force?: boolean
     onProgress?: (line: string) => void
+    signal?: AbortSignal
   } = {},
 ): Promise<SequenceResult> {
   const force = options.force === true
+  const signal = options.signal
   const wanted = (options.touches?.length
     ? options.touches
     : ([1, 2, 3] as OutreachTouch[])
   ).filter((t): t is OutreachTouch => [1, 2, 3].includes(t))
   const progress = options.onProgress
+
+  if (signal?.aborted) throw new JobStoppedError()
 
   const { schedule, scheduleError } = await loadSchedule(lead)
   let drafts = getOutreachDrafts(lead)
@@ -273,6 +320,10 @@ export async function draftOutreachSequence(
   )
 
   for (const touch of wanted) {
+    if (signal?.aborted) {
+      progress?.('  stopped by user')
+      throw new JobStoppedError()
+    }
     const key = String(touch) as '1' | '2' | '3'
     if (!force && drafts[key]?.body?.trim()) {
       progress?.(`  touch ${touch}: skip (already present)`)
@@ -281,7 +332,13 @@ export async function draftOutreachSequence(
     progress?.(`  touch ${touch}: generating…`)
     try {
       // Reload lead-local prior each time so touch 2/3 see freshly saved copy
-      const one = await generateOneTouch(lead, touch, schedule, drafts)
+      const one = await generateOneTouch(
+        lead,
+        touch,
+        schedule,
+        drafts,
+        signal,
+      )
       drafts = setTouchDraft(drafts, touch, one)
       generated.push(touch)
       saveOutreachDrafts(lead.id, drafts, {
@@ -294,6 +351,7 @@ export async function draftOutreachSequence(
         `  touch ${touch}: ok (${one.subject.slice(0, 48)}${one.subject.length > 48 ? '…' : ''})`,
       )
     } catch (err) {
+      if (err instanceof JobStoppedError) throw err
       if (err instanceof OllamaUnavailableError) throw err
       const message = err instanceof Error ? err.message : String(err)
       failed.push({ touch, error: message })
@@ -325,9 +383,9 @@ export async function draftOutreachSequence(
 
 function defaultSubject(lead: Lead, touch: OutreachTouch): string {
   const team = lead.team_name?.trim() || 'your team'
-  if (touch === 2) return `Re: parent calendar idea for ${team}`
+  if (touch === 2) return `Re: email digests for ${team} families`
   if (touch === 3) return `Closing the loop — ${team}`
-  return `Quick idea for ${team} families (Commit calendar)`
+  return `View ${team}'s practice week in seconds`
 }
 
 function normalizeHooks(raw: unknown): string[] {
