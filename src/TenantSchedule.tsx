@@ -16,7 +16,14 @@ import {
   type ScheduleSettings,
 } from './lib/settings'
 import { sharePage } from './lib/share'
-import { getWeekModel, shiftWeek } from './lib/week'
+import {
+  getWeekModel,
+  isCurrentWeek,
+  parseWeekSearch,
+  pathWithWeek,
+  shiftWeek,
+  weekIsoFromAnchor,
+} from './lib/week'
 import { PRODUCT_NAME } from './product'
 import { useTenant } from './tenants/TenantContext'
 import type { CommitEvent, CommitMeet } from './types'
@@ -25,7 +32,10 @@ import './App.css'
 /** Week schedule UI for the active tenant (e.g. /DelmarDolphins). */
 export function TenantSchedule() {
   const tenant = useTenant()
-  const [anchor, setAnchor] = useState(() => new Date())
+  const [anchor, setAnchor] = useState(() =>
+    parseWeekSearch(window.location.search, tenant.defaultTimeZone) ??
+    new Date(),
+  )
   const [events, setEvents] = useState<CommitEvent[]>([])
   const [meets, setMeets] = useState<CommitMeet[]>([])
   const [timeZone, setTimeZone] = useState(tenant.defaultTimeZone)
@@ -46,9 +56,43 @@ export function TenantSchedule() {
   const [isMobile, setIsMobile] = useState(false)
   const [shareFeedback, setShareFeedback] = useState<string | null>(null)
 
+  function weekLocation(next: Date, tz: string): string {
+    const iso = weekIsoFromAnchor(next, tz)
+    return pathWithWeek(
+      window.location.pathname,
+      isCurrentWeek(next, tz) ? null : iso,
+    )
+  }
+
+  function goToWeek(next: Date, historyMode: 'push' | 'replace' = 'push') {
+    setAnchor(next)
+    const dest = weekLocation(next, timeZone)
+    const current = window.location.pathname + window.location.search
+    if (dest === current) return
+    if (historyMode === 'push') window.history.pushState({}, '', dest)
+    else window.history.replaceState({}, '', dest)
+  }
+
   useEffect(() => {
     document.title = `${tenant.displayName} · ${PRODUCT_NAME}`
   }, [tenant])
+
+  useEffect(() => {
+    function onPopState() {
+      setAnchor(
+        parseWeekSearch(window.location.search, timeZone) ?? new Date(),
+      )
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [timeZone])
+
+  useEffect(() => {
+    if (!parseWeekSearch(window.location.search, timeZone)) return
+    const dest = weekLocation(anchor, timeZone)
+    const current = window.location.pathname + window.location.search
+    if (dest !== current) window.history.replaceState({}, '', dest)
+  }, [anchor, timeZone])
 
   useEffect(() => {
     if (!shareFeedback) return
@@ -274,9 +318,9 @@ export function TenantSchedule() {
       <main className="panel">
         <WeekNav
           label={week.label}
-          onPrev={() => setAnchor((d) => shiftWeek(d, -1))}
-          onNext={() => setAnchor((d) => shiftWeek(d, 1))}
-          onToday={() => setAnchor(new Date())}
+          onPrev={() => goToWeek(shiftWeek(anchor, -1))}
+          onNext={() => goToWeek(shiftWeek(anchor, 1))}
+          onToday={() => goToWeek(new Date())}
         />
 
         {loading ? (

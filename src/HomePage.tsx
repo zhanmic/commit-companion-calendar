@@ -5,6 +5,7 @@ import { ShareButton } from './components/ShareButton'
 import { useTheme } from './components/ThemeProvider'
 import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
+import { demoSchedulePath } from './lib/week'
 import {
   PRODUCT_CONTACT_EMAIL,
   PRODUCT_DESCRIPTION,
@@ -57,7 +58,7 @@ export function HomePage() {
               <button
                 type="button"
                 className="landing-cta landing-cta--primary"
-                onClick={() => navigate(demoTenant.path)}
+                onClick={() => navigate(demoSchedulePath(demoTenant.path))}
               >
                 See a live schedule
               </button>

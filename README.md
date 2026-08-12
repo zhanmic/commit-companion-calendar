@@ -14,6 +14,7 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 
 - Live data from `utility.commitswimming.com`
 - Week view (Sunday–Saturday, tenant timezone)
+- Shareable week links (`/DelmarDolphins?week=2026-07-19`)
 - Filter by tenant-defined groups
 - Recurring practices expanded with cancel/override support
 - Optional meets & team events toggle
@@ -27,7 +28,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173/DelmarDolphins](http://localhost:5173/DelmarDolphins).
+Open [http://localhost:5173/DelmarDolphins](http://localhost:5173/DelmarDolphins) for the current week, or [http://localhost:5173/DelmarDolphins?week=2026-07-19](http://localhost:5173/DelmarDolphins?week=2026-07-19) for a specific week. The landing **See a live schedule** button uses that demo week.
 
 ## Build
 

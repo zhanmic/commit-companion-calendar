@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { HomePage } from './HomePage'
 import { NotFoundPage } from './NotFoundPage'
 import { TenantSchedule } from './TenantSchedule'
-import { parsePath, type AppRoute } from './lib/routing'
+import { currentPath, parsePath, type AppRoute } from './lib/routing'
 import { getTenantBySlug } from './tenants'
 import { TenantProvider } from './tenants/TenantContext'
 
@@ -27,8 +27,8 @@ export default function App() {
     if (!tenant) return
     // Canonicalize typo / alias paths (e.g. /DelmaDolphins → /DelmarDolphins).
     if (route.slug.toLowerCase() === tenant.slug.toLowerCase()) return
-    const canonical = `/${tenant.slug}`
-    if (window.location.pathname === canonical) return
+    const canonical = `/${tenant.slug}${window.location.search}`
+    if (currentPath() === canonical) return
     window.history.replaceState({}, '', canonical)
     setRoute(readRoute())
   }, [route])
