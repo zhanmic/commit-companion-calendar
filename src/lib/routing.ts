@@ -19,8 +19,17 @@ export function parsePath(pathname: string): AppRoute {
   return { kind: 'notFound', path: clean }
 }
 
+export function currentPath(): string {
+  return window.location.pathname + window.location.search
+}
+
 export function navigate(path: string): void {
-  if (window.location.pathname === path) return
+  if (currentPath() === path) return
   window.history.pushState({}, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+export function replaceLocation(path: string): void {
+  if (currentPath() === path) return
+  window.history.replaceState({}, '', path)
 }

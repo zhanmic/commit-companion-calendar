@@ -136,3 +136,78 @@ export function isOccurrenceOnDay(
 export function shiftWeek(anchor: Date, deltaWeeks: number) {
   return addDays(anchor, deltaWeeks * 7)
 }
+
+/** Query key for shareable week links, e.g. `/DelmarDolphins?week=2026-07-19`. */
+export const WEEK_QUERY_PARAM = 'week'
+
+/**
+ * Demo week shown from the landing “See a live schedule” CTA
+ * (Sunday 19 Jul 2026 — a full practice week).
+ */
+export const DEMO_WEEK_ISO = '2026-07-19'
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+export function isoDateFromParts(
+  year: number,
+  month: number,
+  date: number,
+): string {
+  return `${year}-${pad2(month + 1)}-${pad2(date)}`
+}
+
+/** Parse `YYYY-MM-DD` into a local-midnight instant in `timeZone`. */
+export function dateFromIso(
+  iso: string,
+  timeZone: string = TEAM_TZ,
+): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim())
+  if (!m) return null
+  const year = Number(m[1])
+  const month = Number(m[2]) - 1
+  const date = Number(m[3])
+  if (month < 0 || month > 11 || date < 1 || date > 31) return null
+  return atLocalMidnight(year, month, date, timeZone)
+}
+
+/** Sunday of the week containing `anchor`, as `YYYY-MM-DD`. */
+export function weekIsoFromAnchor(
+  anchor: Date,
+  timeZone: string = TEAM_TZ,
+): string {
+  const day = getWeekModel(anchor, timeZone).days[0]
+  return isoDateFromParts(day.year, day.month, day.date)
+}
+
+export function isCurrentWeek(
+  anchor: Date,
+  timeZone: string = TEAM_TZ,
+  now: Date = new Date(),
+): boolean {
+  return weekIsoFromAnchor(anchor, timeZone) === weekIsoFromAnchor(now, timeZone)
+}
+
+/** Read `?week=YYYY-MM-DD` from a query string. Any day in the week is accepted. */
+export function parseWeekSearch(
+  search: string,
+  timeZone: string = TEAM_TZ,
+): Date | null {
+  const raw = search.startsWith('?') ? search.slice(1) : search
+  const iso = new URLSearchParams(raw).get(WEEK_QUERY_PARAM)
+  if (!iso) return null
+  return dateFromIso(iso, timeZone)
+}
+
+/** Path + optional week query. Omits `?week=` when `weekIso` is null. */
+export function pathWithWeek(pathname: string, weekIso: string | null): string {
+  const path = pathname || '/'
+  if (!weekIso) return path
+  return `${path}?${WEEK_QUERY_PARAM}=${weekIso}`
+}
+
+/** Landing / outreach demo calendar path for a tenant. */
+export function demoSchedulePath(tenantPath: string): string {
+  return pathWithWeek(tenantPath, DEMO_WEEK_ISO)
+}
