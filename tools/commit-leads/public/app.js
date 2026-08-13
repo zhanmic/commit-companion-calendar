@@ -525,6 +525,7 @@ async function showDetail(id, opts = {}) {
         <button type="button" id="btn-gen-draft" data-tip="Regenerate the selected touch only.">Regenerate this touch</button>
         <button type="button" class="danger" id="btn-stop-outreach" data-tip="Stop draft generation (same as Stop drafts)." disabled>Stop</button>
         <button type="button" class="ghost" id="btn-save-draft" data-tip="Save subject/body edits for this touch.">Save edits</button>
+        <button type="button" id="btn-copy-draft" data-tip="Copy this touch (HTML for Mail/Gmail paste, plus plain text).">Copy draft</button>
         <button type="button" id="btn-open-mail" data-tip="Open this touch in Mac Mail.app.">Open in Mail</button>
         <button type="button" id="btn-open-mail-sent" data-tip="Open Mail and mark contacted (use for touch 1 send).">Open Mail + contacted</button>
         <button type="button" class="ghost" id="btn-mark-contacted" data-tip="Set status to contacted without opening Mail.">Mark contacted</button>
@@ -589,6 +590,31 @@ function htmlToPlainText(html) {
     .replace(/&quot;/g, '"')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+}
+
+async function copyDraftToClipboard(subject, body) {
+  const html = (body || '').trim()
+  const plainBody = looksLikeHtml(html) ? htmlToPlainText(html) : html
+  const plain = [subject?.trim() ? `Subject: ${subject.trim()}` : '', plainBody]
+    .filter(Boolean)
+    .join('\n\n')
+  if (!plain && !html) throw new Error('Nothing to copy')
+
+  if (typeof ClipboardItem === 'function' && navigator.clipboard?.write) {
+    const htmlBlob = new Blob(
+      [html || `<p>${escapeHtml(plainBody).replace(/\n/g, '<br>')}</p>`],
+      { type: 'text/html' },
+    )
+    const plainBlob = new Blob([plain], { type: 'text/plain' })
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': Promise.resolve(htmlBlob),
+        'text/plain': Promise.resolve(plainBlob),
+      }),
+    ])
+    return
+  }
+  await navigator.clipboard.writeText(plain)
 }
 
 function updateMailtoFallback(to, subject, body) {
@@ -801,6 +827,20 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
       await refresh()
     } catch (err) {
       setOutreachStatus(err.message || String(err))
+    }
+  })
+
+  document.getElementById('btn-copy-draft')?.addEventListener('click', async () => {
+    const { subject, body } = readDraft()
+    if (!body) {
+      setOutreachStatus('Generate or paste a draft body first.')
+      return
+    }
+    try {
+      await copyDraftToClipboard(subject, body)
+      setOutreachStatus(`Copied touch ${touch} (HTML + plain, with subject).`)
+    } catch (err) {
+      setOutreachStatus(err.message || 'Could not copy')
     }
   })
 
