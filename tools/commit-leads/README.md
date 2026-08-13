@@ -61,7 +61,7 @@ Fingerprint is what filters for **Commit** users among USA Swimming clubs.
 
 1. Get leads to **researched** (Run queue / process one).
 2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes (generate only the emails you pick). Status becomes **drafted** when all three exist. Or regenerate one lead / one touch.
-3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Open in Mail**.
+3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Copy draft** (HTML + plain) or **Open in Mail**.
 4. Mail.app opens an HTML draft (mailto fallback is plain text only). Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). Mark **contacted** when you send.
 5. Later: send touch 2 / 3 from the same lead; status can stay `contacted`.
 
