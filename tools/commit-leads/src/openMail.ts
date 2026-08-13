@@ -99,18 +99,3 @@ end tell
     await rmdir(dir).catch(() => {})
   }
 }
-
-/** Browser-safe mailto URL (plain text only; HTML is stripped). */
-export function buildMailtoUrl(input: OpenMailInput): string | null {
-  const to = (input.to || '').trim()
-  if (!to || !to.includes('@')) return null
-  const params = new URLSearchParams()
-  if (input.subject) params.set('subject', input.subject)
-  const plain = looksLikeHtml(input.body)
-    ? htmlToPlainText(input.body)
-    : input.body
-  if (plain) params.set('body', plain)
-  const url = `mailto:${to}?${params.toString()}`
-  if (url.length > 1800) return null
-  return url
-}

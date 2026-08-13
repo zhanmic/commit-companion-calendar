@@ -24,7 +24,7 @@ import {
 } from './draftEmail.js'
 import { saveOutreachDrafts, setTouchDraft } from './outreachDrafts.js'
 import { ensureHtmlDraftBody } from './emailHtml.js'
-import { buildMailtoUrl, openMailDraft } from './openMail.js'
+import { openMailDraft } from './openMail.js'
 import { OllamaUnavailableError } from './ollama.js'
 import {
   EXPORT_PATH,
@@ -397,13 +397,6 @@ async function handleApi(
               }
             : null,
           lead: getLead(id),
-          mailto: t1
-            ? buildMailtoUrl({
-                to: lead.contact_email,
-                subject: t1.subject,
-                body: t1.body,
-              })
-            : null,
           busy: { discover: discoverBusy, process: false },
         })
       } else {
@@ -417,11 +410,6 @@ async function handleApi(
           ok: true,
           draft,
           lead: getLead(id),
-          mailto: buildMailtoUrl({
-            to: lead.contact_email,
-            subject: draft.subject,
-            body: draft.body,
-          }),
           busy: { discover: discoverBusy, process: false },
         })
       }
@@ -556,11 +544,6 @@ async function handleApi(
       mail,
       markedContacted,
       touch,
-      mailto: buildMailtoUrl({
-        to: lead.contact_email,
-        subject,
-        body: emailBody,
-      }),
       lead: getLead(id),
     })
     return true
