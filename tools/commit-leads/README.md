@@ -60,9 +60,9 @@ Fingerprint is what filters for **Commit** users among USA Swimming clubs.
 ### Outreach (HTML)
 
 1. Get leads to **researched** (Run queue / process one).
-2. **Generate drafts** (bulk) — uses **Draft batch size** (separate from Process batch size). Each lead gets touches 1→2→3 as **HTML** → **drafted**. Or regenerate one lead / one touch.
+2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes (generate only the emails you pick). Status becomes **drafted** when all three exist. Or regenerate one lead / one touch.
 3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Open in Mail**.
-4. Mail.app opens an HTML draft (mailto fallback is plain text only). Mark **contacted** when you send.
+4. Mail.app opens an HTML draft (mailto fallback is plain text only). Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). Mark **contacted** when you send.
 5. Later: send touch 2 / 3 from the same lead; status can stay `contacted`.
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
@@ -77,7 +77,34 @@ npm run ui
 
 Open [http://127.0.0.1:3847](http://127.0.0.1:3847). Bind defaults to `0.0.0.0`; on start the server prints real LAN IPv4 URLs for a phone on the same Wi‑Fi. Discover and Process can run together; the leads table refreshes during batches.
 
-**Open in Mail** uses macOS Mail.app via `osascript` on the machine running the server (sets HTML content when possible).
+**Open in Mail** uses macOS Mail.app via `osascript` on the machine running the server (sets HTML content when possible). The tool does **not** send mail — you send the draft yourself.
+
+## Send as myswimday.com
+
+Outreach From should be **`sales@mail.myswimday.com`**. That address already receives (Resend inbound → Gmail). Apex `sales@myswimday.com` can *send* from a verified Resend domain, but Gmail’s “confirm this address” mail will not arrive unless apex MX/forwarding exists. Digests stay on `schedule@myswimday.com`.
+
+Path: **Mail.app → your Gmail → Resend SMTP → recipient**. Do not add a Google account for username `resend` (Mail will try `resend@gmail.com`; that is not an account).
+
+### Gmail (web) — Send mail as
+
+1. [Resend](https://resend.com/domains): `myswimday.com` verified for sending (same domain as digests). No extra “mailbox” to create.
+2. Gmail → Settings → **See all settings** → **Accounts and Import** → **Send mail as** → add `sales@mail.myswimday.com`.
+3. SMTP: host `smtp.resend.com`, port `465` (SSL), username `resend`, password = Resend API key. Use **Send through smtp.resend.com**, not “Send through Gmail”.
+4. Click the confirmation link in Gmail (it arrives because inbound is on `mail`).
+
+Resend free tier is $0 (3,000 emails/month, 100/day). Sends and inbound share that quota with digests.
+
+### Mail.app (Mac) — From on drafts
+
+1. Mail → **Settings** → **Accounts** → **+** → **Google** → sign in as **your real Gmail** (the one with Send mail as).
+2. Same Gmail account → **Email Address** → dropdown **Edit Email Addresses…** (or comma-separate) → add `sales@mail.myswimday.com`.
+3. **Composing** → **Send new messages from:** that sales address.
+4. Leads UI → **Open in Mail** → confirm **From:** is sales@. Leave outgoing as Gmail (`smtp.gmail.com`); Gmail relays to Resend.
+
+### Tests
+
+- Send to a **Gmail** address first. That confirms From + SMTP.
+- `@icloud.com` / `@me.com` often bounce (`554 5.7.1 HM08` local policy) on a new domain. That is Apple rejecting the message, not a Mail.app misconfig. Warm the domain before relying on iCloud inboxes.
 
 ## CLI
 

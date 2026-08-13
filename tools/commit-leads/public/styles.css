@@ -161,6 +161,28 @@ body {
   width: auto;
 }
 
+.draft-touches {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem 0.2rem;
+  margin: 0 0 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.85rem;
+}
+
+.draft-touches legend {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 0 0.25rem;
+}
+
+.draft-touches label.check {
+  margin: 0.15rem 0 0.35rem;
+}
+
 .step-row-tight {
   margin-top: 0.25rem;
   margin-bottom: 0;
