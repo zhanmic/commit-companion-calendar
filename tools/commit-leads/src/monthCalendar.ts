@@ -34,6 +34,8 @@ export interface MonthTeamEvent {
 export interface MonthCalendarSummary {
   window: MonthWindow
   timeZone: string
+  /** Local calendar date this summary was built for (YYYY-MM-DD). */
+  asOfYmd: string
   rawEventCount: number
   rawMeetCount: number
   practiceOccurrences: number
@@ -66,6 +68,40 @@ function parseDate(value: unknown): Date | null {
 
 function ymd(d: Date): string {
   return d.toISOString().slice(0, 10)
+}
+
+/** YYYY-MM-DD in an IANA timezone (falls back to UTC). */
+export function ymdInZone(d: Date, timeZone?: string | null): string {
+  const tz = timeZone?.trim()
+  if (!tz || tz === 'unknown') return ymd(d)
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d)
+  } catch {
+    return ymd(d)
+  }
+}
+
+export function formatHumanDate(
+  d: Date = new Date(),
+  timeZone?: string | null,
+): string {
+  const tz = timeZone?.trim() || 'America/New_York'
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(d)
+  } catch {
+    return ymd(d)
+  }
 }
 
 function formatTimeUtc(d: Date): string {
@@ -342,10 +378,22 @@ function buildPracticePatterns(practices: ExpandedOcc[]): PracticePattern[] {
     .slice(0, 10)
 }
 
+function splitByAsOf<T extends { when: string }>(
+  items: T[],
+  asOfYmd: string,
+): { past: T[]; future: T[] } {
+  const past = items.filter((i) => i.when < asOfYmd)
+  const future = items.filter((i) => i.when > asOfYmd)
+  return { past, future }
+}
+
 function pitchAngles(
   summary: Omit<MonthCalendarSummary, 'pitchAngles'>,
-  futureMeetCount: number,
 ): string[] {
+  const { past: pastMeets, future: futureMeets } = splitByAsOf(
+    summary.upcomingMeets,
+    summary.asOfYmd,
+  )
   const angles: string[] = []
   if (summary.practiceOccurrences >= 8) {
     angles.push(
@@ -362,13 +410,19 @@ function pitchAngles(
       `${summary.cancellationCount} cancel/break signal(s) in-window — good pitch for morning email digests catching overnight Commit changes.`,
     )
   }
-  if (summary.upcomingMeets.length > 0) {
-    const newest = summary.upcomingMeets[summary.upcomingMeets.length - 1]
+  if (futureMeets.length > 0) {
+    const next = futureMeets[0]
     angles.push(
-      `Recent/nearby meet activity (e.g. ${newest.title} on ${newest.when}) — good proof they live in Commit.`,
+      `Upcoming meet still ahead: ${next.title} on ${next.when} — only this kind of date may be called upcoming.`,
     )
   }
-  if (futureMeetCount === 0 && summary.practiceOccurrences > 0) {
+  if (pastMeets.length > 0) {
+    const newest = pastMeets[pastMeets.length - 1]
+    angles.push(
+      `Recent meet already happened: ${newest.title} on ${newest.when} — cite in past tense, never as upcoming.`,
+    )
+  }
+  if (futureMeets.length === 0 && summary.practiceOccurrences > 0) {
     angles.push(
       'Forward calendar looks quiet (season transition) — pitch as ready for fall short-course / registration.',
     )
@@ -395,6 +449,8 @@ export function buildMonthCalendarSummary(
   opts?: { timeZone?: string | null; now?: Date },
 ): MonthCalendarSummary {
   const now = opts?.now ?? new Date()
+  const tz = opts?.timeZone?.trim() || 'America/New_York'
+  const asOfYmd = ymdInZone(now, tz)
   const rangeStart = new Date(now.getTime())
   rangeStart.setUTCHours(0, 0, 0, 0)
   rangeStart.setUTCDate(rangeStart.getUTCDate() - 30)
@@ -423,14 +479,14 @@ export function buildMonthCalendarSummary(
   const practicePatterns = buildPracticePatterns(practices)
   const upcomingMeets = meetInRange(meets, rangeStart, rangeEnd)
 
-  const futureMeetCount = upcomingMeets.filter((m) => m.when >= ymd(now)).length
   const partial: Omit<MonthCalendarSummary, 'pitchAngles'> = {
     window: {
       startIso: rangeStart.toISOString(),
       endIso: rangeEnd.toISOString(),
       label: `${ymd(rangeStart)} → ${ymd(new Date(rangeEnd.getTime() - 1))} (past 30d + next 14d)`,
     },
-    timeZone: opts?.timeZone?.trim() || 'unknown',
+    timeZone: tz,
+    asOfYmd,
     rawEventCount: events.length,
     rawMeetCount: meets.length,
     practiceOccurrences: practices.length,
@@ -441,7 +497,7 @@ export function buildMonthCalendarSummary(
     teamEvents,
   }
 
-  return { ...partial, pitchAngles: pitchAngles(partial, futureMeetCount) }
+  return { ...partial, pitchAngles: pitchAngles(partial) }
 }
 
 export function formatMonthCalendarForPrompt(
@@ -451,7 +507,19 @@ export function formatMonthCalendarForPrompt(
     return 'Month calendar: unavailable (no superTeamId or fetch failed).'
   }
 
+  const asOf = summary.asOfYmd
+  const { past: pastMeets, future: futureMeets } = splitByAsOf(
+    summary.upcomingMeets,
+    asOf,
+  )
+  const { past: pastEvents, future: futureEvents } = splitByAsOf(
+    summary.teamEvents,
+    asOf,
+  )
+
   const lines = [
+    `TODAY (ground truth for past vs future): ${asOf} in ${summary.timeZone}.`,
+    `A date < ${asOf} is PAST (recent). A date > ${asOf} is FUTURE (upcoming). Do not call past dates upcoming.`,
     `Commit calendar review window: ${summary.window.label}`,
     `Timezone (team): ${summary.timeZone}`,
     `Published templates: ${summary.rawEventCount} events, ${summary.rawMeetCount} meets (full dump; window below is expanded).`,
@@ -469,24 +537,30 @@ export function formatMonthCalendarForPrompt(
     }
   }
 
-  if (summary.upcomingMeets.length) {
-    lines.push('Meets in window:')
-    for (const m of summary.upcomingMeets.slice(0, 6)) {
-      lines.push(
-        `  • ${m.title} (${m.when})${m.location ? ` @ ${m.location}` : ''}${
-          m.course ? ` [${m.course}]` : ''
-        }`,
-      )
-    }
+  const meetLine = (m: MonthMeet) =>
+    `  • ${m.title} (${m.when})${m.location ? ` @ ${m.location}` : ''}${
+      m.course ? ` [${m.course}]` : ''
+    }`
+
+  if (pastMeets.length) {
+    lines.push('PAST meets (already happened — past tense only):')
+    for (const m of pastMeets.slice(-6)) lines.push(meetLine(m))
+  }
+  if (futureMeets.length) {
+    lines.push('UPCOMING meets (still in the future):')
+    for (const m of futureMeets.slice(0, 6)) lines.push(meetLine(m))
   }
 
-  if (summary.teamEvents.length) {
-    lines.push('Team events / notices in window:')
-    for (const e of summary.teamEvents.slice(0, 5)) {
-      lines.push(
-        `  • ${e.name} (${e.when})${e.description ? ` — ${e.description}` : ''}`,
-      )
-    }
+  const eventLine = (e: MonthTeamEvent) =>
+    `  • ${e.name} (${e.when})${e.description ? ` — ${e.description}` : ''}`
+
+  if (pastEvents.length) {
+    lines.push('PAST team events / notices:')
+    for (const e of pastEvents.slice(-5)) lines.push(eventLine(e))
+  }
+  if (futureEvents.length) {
+    lines.push('UPCOMING team events / notices:')
+    for (const e of futureEvents.slice(0, 5)) lines.push(eventLine(e))
   }
 
   return lines.join('\n')

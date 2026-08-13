@@ -507,7 +507,10 @@ async function showDetail(id, opts = {}) {
         <input id="draft-subject" type="text" value="" placeholder="Email subject" />
       </label>
       <div class="field draft-body-field">
-        <span>Body</span>
+        <div class="draft-body-head">
+          <span>Body</span>
+          <button type="button" class="ghost" id="btn-copy-draft" data-tip="Copy this touch (HTML for Mail/Gmail paste, plus plain text).">Copy draft</button>
+        </div>
         <div class="draft-body-split">
           <label class="draft-pane">
             <span class="draft-pane-label">HTML</span>
@@ -525,17 +528,11 @@ async function showDetail(id, opts = {}) {
         <button type="button" id="btn-gen-draft" data-tip="Regenerate the selected touch only.">Regenerate this touch</button>
         <button type="button" class="danger" id="btn-stop-outreach" data-tip="Stop draft generation (same as Stop drafts)." disabled>Stop</button>
         <button type="button" class="ghost" id="btn-save-draft" data-tip="Save subject/body edits for this touch.">Save edits</button>
-        <button type="button" id="btn-copy-draft" data-tip="Copy this touch (HTML for Mail/Gmail paste, plus plain text).">Copy draft</button>
         <button type="button" id="btn-open-mail" data-tip="Open this touch in Mac Mail.app.">Open in Mail</button>
         <button type="button" id="btn-open-mail-sent" data-tip="Open Mail and mark contacted (use for touch 1 send).">Open Mail + contacted</button>
         <button type="button" class="ghost" id="btn-mark-contacted" data-tip="Set status to contacted without opening Mail.">Mark contacted</button>
       </div>
       <p id="outreach-status" class="hint outreach-status" aria-live="polite"></p>
-      <p class="hint">
-        Fallback:
-        <a id="mailto-fallback" href="#">mailto link</a>
-        (short drafts only).
-      </p>
     </section>
   `
   wireOutreach(id, lead, drafts, initialTouch)
@@ -617,28 +614,6 @@ async function copyDraftToClipboard(subject, body) {
   await navigator.clipboard.writeText(plain)
 }
 
-function updateMailtoFallback(to, subject, body) {
-  const a = document.getElementById('mailto-fallback')
-  if (!a) return
-  if (!to || !to.includes('@')) {
-    a.removeAttribute('href')
-    a.textContent = 'no contact email'
-    return
-  }
-  const plain = looksLikeHtml(body) ? htmlToPlainText(body) : body
-  const params = new URLSearchParams()
-  if (subject) params.set('subject', subject)
-  if (plain) params.set('body', plain)
-  const url = `mailto:${to}?${params.toString()}`
-  if (url.length > 1800) {
-    a.removeAttribute('href')
-    a.textContent = 'draft too long for mailto — use Open in Mail'
-    return
-  }
-  a.href = url
-  a.textContent = `mailto:${to}`
-}
-
 function setOutreachStatus(text) {
   const el = document.getElementById('outreach-status')
   if (el) el.textContent = text || ''
@@ -691,7 +666,6 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     if (bodyElDraft) bodyElDraft.value = d.body || ''
     syncPreview()
     renderHooks(d.hooks || [])
-    updateMailtoFallback(lead.contact_email, d.subject || '', d.body || '')
     if (metaEl) {
       metaEl.textContent = `Touches ready: ${touchReadyLabel(drafts)} · editing touch ${t}${
         d.generatedAt ? ` · generated ${d.generatedAt.slice(0, 16).replace('T', ' ')}` : ''
@@ -821,7 +795,6 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
         body: JSON.stringify({ touch, subject, body }),
       })
       drafts = res.drafts || drafts
-      updateMailtoFallback(lead.contact_email, subject, body)
       setOutreachStatus(`Saved touch ${touch} edits.`)
       showTouch(touch)
       await refresh()
@@ -861,13 +834,6 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, body, touch, markContacted }),
       })
-      if (res.mailto) {
-        const a = document.getElementById('mailto-fallback')
-        if (a) {
-          a.href = res.mailto
-          a.textContent = `mailto:${lead.contact_email || 'recipient'}`
-        }
-      }
       setOutreachStatus(
         (res.mail?.message || (res.ok ? 'Opened Mail' : 'Mail open failed')) +
           (res.markedContacted ? ' · status → contacted' : ''),
@@ -897,13 +863,7 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     if (selectedId === id) await showDetail(id, { keepOpen: true, touch })
   })
 
-  const syncMailto = () => {
-    const { subject, body } = readDraft()
-    updateMailtoFallback(lead.contact_email, subject, body)
-  }
-  subjectEl?.addEventListener('input', syncMailto)
   bodyElDraft?.addEventListener('input', () => {
-    syncMailto()
     syncPreview()
   })
 }

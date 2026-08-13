@@ -18,6 +18,10 @@ import {
   type TouchDraft,
 } from './outreachDrafts.js'
 import {
+  formatHumanDate,
+  ymdInZone,
+} from './monthCalendar.js'
+import {
   formatScheduleForPrompt,
   loadScheduleContext,
   type ScheduleContext,
@@ -54,7 +58,7 @@ const TOUCH_BRIEF: Record<OutreachTouch, string> = {
   1: `TOUCH 1 — first outreach (Day 0).
 Introduce My Swim Day in 1–2 sentences using the product facts below (do not paste a feature list).
 Early in the email, include ONE short peer line from sender context (Delmar Dolphins parent of four)
-to relate — not a biography. Use 1–2 real calendar facts.
+to relate — not a biography. Use 1–2 real calendar facts with correct tense vs TODAY (past = already happened; future = still ahead).
 Soft CTA for a free pilot / quick look at their Commit schedule. Do not mention prior emails.`,
   2: `TOUCH 2 — follow-up (~5–7 days after touch 1 if no reply).
 Assume they may have seen touch 1. New angle — not "just bumping". Prefer one of:
@@ -79,7 +83,9 @@ Product facts (match current homepage — pick 1–2 per email, do not dump all)
 - Built for Commit teams: coaches update Commit once; admins share one live link; parents open the week or subscribe.
 - Not affiliated with Commit Swimming — do not claim partnership/official status.
 
-You will receive an expanded Commit calendar review (past ~30 days + next ~14 days).
+You will receive TODAY's date plus an expanded Commit calendar review (past ~30 days + next ~14 days).
+Dates before today are PAST. Dates after today are FUTURE. Never call a past meet, banquet, or championship "upcoming".
+
 Study that window, then write ONE email for the specified touch in a 3-email sequence.
 
 ${TOUCH_BRIEF[touch]}
@@ -98,7 +104,8 @@ HTML body rules:
 Other rules:
 - Open with the team name. Do NOT invent a person's first name from an email local-part.
 - Do not invent contacts, meets, or practice groups.
-- Use real calendar details when available; if forward calendar is empty (common mid-summer), use recent activity + fall framing, and lean on the product screenshots + live Delmar demo links.
+- Use real calendar details when available; if the forward (after today) calendar is empty (common mid-summer), use recent PAST activity in past tense + fall framing, and lean on the product screenshots + live Delmar demo links.
+- NEVER describe an event on or before TODAY as upcoming, coming up, or "your team's upcoming X".
 - Sign off as the provided sender name (include "from MySwimDay" in the sign-off if not already in the name). Put the sign-off in its own <p>.
 - Use the provided sender context exactly once in touch 1 (peer credibility as a Delmar Dolphins parent). Keep it to one sentence; do not invent kids' names, ages, or group placements.
 - Contact email is ONLY the message To: address (already set when opening Mail). NEVER paste it into the body. NEVER tell them to email their own address, "reply to [their email]", or "email …@… with questions." CTA is simply reply to this email.
@@ -116,12 +123,19 @@ function userPrompt(
   schedule: ScheduleContext | null,
   prior: OutreachDrafts,
 ): string {
+  const tz = lead.timezone?.trim() || 'America/New_York'
+  const now = new Date()
+  const todayYmd = ymdInZone(now, tz)
+  const todayHuman = formatHumanDate(now, tz)
   const priorNote =
     touch === 1
       ? 'No prior emails in this sequence yet.'
       : `Prior touches already drafted (for continuity — do not copy them):\n${summarizePrior(prior, touch)}`
 
   return `Draft outreach TOUCH ${touch} for this Commit swim team lead.
+
+TODAY IS ${todayHuman} (${todayYmd}) in timezone ${tz}.
+This is the current date. Compare every meet/event date to it before writing.
 
 Sender sign-off (use exactly): ${SENDER_NAME}
 Sender context (peer line — use in touch 1 once; paraphrase lightly only if needed): ${SENDER_CONTEXT}
