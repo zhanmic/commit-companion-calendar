@@ -82,6 +82,10 @@ Health check: `GET https://myswimday.com/api/inbound` (shows which env vars are 
 
 By default any address `@mail.myswimday.com` is forwarded. Optional: `CONTACT_INBOUND_ADDRESSES` / `CONTACT_INBOUND_DOMAIN`.
 
+### Send outreach as `sales@mail.myswimday.com`
+
+The leads tool does not send. Configure Gmail **Send mail as** that address via Resend SMTP, then pick it as **From** in Mac Mail. Details: [`tools/commit-leads/README.md`](tools/commit-leads/README.md#send-as-myswimdaycom). Prefer `sales@mail.myswimday.com` over apex `sales@myswimday.com` so replies and Gmail’s confirm mail can be received.
+
 ## Email digests
 
 Subscribers pick **daily** or **weekly**, plus tenant-specific group filters (Delmar: Sr / Jr / Jr Prep / DEVO / …). Empty or all groups = full schedule. Meets and team events are optional.

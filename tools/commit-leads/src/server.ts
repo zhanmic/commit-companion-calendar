@@ -246,11 +246,14 @@ async function handleRun(
           log,
         )
       } else {
-        log('Starting draft queue (researched → 3-touch drafts → drafted)…')
+        log(
+          `Starting draft queue (touches [${(body.touches ?? [1, 2, 3]).join(', ')}])…`,
+        )
         await runDraftPending(
           {
             limit: body.limit,
             forceReprocess: body.forceReprocess,
+            touches: body.touches,
             signal,
           },
           log,

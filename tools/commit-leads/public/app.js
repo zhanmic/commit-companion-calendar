@@ -1011,6 +1011,13 @@ document.getElementById('btn-process-one')?.addEventListener('click', () => {
 })
 
 document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
+  const touches = [1, 2, 3].filter(
+    (t) => document.getElementById(`draft-touch-q-${t}`)?.checked === true,
+  )
+  if (!touches.length) {
+    appendLog(logProcess, 'Pick at least one draft email (1, 2, or 3)')
+    return
+  }
   runAction(
     'draft',
     {
@@ -1018,6 +1025,7 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
       limit: Number(document.getElementById('draft-limit')?.value || 10),
       forceReprocess:
         document.getElementById('draft-force-queue')?.checked === true,
+      touches,
     },
     logProcess,
   )

@@ -27,8 +27,8 @@ import { exportCsv } from './export.js'
 import { fingerprintSite } from './fingerprintSite.js'
 import { draftOutreachSequence } from './draftEmail.js'
 import {
-  allTouchesReady,
   getOutreachDrafts,
+  hasTouch,
   missingTouches,
 } from './outreachDrafts.js'
 import { scoreLead } from './score.js'
@@ -537,10 +537,15 @@ export function needsScore(lead: Lead, force = false): boolean {
 }
 
 /**
- * Researched (or force-drafted) Commit leads ready for 3-touch outreach copy.
+ * Researched (or force-drafted) Commit leads ready for outreach copy.
  * researched = enrich done; drafted = all 3 touches present.
+ * `touches` limits “pending” to leads missing at least one of those emails.
  */
-export function needsDraft(lead: Lead, force = false): boolean {
+export function needsDraft(
+  lead: Lead,
+  force = false,
+  touches?: Array<1 | 2 | 3>,
+): boolean {
   if (!lead.super_team_id || !lead.contact_email) return false
   if (lead.status === 'disqualified' || lead.status === 'lost') return false
   if (
@@ -551,7 +556,18 @@ export function needsDraft(lead: Lead, force = false): boolean {
     return false
   }
   if (force) return true
-  return !allTouchesReady(getOutreachDrafts(lead))
+  const wanted = normalizeDraftTouches(touches)
+  const drafts = getOutreachDrafts(lead)
+  return wanted.some((t) => !hasTouch(drafts, t))
+}
+
+function normalizeDraftTouches(
+  touches?: Array<1 | 2 | 3>,
+): Array<1 | 2 | 3> {
+  const wanted = (touches ?? []).filter((t): t is 1 | 2 | 3 =>
+    t === 1 || t === 2 || t === 3,
+  )
+  return wanted.length ? [...new Set(wanted)].sort() : [1, 2, 3]
 }
 
 async function applyFingerprint(
@@ -730,13 +746,14 @@ export async function runScore(
 }
 
 /**
- * Bulk-generate 3-touch outreach drafts for researched leads missing copy.
+ * Bulk-generate outreach drafts for researched leads missing the selected touches.
  * Sets status → drafted when all three touches exist.
  */
 export async function runDraftPending(
   options: {
     limit?: number
     forceReprocess?: boolean
+    touches?: Array<1 | 2 | 3>
     signal?: AbortSignal
   } = {},
   log: LogFn = console.log,
@@ -744,12 +761,13 @@ export async function runDraftPending(
   const force = options.forceReprocess === true
   const limit = Math.max(1, Math.min(options.limit ?? 25, 1000))
   const signal = options.signal
+  const wanted = normalizeDraftTouches(options.touches)
   const batch = listLeads()
-    .filter((l) => needsDraft(l, force))
+    .filter((l) => needsDraft(l, force, wanted))
     .slice(0, limit)
 
   log(
-    `Draft queue: ${batch.length} lead(s) (limit=${limit}, force=${force}). Each gets touches 1→2→3 from Commit calendar + Ollama.`,
+    `Draft queue: ${batch.length} lead(s) (limit=${limit}, force=${force}, touches=[${wanted.join(', ')}]).`,
   )
   if (batch.length === 0) {
     log('Nothing pending — filter status researched (or force drafted).')
@@ -760,13 +778,16 @@ export async function runDraftPending(
     for (let i = 0; i < batch.length; i++) {
       throwIfStopped(signal)
       const lead = batch[i]
-      const missing = missingTouches(getOutreachDrafts(lead))
+      const missing = missingTouches(getOutreachDrafts(lead)).filter((t) =>
+        wanted.includes(t),
+      )
+      const touches = force ? wanted : missing.length ? missing : wanted
       log(
-        `#${lead.id}: draft ${lead.team_name ?? lead.super_team_id} (${i + 1}/${batch.length}) missing=[${missing.join(',') || 'none — regenerating all'}]`,
+        `#${lead.id}: draft ${lead.team_name ?? lead.super_team_id} (${i + 1}/${batch.length}) touches=[${touches.join(',')}] missing=[${missing.join(',') || 'none'}]`,
       )
       try {
         const result = await draftOutreachSequence(lead, {
-          touches: force ? [1, 2, 3] : missing.length ? missing : [1, 2, 3],
+          touches,
           force,
           onProgress: log,
           signal,
