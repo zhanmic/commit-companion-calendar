@@ -310,9 +310,7 @@ export function TenantSchedule() {
             <ThemeToggle />
           </div>
         </div>
-        <p className="hero__sub">
-          Weekly view by group — powered by the live Commit calendar API.
-        </p>
+        <p className="hero__sub">Weekly view by group.</p>
       </header>
 
       <main className="panel">
