@@ -30,6 +30,12 @@ interface Props {
 
 type SessionKind = 'practice' | 'meet' | 'event'
 
+type OpenDetail = {
+  title: string
+  subtitle?: string
+  occurrences: Occurrence[]
+}
+
 function sessionKind(occ: Occurrence): SessionKind {
   if (occ.label === 'meet') return 'meet'
   if (occ.label === 'event') return 'event'
@@ -55,6 +61,16 @@ function groupOccurrencesByDay(week: WeekModel, occurrences: Occurrence[]) {
     .filter((group) => group.occurrences.length > 0)
 }
 
+function activateOnKey(
+  event: KeyboardEvent,
+  action: () => void,
+) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    action()
+  }
+}
+
 export function WeekSchedule({
   week,
   occurrences,
@@ -62,7 +78,7 @@ export function WeekSchedule({
   fitMode = false,
 }: Props) {
   const tenant = useTenant()
-  const [openDayKey, setOpenDayKey] = useState<string | null>(null)
+  const [openDetail, setOpenDetail] = useState<OpenDetail | null>(null)
 
   function sessionAccent(occ: Occurrence): string {
     const kind = sessionKind(occ)
@@ -78,32 +94,38 @@ export function WeekSchedule({
     return practiceGroupLabel(occ.subTeams, selectedGroups)
   }
 
+  function openDayDetail(
+    heading: ReturnType<typeof dayHeading>,
+    dayOccs: Occurrence[],
+  ) {
+    setOpenDetail({
+      title: `${heading.weekday}, ${heading.date}`,
+      subtitle: `${dayOccs.length} session${dayOccs.length === 1 ? '' : 's'}`,
+      occurrences: dayOccs,
+    })
+  }
+
+  function openSessionDetail(
+    heading: ReturnType<typeof dayHeading>,
+    occ: Occurrence,
+  ) {
+    const kind = sessionKind(occ)
+    setOpenDetail({
+      title: `${heading.weekday}, ${heading.date}`,
+      subtitle: sessionKindTitle(kind),
+      occurrences: [occ],
+    })
+  }
+
   const dayGroups = groupOccurrencesByDay(week, occurrences)
-  const openGroup =
-    openDayKey == null
-      ? null
-      : dayGroups.find((group) => group.day.key === openDayKey) ?? null
 
-  function openDay(key: string) {
-    setOpenDayKey(key)
-  }
-
-  function onDayKeyDown(event: KeyboardEvent, key: string) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      openDay(key)
-    }
-  }
-
-  const detailSheet = openGroup ? (
+  const detailSheet = openDetail ? (
     <DayDetailSheet
-      title={`${openGroup.heading.weekday}, ${openGroup.heading.date}`}
-      subtitle={`${openGroup.occurrences.length} session${
-        openGroup.occurrences.length === 1 ? '' : 's'
-      }`}
-      occurrences={openGroup.occurrences}
+      title={openDetail.title}
+      subtitle={openDetail.subtitle}
+      occurrences={openDetail.occurrences}
       selectedGroups={selectedGroups}
-      onClose={() => setOpenDayKey(null)}
+      onClose={() => setOpenDetail(null)}
     />
   ) : null
 
@@ -122,21 +144,28 @@ export function WeekSchedule({
           {dayGroups.map((group) => (
             <section
               key={group.day.key}
-              className={`day-group day-group--interactive${
-                group.heading.isToday ? ' is-today' : ''
-              }`}
-              role="button"
-              tabIndex={0}
-              aria-label={`${group.heading.weekday} ${group.heading.shortDate}, ${group.occurrences.length} sessions. Open full details.`}
+              className={`day-group${group.heading.isToday ? ' is-today' : ''}`}
+              role="listitem"
               style={
                 {
                   '--day-sessions': String(group.occurrences.length),
                 } as CSSProperties
               }
-              onClick={() => openDay(group.day.key)}
-              onKeyDown={(event) => onDayKeyDown(event, group.day.key)}
             >
-              <header className="day-group__when">
+              <header
+                className="day-group__when day-group__when--interactive"
+                role="button"
+                tabIndex={0}
+                aria-label={`${group.heading.weekday} ${group.heading.shortDate}, ${group.occurrences.length} sessions. Open full day details.`}
+                onClick={() =>
+                  openDayDetail(group.heading, group.occurrences)
+                }
+                onKeyDown={(event) =>
+                  activateOnKey(event, () =>
+                    openDayDetail(group.heading, group.occurrences),
+                  )
+                }
+              >
                 <span className="day-group__weekday">
                   {group.heading.weekday}
                 </span>
@@ -153,10 +182,19 @@ export function WeekSchedule({
                   const team = teamLabel(occ)
                   const loc = kind === 'event' ? null : occ.location
                   const time = formatTimeRangeCompact(occ.start, occ.end)
+                  const label = [
+                    sessionKindTitle(kind),
+                    isPractice ? team : occ.name,
+                    loc,
+                    time,
+                    'Open details',
+                  ]
+                    .filter(Boolean)
+                    .join(', ')
                   return (
                     <article
                       key={occ.id}
-                      className={`day-session day-session--${kind}${
+                      className={`day-session day-session--interactive day-session--${kind}${
                         isMeet && loc ? ' day-session--stacked' : ''
                       }`}
                       style={
@@ -164,14 +202,15 @@ export function WeekSchedule({
                           '--card-accent': sessionAccent(occ),
                         } as CSSProperties
                       }
-                      aria-label={[
-                        sessionKindTitle(kind),
-                        isPractice ? team : occ.name,
-                        loc,
-                        time,
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={label}
+                      onClick={() => openSessionDetail(group.heading, occ)}
+                      onKeyDown={(event) =>
+                        activateOnKey(event, () =>
+                          openSessionDetail(group.heading, occ),
+                        )
+                      }
                     >
                       <SessionKindIcon
                         kind={kind}
@@ -226,29 +265,40 @@ export function WeekSchedule({
           const dayOccs = occurrences.filter((o) =>
             isOccurrenceOnDay(o.start, day),
           )
-          const interactive = dayOccs.length > 0
+          const hasSessions = dayOccs.length > 0
 
           return (
             <section
               key={day.key}
-              className={`day-col${heading.isToday ? ' is-today' : ''}${
-                interactive ? ' day-col--interactive' : ''
-              }`}
-              role={interactive ? 'button' : 'listitem'}
-              tabIndex={interactive ? 0 : undefined}
-              aria-label={
-                interactive
-                  ? `${heading.weekday} ${heading.date}, ${dayOccs.length} sessions. Open full details.`
-                  : `${heading.weekday} ${heading.date}`
-              }
-              onClick={interactive ? () => openDay(day.key) : undefined}
-              onKeyDown={
-                interactive
-                  ? (event) => onDayKeyDown(event, day.key)
-                  : undefined
-              }
+              className={`day-col${heading.isToday ? ' is-today' : ''}`}
+              role="listitem"
+              aria-label={`${heading.weekday} ${heading.date}`}
             >
-              <header className="day-col__head">
+              <header
+                className={`day-col__head${
+                  hasSessions ? ' day-col__head--interactive' : ''
+                }`}
+                role={hasSessions ? 'button' : undefined}
+                tabIndex={hasSessions ? 0 : undefined}
+                aria-label={
+                  hasSessions
+                    ? `${heading.weekday} ${heading.date}, ${dayOccs.length} sessions. Open full day details.`
+                    : undefined
+                }
+                onClick={
+                  hasSessions
+                    ? () => openDayDetail(heading, dayOccs)
+                    : undefined
+                }
+                onKeyDown={
+                  hasSessions
+                    ? (event) =>
+                        activateOnKey(event, () =>
+                          openDayDetail(heading, dayOccs),
+                        )
+                    : undefined
+                }
+              >
                 <span className="day-col__weekday">{heading.weekday}</span>
                 <span className="day-col__date">{heading.date}</span>
               </header>
@@ -265,11 +315,27 @@ export function WeekSchedule({
                     return (
                       <article
                         key={occ.id}
-                        className={`practice-card practice-card--${kind}`}
+                        className={`practice-card practice-card--interactive practice-card--${kind}`}
                         style={
                           {
                             '--card-accent': sessionAccent(occ),
                           } as CSSProperties
+                        }
+                        role="button"
+                        tabIndex={0}
+                        aria-label={[
+                          sessionKindTitle(kind),
+                          isPractice ? team : occ.name,
+                          loc,
+                          'Open details',
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                        onClick={() => openSessionDetail(heading, occ)}
+                        onKeyDown={(event) =>
+                          activateOnKey(event, () =>
+                            openSessionDetail(heading, occ),
+                          )
                         }
                       >
                         <div className="practice-card__meta">

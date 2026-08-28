@@ -1704,7 +1704,26 @@
   color: var(--team-event);
 }
 
-.day-group--interactive {
+.day-group__when--interactive {
+  cursor: pointer;
+  border-radius: 12px;
+  margin: -4px;
+  padding: 4px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.day-group__when--interactive:hover {
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+}
+
+.day-group__when--interactive:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.day-session--interactive {
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -1712,29 +1731,46 @@
     transform 0.15s ease;
 }
 
-.day-group--interactive:hover {
-  border-color: color-mix(in srgb, var(--cyan) 45%, var(--line));
+.day-session--interactive:hover {
   transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
-.day-group--interactive:focus-visible {
+.day-session--interactive:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
 
-.day-col--interactive {
+.day-col__head--interactive {
+  cursor: pointer;
+  border-radius: 10px;
+  margin: -4px -4px 0;
+  padding: 4px;
+  transition: background 0.15s ease;
+}
+
+.day-col__head--interactive:hover {
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+}
+
+.day-col__head--interactive:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.practice-card--interactive {
   cursor: pointer;
   transition:
     border-color 0.15s ease,
     transform 0.15s ease;
 }
 
-.day-col--interactive:hover {
-  border-color: color-mix(in srgb, var(--cyan) 45%, var(--line));
+.practice-card--interactive:hover {
   transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--line));
 }
 
-.day-col--interactive:focus-visible {
+.practice-card--interactive:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
