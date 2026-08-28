@@ -62,7 +62,6 @@ export function buildEventDetailFields(
   pushField(fields, 'Starts', formatInstant(start))
   pushField(fields, 'Ends', formatInstant(end))
   pushField(fields, 'Recurs', formatRecurring(event))
-  pushField(fields, 'Visible to', event.visibleTo)
   return fields
 }
 
