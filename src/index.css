@@ -84,17 +84,17 @@ html.dark {
 
 /*
  * Vortex packs the hue wheel (Peak…Thunder). Global meet magenta ≈ Thunder
- * and event indigo ≈ Storm — use royal blue + gold instead so chips/rows
- * stay distinct from every practice group.
+ * and event indigo ≈ Storm — use gold meet + light-blue event instead so
+ * chips/rows stay distinct from every practice group.
  */
 .app[data-tenant='VortexSwimClub'] {
-  --team-meet: #1d4ed8;
-  --team-event: #ca8a04;
+  --team-meet: #ca8a04;
+  --team-event: #93c5fd;
 }
 
 html.dark .app[data-tenant='VortexSwimClub'] {
-  --team-meet: #60a5fa;
-  --team-event: #facc15;
+  --team-meet: #facc15;
+  --team-event: #bfdbfe;
 }
 
 *,
