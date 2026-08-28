@@ -57,7 +57,7 @@ interface LlmDraft {
 const TOUCH_BRIEF: Record<OutreachTouch, string> = {
   1: `TOUCH 1 — first outreach (Day 0).
 Introduce My Swim Day in 1–2 sentences using the product facts below (do not paste a feature list).
-Early in the email, include ONE short peer line from sender context (Delmar Dolphins parent of four)
+Early in the email, include ONE short peer line from sender context (Delmar Dolfins parent of four)
 to relate — not a biography. Use 1–2 real facts from THEIR COMMIT calendar (not MySwimDay) with correct tense vs TODAY.
 Never imply they already have a MySwimDay page. The only live calendar to link is the Delmar demo. Soft CTA: free pilot that would sync their Commit schedule into a mobile week view. Do not mention prior emails.`,
   2: `TOUCH 2 — follow-up (~5–7 days after touch 1 if no reply).
@@ -82,7 +82,7 @@ Product facts (match current homepage — pick 1–2 per email, do not dump all)
 - NEW: parents/coaches can subscribe to daily or weekly email digests (morning digest catches overnight Commit changes before practice).
 - Built for Commit teams: coaches update Commit once; after a pilot, admins share one live MySwimDay link; parents open the week or subscribe.
 - Not affiliated with Commit Swimming — do not claim partnership/official status.
-- IMPORTANT product truth: this prospect does NOT have a MySwimDay calendar yet. Delmar Dolphins is the only live demo. Calendar facts below were read from their public COMMIT schedule so you can personalize — they live on Commit, not on MySwimDay.
+- IMPORTANT product truth: this prospect does NOT have a MySwimDay calendar yet. Delmar Dolfins is the only live demo. Calendar facts below were read from their public COMMIT schedule so you can personalize — they live on Commit, not on MySwimDay.
 
 You will receive TODAY's date plus an expanded Commit calendar review (past ~30 days + next ~14 days).
 Dates before today are PAST. Dates after today are FUTURE. Never call a past meet, banquet, or championship "upcoming".
@@ -110,7 +110,7 @@ Other rules:
 - NEVER describe an event on or before TODAY as upcoming, coming up, or "your team's upcoming X".
 - NEVER claim MySwimDay already built, hosts, or syncs this team's calendar. Do not write "your events are already in the calendar" unless you clearly mean Commit. The Delmar demo link is OUR example, not theirs.
 - Sign off as the provided sender name (include "from MySwimDay" in the sign-off if not already in the name). Put the sign-off in its own <p>.
-- Use the provided sender context exactly once in touch 1 (peer credibility as a Delmar Dolphins parent). Keep it to one sentence; do not invent kids' names, ages, or group placements.
+- Use the provided sender context exactly once in touch 1 (peer credibility as a Delmar Dolfins parent). Keep it to one sentence; do not invent kids' names, ages, or group placements.
 - Contact email is ONLY the message To: address (already set when opening Mail). NEVER paste it into the body. NEVER tell them to email their own address, "reply to [their email]", or "email …@… with questions." CTA is simply reply to this email.
 - No emojis. Peer tone to office/admin / fellow swim parents.`
 }
@@ -145,7 +145,7 @@ Sender context (peer line — use in touch 1 once; paraphrase lightly only if ne
 
 REQUIRED HTML links — include both as <a href> anchors (exact URLs):
 1) Main site / screenshots: <a href="${SITE_URL}">Product overview</a>
-2) Live Delmar demo: <a href="${DEMO_CALENDAR_URL}">Live Delmar Dolphins demo</a>
+2) Live Delmar demo: <a href="${DEMO_CALENDAR_URL}">Live Delmar Dolfins demo</a>
 Example paragraph:
 <p>Product overview: <a href="${SITE_URL}">${SITE_URL}</a><br>
 Live Delmar demo: <a href="${DEMO_CALENDAR_URL}">${DEMO_CALENDAR_URL}</a></p>

@@ -22,12 +22,12 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 
 /**
  * First My Swim Day tenant.
- * Path: /DelmarDolphins
+ * Path: /DelmarDolfins (aliases keep old /DelmarDolphins links working).
  */
-export const delmarDolphinsTenant: TenantConfig = {
-  slug: 'DelmarDolphins',
-  slugAliases: ['DelmaDolphins'],
-  displayName: 'Delmar Dolphins',
+export const delmarDolfinsTenant: TenantConfig = {
+  slug: 'DelmarDolfins',
+  slugAliases: ['DelmarDolphins', 'DelmaDolphins'],
+  displayName: 'Delmar Dolfins',
   superTeamId: 'g8g7f3rkF8N23vXs4',
   /** New York — daily digests 7 a.m. ET, weekly Sunday 6 p.m. ET. */
   defaultTimeZone: 'America/New_York',
@@ -39,11 +39,14 @@ export const delmarDolphinsTenant: TenantConfig = {
     officialCalendar: 'https://www.delmardolfins.com/schedule',
     carpool: 'https://swim-carpool.vercel.app',
   },
-  icsFilenamePrefix: 'delmar-dolphins',
+  icsFilenamePrefix: 'delmar-dolfins',
   parsePractice: parseDelmaPractice,
   parseMeet: parseDelmaMeet,
   occurrenceMatchesTeams: delmaOccurrenceMatchesTeams,
 }
 
-/** @deprecated Use `delmarDolphinsTenant`. */
-export const delmaDolphinsTenant = delmarDolphinsTenant
+/** @deprecated Use `delmarDolfinsTenant`. */
+export const delmarDolphinsTenant = delmarDolfinsTenant
+
+/** @deprecated Use `delmarDolfinsTenant`. */
+export const delmaDolphinsTenant = delmarDolfinsTenant
