@@ -34,6 +34,10 @@ export const DEMO_CALENDAR_URL =
 export const SENDER_NAME =
   process.env.SENDER_NAME ?? 'Mic Zhan from MySwimDay'
 
+/** Mail.app From identity (must already exist on the account). */
+export const MAIL_FROM =
+  process.env.MAIL_FROM ?? 'sales@mail.myswimday.com'
+
 /** One-line peer credibility for outreach (swim parent angle). */
 export const SENDER_CONTEXT =
   process.env.SENDER_CONTEXT ??

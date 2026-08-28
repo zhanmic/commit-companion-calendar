@@ -55,19 +55,21 @@ Fingerprint is what filters for **Commit** users among USA Swimming clubs.
 | `disqualified` | No Commit footprint (or similar reject). |
 | `researched` | Enrich done (contact + Commit ID). Ready for drafts — **not** “email written”. |
 | `drafted` | Touches **1, 2, and 3** ready. Ready to send. |
-| `contacted` | You sent outreach (usually touch 1). |
+| `contacted_1` | Sent touch 1 (first email). |
+| `contacted_2` | Sent touch 2 (follow-up). |
+| `contacted_3` | Sent touch 3 (close loop). |
 
 ### Outreach (HTML)
 
 1. Get leads to **researched** (Run queue / process one).
-2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes (generate only the emails you pick). Status becomes **drafted** when all three exist. Or regenerate one lead / one touch.
+2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes. **Force regenerate** only hits the **Force statuses** you check (default: **drafted**). Status becomes **drafted** when all three exist (does not overwrite contacted_1/2/3).
 3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Copy draft** (HTML + plain) or **Open in Mail**.
-4. Mail.app opens an HTML draft. Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). Mark **contacted** when you send.
-5. Later: send touch 2 / 3 from the same lead; status can stay `contacted`.
+4. Mail.app opens an HTML draft. Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). **Open Mail + contacted** / **Mark contacted** advances `contacted_1` → `contacted_2` → `contacted_3` (from the active touch; never goes backward).
+5. Later: send touch 2 / 3 from the same lead; status moves to `contacted_2` / `contacted_3`.
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
 
-Pitch notes baked into prompts: Delmar as the live demo, peer line from `SENDER_CONTEXT` in touch 1, digests as a follow-up angle, no invented contacts or kids’ details.
+Pitch notes baked into prompts: Delmar is the only live demo (prospects have no MySwimDay calendar yet); cite meets as on their Commit calendar; MySwimDay would sync a mobile week view; peer line from `SENDER_CONTEXT` in touch 1; no invented contacts or kids’ details.
 
 ## Web UI (local)
 
@@ -98,8 +100,8 @@ Resend free tier is $0 (3,000 emails/month, 100/day). Sends and inbound share th
 
 1. Mail → **Settings** → **Accounts** → **+** → **Google** → sign in as **your real Gmail** (the one with Send mail as).
 2. Same Gmail account → **Email Address** → dropdown **Edit Email Addresses…** (or comma-separate) → add `sales@mail.myswimday.com`.
-3. **Composing** → **Send new messages from:** that sales address.
-4. Leads UI → **Open in Mail** → confirm **From:** is sales@. Leave outgoing as Gmail (`smtp.gmail.com`); Gmail relays to Resend.
+3. **Composing** → **Send new messages from:** that sales address (fallback if a draft does not set From).
+4. Leads UI → **Open in Mail** sets **From:** to `MAIL_FROM` (`sales@mail.myswimday.com` by default). Confirm it before sending. Leave outgoing as Gmail (`smtp.gmail.com`); Gmail relays to Resend. If From stays on your Gmail address, the sales identity is not on that Mail account yet (step 2).
 
 ### Tests
 

@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, unlink, rmdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
+import { MAIL_FROM, SENDER_NAME } from './config.js'
 import {
   htmlToPlainText,
   looksLikeHtml,
@@ -54,6 +55,13 @@ export async function openMailDraft(
     wrapEmailHtmlDocument(isHtml ? rawBody : rawBody.replace(/\n/g, '<br>\n')),
   )
   const to = (input.to || '').trim()
+  const fromAddr = MAIL_FROM.trim()
+  const fromName = SENDER_NAME.trim()
+  const senderValue = fromName
+    ? `${fromName} <${fromAddr}>`
+    : fromAddr
+  const senderEsc = escapeAppleScript(senderValue)
+  const fromAddrEsc = escapeAppleScript(fromAddr)
 
   const recipientBlock = to
     ? `tell newMessage
@@ -65,6 +73,13 @@ export async function openMailDraft(
 tell application "Mail"
   set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${plainBody}", visible:true}
   ${recipientBlock}
+  try
+    set sender of newMessage to "${senderEsc}"
+  on error
+    try
+      set sender of newMessage to "${fromAddrEsc}"
+    end try
+  end try
   try
     set html content of newMessage to "${htmlDoc}"
   end try
@@ -84,8 +99,8 @@ end tell
       ok: true,
       method: 'mail_app',
       message: to
-        ? `Opened Mail draft to ${to} (HTML)`
-        : 'Opened Mail draft (HTML; add recipient manually)',
+        ? `Opened Mail draft to ${to} from ${fromAddr} (HTML)`
+        : `Opened Mail draft from ${fromAddr} (HTML; add recipient manually)`,
     }
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)

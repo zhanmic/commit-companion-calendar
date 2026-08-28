@@ -133,7 +133,8 @@
         <p class="hint">
           Pipeline: fingerprint → enrich → <strong>researched</strong> → generate
           3-touch drafts → <strong>drafted</strong> → send →
-          <strong>contacted</strong>.
+          <strong>contacted_1</strong> / <strong>contacted_2</strong> /
+          <strong>contacted_3</strong>.
         </p>
         <div class="process-grid">
           <div class="process-col">
@@ -210,11 +211,42 @@
             </fieldset>
             <label
               class="check has-tip"
-              data-tip="Regenerate the selected touches even if drafts already exist."
+              data-tip="Regenerate the selected touches even if drafts already exist. Uses Force statuses below."
             >
               <input id="draft-force-queue" type="checkbox" />
               Force regenerate
             </label>
+            <fieldset
+              class="draft-touches has-tip"
+              id="draft-force-statuses"
+              data-tip="When Force is on, only these statuses are regenerated. Default: drafted."
+            >
+              <legend>Force statuses</legend>
+              <label class="check">
+                <input id="draft-status-researched" type="checkbox" />
+                researched
+              </label>
+              <label class="check">
+                <input id="draft-status-drafted" type="checkbox" checked />
+                drafted
+              </label>
+              <label class="check">
+                <input id="draft-status-contacted_1" type="checkbox" />
+                contacted_1
+              </label>
+              <label class="check">
+                <input id="draft-status-contacted_2" type="checkbox" />
+                contacted_2
+              </label>
+              <label class="check">
+                <input id="draft-status-contacted_3" type="checkbox" />
+                contacted_3
+              </label>
+              <label class="check">
+                <input id="draft-status-identified" type="checkbox" />
+                identified
+              </label>
+            </fieldset>
             <div class="step-row">
               <button
                 type="button"

@@ -27,7 +27,9 @@ const STATUS_OPTIONS = [
   'identified',
   'researched',
   'drafted',
-  'contacted',
+  'contacted_1',
+  'contacted_2',
+  'contacted_3',
   'replied',
   'demo',
   'disqualified',
@@ -94,7 +96,7 @@ function statusPill(status) {
 function colorizeStatusInText(text) {
   const escaped = escapeHtml(text)
   return escaped.replace(
-    /\b(new|identified|researched|drafted|contacted|replied|demo|disqualified|won|lost)\b/gi,
+    /\b(new|identified|researched|drafted|contacted_1|contacted_2|contacted_3|contacted|replied|demo|disqualified|won|lost)\b/gi,
     (match) => statusPill(match.toLowerCase()),
   )
 }
@@ -491,7 +493,7 @@ async function showDetail(id, opts = {}) {
       <div class="outreach-head">
         <h3>Outreach drafts (3 touches)</h3>
         <p class="hint">
-          researched = enrich done · drafted = touches 1–3 ready · contacted = you sent.
+          researched = enrich done · drafted = touches 1–3 ready · contacted_1/2/3 = sent once / twice / three times.
           Calendar window + Ollama customize each touch. Mail opens a draft only.
         </p>
       </div>
@@ -529,8 +531,8 @@ async function showDetail(id, opts = {}) {
         <button type="button" class="danger" id="btn-stop-outreach" data-tip="Stop draft generation (same as Stop drafts)." disabled>Stop</button>
         <button type="button" class="ghost" id="btn-save-draft" data-tip="Save subject/body edits for this touch.">Save edits</button>
         <button type="button" id="btn-open-mail" data-tip="Open this touch in Mac Mail.app.">Open in Mail</button>
-        <button type="button" id="btn-open-mail-sent" data-tip="Open Mail and mark contacted (use for touch 1 send).">Open Mail + contacted</button>
-        <button type="button" class="ghost" id="btn-mark-contacted" data-tip="Set status to contacted without opening Mail.">Mark contacted</button>
+        <button type="button" id="btn-open-mail-sent" data-tip="Open Mail and mark contacted_1/2/3 from this touch (does not go backward).">Open Mail + contacted</button>
+        <button type="button" class="ghost" id="btn-mark-contacted" data-tip="Advance contacted_1 → 2 → 3 without opening Mail.">Mark contacted</button>
       </div>
       <p id="outreach-status" class="hint outreach-status" aria-live="polite"></p>
     </section>
@@ -856,9 +858,9 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
     await fetchJson(`/api/leads/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'contacted' }),
+      body: JSON.stringify({ bumpContacted: true, touch }),
     })
-    setOutreachStatus('Status set to contacted.')
+    setOutreachStatus('Status advanced (contacted_1 / 2 / 3).')
     await refresh()
     if (selectedId === id) await showDetail(id, { keepOpen: true, touch })
   })
@@ -1010,6 +1012,15 @@ document.getElementById('btn-process-one')?.addEventListener('click', () => {
   )
 })
 
+function syncForceStatusUi() {
+  const on = document.getElementById('draft-force-queue')?.checked === true
+  const box = document.getElementById('draft-force-statuses')
+  if (box) box.classList.toggle('is-disabled', !on)
+}
+
+document.getElementById('draft-force-queue')?.addEventListener('change', syncForceStatusUi)
+syncForceStatusUi()
+
 document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
   const touches = [1, 2, 3].filter(
     (t) => document.getElementById(`draft-touch-q-${t}`)?.checked === true,
@@ -1018,14 +1029,31 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
     appendLog(logProcess, 'Pick at least one draft email (1, 2, or 3)')
     return
   }
+  const force =
+    document.getElementById('draft-force-queue')?.checked === true
+  const statusIds = [
+    'researched',
+    'drafted',
+    'contacted_1',
+    'contacted_2',
+    'contacted_3',
+    'identified',
+  ]
+  const statuses = statusIds.filter(
+    (s) => document.getElementById(`draft-status-${s}`)?.checked === true,
+  )
+  if (force && !statuses.length) {
+    appendLog(logProcess, 'Force regenerate: pick at least one status (drafted is the usual choice)')
+    return
+  }
   runAction(
     'draft',
     {
       target: 'all',
       limit: Number(document.getElementById('draft-limit')?.value || 10),
-      forceReprocess:
-        document.getElementById('draft-force-queue')?.checked === true,
+      forceReprocess: force,
       touches,
+      statuses: force ? statuses : undefined,
     },
     logProcess,
   )

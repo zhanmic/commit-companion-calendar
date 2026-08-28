@@ -33,6 +33,25 @@ export function plainTextToHtml(body: string): string {
     .join('\n')
 }
 
+/** Put the greeting in its own paragraph: "Team," then the first sentence. */
+export function ensureGreetingLineBreak(html: string): string {
+  const m = html.match(/<p>([\s\S]*?)<\/p>/i)
+  if (!m || m.index == null) return html
+  const inner = m[1]
+  const compact = inner.replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim()
+  if (/^(?:hi|hello|hey)?[\s,]*[^,]{2,80},$/i.test(compact)) return html
+
+  const split = inner.match(
+    /^(\s*(?:(?:Hi|Hello|Hey)\s+)?[^<,]{2,90}),(?:<br\s*\/?>|\s)+([\s\S]+)$/i,
+  )
+  if (!split) return html
+  const greet = split[1].trim()
+  const rest = split[2].trim()
+  if (!rest || greet.length > 80) return html
+  const next = `<p>${greet},</p>\n<p>${rest}</p>`
+  return html.slice(0, m.index) + next + html.slice(m.index + m[0].length)
+}
+
 /**
  * Ensure body is HTML and includes both product links as clickable anchors.
  */
@@ -40,6 +59,7 @@ export function ensureHtmlDraftBody(body: string): string {
   let html = body.trim()
   if (!html) return html
   if (!looksLikeHtml(html)) html = plainTextToHtml(html)
+  html = ensureGreetingLineBreak(html)
 
   const hasSite = html.includes(SITE_URL)
   const hasDemo = html.includes(DEMO_CALENDAR_URL)

@@ -413,13 +413,13 @@ function pitchAngles(
   if (futureMeets.length > 0) {
     const next = futureMeets[0]
     angles.push(
-      `Upcoming meet still ahead: ${next.title} on ${next.when} — only this kind of date may be called upcoming.`,
+      `Upcoming Commit meet still ahead: ${next.title} on ${next.when} — cite as on their Commit calendar; only this kind of date may be called upcoming.`,
     )
   }
   if (pastMeets.length > 0) {
     const newest = pastMeets[pastMeets.length - 1]
     angles.push(
-      `Recent meet already happened: ${newest.title} on ${newest.when} — cite in past tense, never as upcoming.`,
+      `Recent Commit meet already happened: ${newest.title} on ${newest.when} — past tense, on Commit (not MySwimDay), never as upcoming.`,
     )
   }
   if (futureMeets.length === 0 && summary.practiceOccurrences > 0) {
@@ -520,6 +520,7 @@ export function formatMonthCalendarForPrompt(
   const lines = [
     `TODAY (ground truth for past vs future): ${asOf} in ${summary.timeZone}.`,
     `A date < ${asOf} is PAST (recent). A date > ${asOf} is FUTURE (upcoming). Do not call past dates upcoming.`,
+    `SOURCE: this dump is their public COMMIT Swimming calendar. They do not have a MySwimDay tenant. Cite as Commit facts; offer MySwimDay as a sync + mobile week view.`,
     `Commit calendar review window: ${summary.window.label}`,
     `Timezone (team): ${summary.timeZone}`,
     `Published templates: ${summary.rawEventCount} events, ${summary.rawMeetCount} meets (full dump; window below is expanded).`,

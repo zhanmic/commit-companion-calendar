@@ -6,12 +6,32 @@ export type LeadStatus =
   | 'identified'
   | 'researched'
   | 'drafted'
-  | 'contacted'
+  | 'contacted_1'
+  | 'contacted_2'
+  | 'contacted_3'
   | 'replied'
   | 'demo'
   | 'disqualified'
   | 'won'
   | 'lost'
+
+const CONTACTED_STEPS = ['contacted_1', 'contacted_2', 'contacted_3'] as const
+
+/** drafted → contacted_1 → contacted_2 → contacted_3. Optional touch sets a floor, never goes backward. */
+export function nextContactedStatus(
+  current: LeadStatus | string | null | undefined,
+  touch?: 1 | 2 | 3,
+): LeadStatus {
+  const cur = current === 'contacted' ? 'contacted_1' : current
+  const curIdx = CONTACTED_STEPS.indexOf(cur as (typeof CONTACTED_STEPS)[number])
+  if (touch === 1 || touch === 2 || touch === 3) {
+    const fromTouch = CONTACTED_STEPS[touch - 1]
+    if (curIdx >= touch - 1) return CONTACTED_STEPS[curIdx]
+    return fromTouch
+  }
+  if (curIdx < 0) return 'contacted_1'
+  return CONTACTED_STEPS[Math.min(curIdx + 1, 2)]
+}
 
 export type ContactSource =
   | 'websiteConfig'
@@ -94,6 +114,10 @@ export function getDb(): DatabaseSync {
      SET status = 'identified', updated_at = ?
      WHERE status = 'new'
        AND super_team_id IS NOT NULL`,
+  ).run(nowIso())
+  db.prepare(
+    `UPDATE leads SET status = 'contacted_1', updated_at = ?
+     WHERE status = 'contacted'`,
   ).run(nowIso())
   return db
 }

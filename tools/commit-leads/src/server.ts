@@ -14,7 +14,7 @@ import {
   runUsaDiscover,
   searchLeads,
 } from './jobs.js'
-import { getLead, listLeads, updateLead, type LeadStatus } from './db.js'
+import { getLead, listLeads, nextContactedStatus, updateLead, type LeadStatus } from './db.js'
 import {
   draftOutreachEmail,
   draftOutreachSequence,
@@ -129,6 +129,7 @@ async function handleRun(
     enrich?: boolean
     score?: boolean
     touches?: Array<1 | 2 | 3>
+    statuses?: LeadStatus[]
   }
   try {
     body = JSON.parse(raw || '{}') as typeof body
@@ -254,6 +255,7 @@ async function handleRun(
             limit: body.limit,
             forceReprocess: body.forceReprocess,
             touches: body.touches,
+            statuses: body.statuses,
             signal,
           },
           log,
@@ -535,7 +537,7 @@ async function handleApi(
 
     let markedContacted = false
     if (body.markContacted && mail.ok) {
-      updateLead(id, { status: 'contacted' })
+      updateLead(id, { status: nextContactedStatus(lead.status, touch) })
       markedContacted = true
     }
 
@@ -558,7 +560,9 @@ async function handleApi(
     }
     const raw = await readBody(req)
     const body = JSON.parse(raw || '{}') as {
-      status?: LeadStatus
+      status?: LeadStatus | 'contacted'
+      bumpContacted?: boolean
+      touch?: number
       draft_email?: string
       draft_subject?: string
     }
@@ -567,7 +571,16 @@ async function handleApi(
       draft_email: string | null
       draft_subject: string | null
     }> = {}
-    if (body.status) patch.status = body.status
+    if (body.bumpContacted) {
+      const touch = ([1, 2, 3] as const).includes(body.touch as 1 | 2 | 3)
+        ? (body.touch as 1 | 2 | 3)
+        : undefined
+      patch.status = nextContactedStatus(lead.status, touch)
+    } else if (body.status === 'contacted') {
+      patch.status = 'contacted_1'
+    } else if (body.status) {
+      patch.status = body.status
+    }
     if (typeof body.draft_email === 'string') {
       patch.draft_email = body.draft_email
     }

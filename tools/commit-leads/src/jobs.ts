@@ -18,6 +18,7 @@ import {
   repairScannedStatuses,
   type Lead,
   type SeedRow,
+  type LeadStatus,
 } from './db.js'
 import {
   enrichFromCommitApi,
@@ -536,26 +537,35 @@ export function needsScore(lead: Lead, force = false): boolean {
   return lead.fit_score == null
 }
 
+const FORCE_DRAFT_STATUSES: LeadStatus[] = [
+  'identified',
+  'researched',
+  'drafted',
+  'contacted_1',
+  'contacted_2',
+  'contacted_3',
+]
+
 /**
  * Researched (or force-drafted) Commit leads ready for outreach copy.
- * researched = enrich done; drafted = all 3 touches present.
- * `touches` limits “pending” to leads missing at least one of those emails.
+ * Without force: researched/drafted missing selected touches.
+ * With force: only the statuses in `statuses` (default drafted).
  */
 export function needsDraft(
   lead: Lead,
   force = false,
   touches?: Array<1 | 2 | 3>,
+  statuses?: LeadStatus[],
 ): boolean {
   if (!lead.super_team_id || !lead.contact_email) return false
   if (lead.status === 'disqualified' || lead.status === 'lost') return false
-  if (
-    lead.status !== 'researched' &&
-    lead.status !== 'drafted' &&
-    !(force && (lead.status === 'identified' || lead.status === 'contacted'))
-  ) {
-    return false
+  if (force) {
+    const pool = (statuses?.length ? statuses : (['drafted'] as LeadStatus[])).filter(
+      (s) => FORCE_DRAFT_STATUSES.includes(s),
+    )
+    return pool.includes(lead.status)
   }
-  if (force) return true
+  if (lead.status !== 'researched' && lead.status !== 'drafted') return false
   const wanted = normalizeDraftTouches(touches)
   const drafts = getOutreachDrafts(lead)
   return wanted.some((t) => !hasTouch(drafts, t))
@@ -754,6 +764,7 @@ export async function runDraftPending(
     limit?: number
     forceReprocess?: boolean
     touches?: Array<1 | 2 | 3>
+    statuses?: LeadStatus[]
     signal?: AbortSignal
   } = {},
   log: LogFn = console.log,
@@ -762,15 +773,24 @@ export async function runDraftPending(
   const limit = Math.max(1, Math.min(options.limit ?? 25, 1000))
   const signal = options.signal
   const wanted = normalizeDraftTouches(options.touches)
+  const statuses = options.statuses
   const batch = listLeads()
-    .filter((l) => needsDraft(l, force, wanted))
+    .filter((l) => needsDraft(l, force, wanted, statuses))
     .slice(0, limit)
 
   log(
-    `Draft queue: ${batch.length} lead(s) (limit=${limit}, force=${force}, touches=[${wanted.join(', ')}]).`,
+    `Draft queue: ${batch.length} lead(s) (limit=${limit}, force=${force}, touches=[${wanted.join(', ')}]${
+      force
+        ? `, statuses=[${(statuses?.length ? statuses : ['drafted']).join(', ')}]`
+        : ''
+    }).`,
   )
   if (batch.length === 0) {
-    log('Nothing pending — filter status researched (or force drafted).')
+    log(
+      force
+        ? 'Nothing pending — pick Force statuses that have matching leads (default: drafted).'
+        : 'Nothing pending — filter status researched (or force drafted).',
+    )
     return
   }
 

@@ -183,6 +183,11 @@ body {
   margin: 0.15rem 0 0.35rem;
 }
 
+.draft-touches.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .step-row-tight {
   margin-top: 0.25rem;
   margin-bottom: 0;
@@ -682,10 +687,22 @@ tbody tr[data-status='won'].active {
   border-color: #9fd0bc;
 }
 
-.status-contacted {
+.status-contacted,
+.status-contacted_1,
+.status-contacted_2,
+.status-contacted_3 {
   color: var(--status-contacted);
   background: var(--status-contacted-bg);
   border-color: #a9cdd9;
+}
+
+.status-contacted_2 {
+  border-color: #6fa8bc;
+}
+
+.status-contacted_3 {
+  background: #c5e0ec;
+  border-color: #3d7a90;
 }
 
 .status-replied {
@@ -750,6 +767,12 @@ tbody tr[data-status='won'].active {
 
 #log-discover .status-contacted,
 #log-process .status-contacted,
+#log-discover .status-contacted_1,
+#log-process .status-contacted_1,
+#log-discover .status-contacted_2,
+#log-process .status-contacted_2,
+#log-discover .status-contacted_3,
+#log-process .status-contacted_3,
 #log-discover .status-replied,
 #log-process .status-replied {
   color: #b3dff0;
@@ -962,10 +985,12 @@ tbody tr[data-status='won'].active {
 
 .touch-tabs button {
   border: 1px solid var(--line);
-  background: #fffdf8;
+  background: #fff;
+  color: var(--ink);
   padding: 0.35rem 0.65rem;
   font: inherit;
   font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
