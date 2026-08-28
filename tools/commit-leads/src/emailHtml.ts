@@ -76,7 +76,7 @@ export function ensureHtmlDraftBody(body: string): string {
   }
   if (!hasDemo) {
     bits.push(
-      `<a href="${DEMO_CALENDAR_URL}">Live Delmar Dolphins demo</a>`,
+      `<a href="${DEMO_CALENDAR_URL}">Live Delmar Dolfins demo</a>`,
     )
   }
   const linkBlock = `<p>${bits.join('<br>\n')}</p>`

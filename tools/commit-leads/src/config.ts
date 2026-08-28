@@ -28,7 +28,7 @@ export const SITE_URL = process.env.SITE_URL ?? 'https://myswimday.com'
 /** Live Delmar demo calendar URL for outreach drafts. */
 export const DEMO_CALENDAR_URL =
   process.env.DEMO_CALENDAR_URL ??
-  'https://myswimday.com/DelmarDolphins?week=2026-07-19'
+  'https://myswimday.com/DelmarDolfins?week=2026-07-19'
 
 /** Sign-off used in generated outreach drafts. */
 export const SENDER_NAME =
@@ -41,7 +41,7 @@ export const MAIL_FROM =
 /** One-line peer credibility for outreach (swim parent angle). */
 export const SENDER_CONTEXT =
   process.env.SENDER_CONTEXT ??
-  'I am a parent of four swimmers at Delmar Dolphins.'
+  'I am a parent of four swimmers at Delmar Dolfins.'
 
 /** Headless Chromium network capture (DevTools-style). Set FINGERPRINT_NETWORK=0 to disable. */
 export const FINGERPRINT_NETWORK = !['0', 'false', 'no'].includes(

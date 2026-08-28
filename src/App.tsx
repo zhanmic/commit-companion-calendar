@@ -25,7 +25,7 @@ export default function App() {
     if (route.kind !== 'tenant') return
     const tenant = getTenantBySlug(route.slug)
     if (!tenant) return
-    // Canonicalize typo / alias paths (e.g. /DelmaDolphins → /DelmarDolphins).
+    // Canonicalize typo / alias paths (e.g. /DelmarDolphins → /DelmarDolfins).
     if (route.slug.toLowerCase() === tenant.slug.toLowerCase()) return
     const canonical = `/${tenant.slug}${window.location.search}`
     if (currentPath() === canonical) return

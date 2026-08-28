@@ -1,6 +1,6 @@
 import type { TenantGroup } from '../types'
 
-/** Delmar Dolphins practice groups (Sr / Jr / DEVO / Jr Prep). */
+/** Delmar Dolfins practice groups (Sr / Jr / DEVO / Jr Prep). */
 export const DELMA_GROUPS: TenantGroup[] = [
   { id: 'Sr', label: 'Sr', color: 'var(--team-sr)', alwaysShow: true },
   { id: 'Jr', label: 'Jr', color: 'var(--team-jr)', alwaysShow: true },

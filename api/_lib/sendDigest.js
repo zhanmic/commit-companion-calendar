@@ -57,7 +57,19 @@ export async function sendDigestsForTenantFrequency({
   now,
   base,
 }) {
-  const subs = await listActiveByFrequency(frequency, tenant.slug)
+  // Include aliases so subscribers stored under a previous slug still get digests
+  // after a rename (e.g. DelmarDolphins → DelmarDolfins).
+  const slugKeys = [tenant.slug, ...(tenant.slugAliases ?? [])]
+  const seen = new Set()
+  const subs = []
+  for (const slug of slugKeys) {
+    for (const sub of await listActiveByFrequency(frequency, slug)) {
+      const id = `${sub.email}`.toLowerCase()
+      if (seen.has(id)) continue
+      seen.add(id)
+      subs.push(sub)
+    }
+  }
   let sent = 0
   let skipped = 0
   const errors = []

@@ -137,7 +137,7 @@ export function shiftWeek(anchor: Date, deltaWeeks: number) {
   return addDays(anchor, deltaWeeks * 7)
 }
 
-/** Query key for shareable week links, e.g. `/DelmarDolphins?week=2026-07-19`. */
+/** Query key for shareable week links, e.g. `/DelmarDolfins?week=2026-07-19`. */
 export const WEEK_QUERY_PARAM = 'week'
 
 /**

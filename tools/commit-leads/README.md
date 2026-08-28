@@ -21,7 +21,7 @@ Fingerprint’s browser pass uses Playwright Chromium (installed via `postinstal
 | Variable | Purpose |
 |----------|---------|
 | `SITE_URL` | Product / screenshots link (default `https://myswimday.com`) |
-| `DEMO_CALENDAR_URL` | Live Delmar demo (default `https://myswimday.com/DelmarDolphins?week=2026-07-19`) |
+| `DEMO_CALENDAR_URL` | Live Delmar demo (default `https://myswimday.com/DelmarDolfins?week=2026-07-19`) |
 | `SENDER_NAME` | Sign-off name |
 | `SENDER_CONTEXT` | One peer line for touch 1 (e.g. Delmar parent of four) |
 | `OLLAMA_MODEL` | Local model for score + drafts |
@@ -132,7 +132,7 @@ Edit `data/seeds.csv` (gitignored). Columns:
 team_name,website_url,super_team_id,region_notes
 ```
 
-Start from `seeds.example.csv` (includes Delmar Dolphins).
+Start from `seeds.example.csv` (includes Delmar Dolfins).
 
 ## Compliance
 

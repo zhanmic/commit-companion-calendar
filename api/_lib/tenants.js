@@ -6,10 +6,10 @@
 
 export const TENANTS = [
   {
-    slug: 'DelmarDolphins',
-    displayName: 'Delmar Dolphins',
-    path: '/DelmarDolphins',
-    slugAliases: ['DelmaDolphins'],
+    slug: 'DelmarDolfins',
+    displayName: 'Delmar Dolfins',
+    path: '/DelmarDolfins',
+    slugAliases: ['DelmarDolphins', 'DelmaDolphins'],
     superTeamId: 'g8g7f3rkF8N23vXs4',
     /** IANA zone — digests fire at dailySendHour / weeklySendHour in this zone. */
     defaultTimeZone: 'America/New_York',

@@ -223,7 +223,7 @@ export function parseMeet(meet) {
 
 /** Tenant-specific parsing hooks used by expand/digest. */
 export function getTenantParsers(tenant) {
-  if (tenant.slug === 'DelmarDolphins') {
+  if (tenant.slug === 'DelmarDolfins' || tenant.slug === 'DelmarDolphins') {
     return {
       parsePractice: (name, format) =>
         parsePracticeName(name, format, {

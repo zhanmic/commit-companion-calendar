@@ -33,7 +33,7 @@ Region notes: ${lead.region_notes ?? 'none'}
 
 Product angle: They already run Commit — My Swim Day gives families a mobile week view
 plus optional daily/weekly email digests. No login or app. Not affiliated with Commit.
-Proof: live Delmar Dolphins calendar. Offer a free pilot for one team.
+Proof: live Delmar Dolfins calendar. Offer a free pilot for one team.
 Target buyer priority: team admin/office, head coach, website coordinator, board president.
 
 Return JSON only.`

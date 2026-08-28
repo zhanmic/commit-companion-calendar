@@ -51,7 +51,7 @@ export interface TenantLinks {
  * and register it in `registry.ts`.
  */
 export interface TenantConfig {
-  /** Canonical URL path segment, e.g. `DelmarDolphins` → `/DelmarDolphins`. */
+  /** Canonical URL path segment, e.g. `DelmarDolfins` → `/DelmarDolfins`. */
   slug: string
   /**
    * Former path segments that should resolve to this tenant
