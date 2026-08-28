@@ -934,7 +934,17 @@
 }
 
 .week-nav__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+}
+
+.week-nav__heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .week-nav__label {
@@ -943,6 +953,39 @@
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--ink);
+}
+
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.18rem 0.5rem 0.18rem 0.32rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.view-toggle:hover {
+  background: var(--surface-3);
+}
+
+.view-toggle:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.view-toggle svg {
+  display: block;
+  flex-shrink: 0;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .cal-btn-wrap {
@@ -1217,6 +1260,212 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.55rem;
+}
+
+.month-grid {
+  display: flex;
+  flex-direction: column;
+  min-height: 34rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.month-grid__head,
+.month-week {
+  display: grid;
+  grid-template-columns: 2.15rem repeat(7, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.month-grid__head {
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--surface-3) 70%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+
+.month-grid__dow {
+  padding: 0.45rem 0.2rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.month-week {
+  flex: 1 1 0;
+  min-height: 5.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.month-week__num,
+.month-week__num--spacer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.45rem 0 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.month-week__num {
+  cursor: pointer;
+}
+
+.month-grid__head + .month-week {
+  border-top: 0;
+}
+
+.month-week__num:hover {
+  color: var(--cyan);
+}
+
+.month-week__num:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+
+.month-day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.28rem 0.22rem 0.3rem;
+  border-left: 1px solid var(--line);
+}
+
+.month-day--outside {
+  opacity: 0.42;
+}
+
+.month-day__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  margin: 0 auto 0.05rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+button.month-day__num {
+  cursor: pointer;
+}
+
+button.month-day__num:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+button.month-day__num:not(:disabled):hover {
+  background: color-mix(in srgb, var(--cyan) 16%, transparent);
+}
+
+button.month-day__num:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.month-day--today .month-day__num {
+  background: var(--cyan);
+  color: #fff;
+  font-weight: 800;
+}
+
+.month-day__events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-height: 0;
+}
+
+.month-event {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0.08rem 0.28rem 0.08rem 0.35rem;
+  border: 0;
+  border-radius: 0.25rem;
+  border-left: 2px solid var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 16%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.month-event:hover {
+  background: color-mix(in srgb, var(--card-accent) 28%, transparent);
+}
+
+.month-event:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.month-event__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-event__time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-event--more {
+  border-left-color: transparent;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.month-event--more:hover {
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+  color: var(--cyan);
+}
+
+.month-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.18rem;
+  min-height: 0.42rem;
+  padding-top: 0.05rem;
+}
+
+.month-dot {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: var(--dot-color);
 }
 
 .day-col {
@@ -2188,6 +2437,67 @@
 
   .app--fit .week-nav__label {
     font-size: 0.95rem;
+  }
+
+  .app--fit .week-nav__heading {
+    gap: 0.25rem;
+  }
+
+  .app--fit .view-toggle {
+    gap: 0.2rem;
+    padding: 0.14rem 0.42rem 0.14rem 0.26rem;
+    font-size: 0.72rem;
+  }
+
+  .app--fit .view-toggle svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .app--fit.app--month .month-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 0.75rem;
+  }
+
+  .app--fit .month-grid__head,
+  .app--fit .month-week {
+    grid-template-columns: 1.55rem repeat(7, minmax(0, 1fr));
+  }
+
+  .app--fit .month-week {
+    min-height: 0;
+  }
+
+  .app--fit .month-week--fit {
+    cursor: pointer;
+  }
+
+  .app--fit .month-week--fit:active {
+    background: color-mix(in srgb, var(--cyan) 10%, var(--surface-2));
+  }
+
+  .app--fit .month-week__num {
+    padding-top: 0.35rem;
+    font-size: 0.58rem;
+    pointer-events: none;
+  }
+
+  .app--fit .month-day {
+    padding: 0.35rem 0.05rem 0.25rem;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .app--fit .month-day__num {
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: 0.78rem;
+  }
+
+  .app--fit .month-dot {
+    width: 0.32rem;
+    height: 0.32rem;
   }
 
   .app--fit .filters__row--kinds {
