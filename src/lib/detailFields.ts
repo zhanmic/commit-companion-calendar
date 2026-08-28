@@ -63,7 +63,6 @@ export function buildEventDetailFields(
   pushField(fields, 'Ends', formatInstant(end))
   pushField(fields, 'Recurs', formatRecurring(event))
   pushField(fields, 'Visible to', event.visibleTo)
-  pushField(fields, 'Event ID', event._id)
   return fields
 }
 
@@ -95,6 +94,5 @@ export function buildMeetDetailFields(
   pushField(fields, 'Status', meet.status)
   pushField(fields, 'Starts', formatInstant(start))
   pushField(fields, 'Ends', formatInstant(end))
-  pushField(fields, 'Meet ID', meet._id)
   return fields
 }
