@@ -9,7 +9,7 @@ import type { TenantGroup } from '../types'
 export const VORTEX_GROUPS: TenantGroup[] = [
   { id: 'Peak', label: 'Peak', color: 'var(--team-sr)', alwaysShow: true },
   { id: 'Elite', label: 'Elite', color: 'var(--team-jr)', alwaysShow: true },
-  { id: 'Prep', label: 'Prep', color: 'var(--team-jr-prep)', alwaysShow: true },
+  { id: 'Prep', label: 'Prep', color: 'var(--team-vortex-prep)', alwaysShow: true },
   {
     id: 'Age Group',
     label: 'Age Group',
