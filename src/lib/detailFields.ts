@@ -20,12 +20,6 @@ function pushField(
   fields.push({ label, value: trimmed })
 }
 
-function formatInstant(isoOrDate: string | Date, timeZone: string = TEAM_TZ) {
-  const date = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate
-  if (Number.isNaN(date.getTime())) return String(isoOrDate)
-  return format(toZonedTime(date, timeZone), 'EEE MMM d, yyyy · h:mm a')
-}
-
 function formatRecurring(event: CommitEvent): string | null {
   const rec = event.recurring
   if (!rec) return null
@@ -46,21 +40,17 @@ function formatRecurring(event: CommitEvent): string | null {
 export function buildEventDetailFields(
   event: CommitEvent,
   occurrenceName: string,
-  start: Date,
-  end: Date,
   subTeams: SubTeam[],
   location: string | null,
 ): DetailField[] {
+  // Name / start–end are already shown on the day-sheet card header — omit here.
   const fields: DetailField[] = []
-  pushField(fields, 'Name', occurrenceName)
   if (occurrenceName.trim() !== event.name.trim()) {
     pushField(fields, 'Series name', event.name)
   }
   pushField(fields, 'Type', event.label)
   pushField(fields, 'Groups', subTeams.join(', '))
   pushField(fields, 'Location', location)
-  pushField(fields, 'Starts', formatInstant(start))
-  pushField(fields, 'Ends', formatInstant(end))
   pushField(fields, 'Recurs', formatRecurring(event))
   return fields
 }
@@ -68,12 +58,10 @@ export function buildEventDetailFields(
 export function buildMeetDetailFields(
   meet: CommitMeet,
   occurrenceName: string,
-  start: Date,
-  end: Date,
   location: string | null,
 ): DetailField[] {
+  // Name / start–end are already shown on the day-sheet card header — omit here.
   const fields: DetailField[] = []
-  pushField(fields, 'Name', occurrenceName)
   if (
     meet.titleEventsFile &&
     meet.titleEventsFile.trim() &&
@@ -91,7 +79,5 @@ export function buildMeetDetailFields(
   )
   pushField(fields, 'Course', meet.course)
   pushField(fields, 'Status', meet.status)
-  pushField(fields, 'Starts', formatInstant(start))
-  pushField(fields, 'Ends', formatInstant(end))
   return fields
 }

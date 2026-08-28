@@ -177,8 +177,6 @@ function toOccurrence(
     fields: buildEventDetailFields(
       event,
       name,
-      start,
-      end,
       parsed.subTeams,
       parsed.location,
     ),
@@ -224,7 +222,7 @@ export function expandMeets(
       // Groups apply to practices only — meets are filtered via the Meet chip.
       subTeams: [],
       location,
-      fields: buildMeetDetailFields(meet, name, start, end, location),
+      fields: buildMeetDetailFields(meet, name, location),
     })
   }
 
