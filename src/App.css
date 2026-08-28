@@ -1177,7 +1177,7 @@
 }
 
 .filter-chip.is-active {
-  color: var(--ink);
+  color: var(--chip-color, var(--ink));
   background: color-mix(in srgb, var(--chip-color) 22%, var(--surface-2));
   border-color: color-mix(in srgb, var(--chip-color) 55%, var(--line));
 }
@@ -1282,6 +1282,11 @@
   animation: fade-card 0.45s ease both;
 }
 
+.practice-card--practice {
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 14%, var(--surface-3));
+  border-color: color-mix(in srgb, var(--card-accent, var(--cyan)) 40%, var(--line));
+}
+
 .practice-card--meet {
   background: color-mix(in srgb, var(--team-meet) 14%, var(--surface-3));
   border-color: color-mix(in srgb, var(--team-meet) 40%, var(--line));
@@ -1336,6 +1341,11 @@
   color: var(--ink);
   background: color-mix(in srgb, var(--muted) 22%, transparent);
   flex-shrink: 0;
+}
+
+.practice-card--practice .practice-card__kind {
+  color: var(--card-accent, var(--cyan));
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 28%, transparent);
 }
 
 .practice-card--meet .practice-card__kind {
@@ -1447,6 +1457,12 @@
   padding: 0.2rem 0 0.2rem 0.55rem;
 }
 
+.day-session--practice {
+  padding: 0.28rem 0.4rem 0.28rem 0.55rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 12%, transparent);
+}
+
 .day-session--meet {
   padding: 0.28rem 0.4rem 0.28rem 0.55rem;
   border-radius: 0.5rem;
@@ -1535,6 +1551,11 @@
   border-radius: 0.35rem;
   color: var(--ink);
   background: color-mix(in srgb, var(--muted) 22%, transparent);
+}
+
+.day-session--practice .day-session__kind {
+  color: var(--card-accent, var(--cyan));
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 30%, transparent);
 }
 
 .day-session--meet .day-session__kind {
@@ -1824,6 +1845,11 @@
   padding: 0.8rem 0.85rem 0.85rem 0.95rem;
 }
 
+.day-sheet__card--practice {
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 12%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--card-accent, var(--cyan)) 38%, var(--line));
+}
+
 .day-sheet__card--meet {
   background: color-mix(in srgb, var(--team-meet) 12%, var(--surface-2));
   border-color: color-mix(in srgb, var(--team-meet) 38%, var(--line));
@@ -1884,6 +1910,11 @@
   border-radius: 0.4rem;
   color: var(--ink);
   background: color-mix(in srgb, var(--muted) 22%, transparent);
+}
+
+.day-sheet__card--practice .day-sheet__badge {
+  color: var(--card-accent, var(--cyan));
+  background: color-mix(in srgb, var(--card-accent, var(--cyan)) 30%, transparent);
 }
 
 .day-sheet__card--meet .day-sheet__badge {
@@ -2250,6 +2281,10 @@
     flex: 1 1 0;
     min-height: 0;
     padding: 0.12rem 0 0.12rem 0.5rem;
+  }
+
+  .app--fit .day-session--practice {
+    padding: 0.18rem 0.35rem 0.18rem 0.5rem;
   }
 
   .app--fit .day-session--meet {
