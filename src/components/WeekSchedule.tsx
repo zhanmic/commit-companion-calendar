@@ -84,7 +84,7 @@ export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
       title={`${openGroup.heading.weekday}, ${openGroup.heading.date}`}
       subtitle={`${openGroup.occurrences.length} session${
         openGroup.occurrences.length === 1 ? '' : 's'
-      } · Commit API details`}
+      }`}
       occurrences={openGroup.occurrences}
       onClose={() => setOpenDayKey(null)}
     />

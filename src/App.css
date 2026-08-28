@@ -1744,6 +1744,7 @@
   max-height: min(88dvh, 52rem);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 1.15rem 1.15rem 0 0;
   background: color-mix(in srgb, var(--surface) 97%, transparent);
@@ -1804,10 +1805,14 @@
 }
 
 .day-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 0.85rem 1rem max(1rem, var(--safe-bottom));
   display: grid;
+  align-content: start;
   gap: 0.75rem;
 }
 
@@ -1817,7 +1822,6 @@
   border-radius: 0.9rem;
   background: var(--surface-2);
   padding: 0.8rem 0.85rem 0.85rem 0.95rem;
-  overflow: hidden;
 }
 
 .day-sheet__card--meet {
