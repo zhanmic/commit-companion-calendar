@@ -1,6 +1,10 @@
 import type { TenantGroup } from '../types'
 
-/** Vortex practice groups from Commit titles (Peak … Thunder). */
+/**
+ * Vortex practice groups from Commit titles (Peak … Thunder).
+ * Colors are spaced around the hue wheel so neighboring chips/rows stay distinct
+ * (especially Peak/Cyclone/Hail blues and Storm/Thunder purples).
+ */
 export const VORTEX_GROUPS: TenantGroup[] = [
   { id: 'Peak', label: 'Peak', color: 'var(--team-sr)', alwaysShow: true },
   { id: 'Elite', label: 'Elite', color: 'var(--team-jr)', alwaysShow: true },
@@ -12,18 +16,28 @@ export const VORTEX_GROUPS: TenantGroup[] = [
     alwaysShow: true,
   },
   { id: 'Storm', label: 'Storm', color: 'var(--team-sr-jr)', alwaysShow: true },
-  { id: 'Cyclone', label: 'Cyclone', color: '#0e8a98', alwaysShow: true },
-  { id: 'Hail', label: 'Hail', color: '#0891b2', alwaysShow: true },
+  {
+    id: 'Cyclone',
+    label: 'Cyclone',
+    color: 'var(--team-vortex-cyclone)',
+    alwaysShow: true,
+  },
+  {
+    id: 'Hail',
+    label: 'Hail',
+    color: 'var(--team-vortex-hail)',
+    alwaysShow: true,
+  },
   {
     id: 'Lightning',
     label: 'Lightning',
-    color: '#ca8a04',
+    color: 'var(--team-vortex-lightning)',
     alwaysShow: true,
   },
   {
     id: 'Thunder',
     label: 'Thunder',
-    color: '#4338ca',
+    color: 'var(--team-vortex-thunder)',
     alwaysShow: true,
   },
   { id: 'Other', label: 'Other', color: 'var(--team-other)' },
