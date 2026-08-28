@@ -934,7 +934,17 @@
 }
 
 .week-nav__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+}
+
+.week-nav__heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .week-nav__label {
@@ -945,23 +955,37 @@
   color: var(--ink);
 }
 
-.week-nav__actions {
+.view-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  margin-top: 0.15rem;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.18rem 0.5rem 0.18rem 0.32rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.nav-btn--view {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.65rem;
-  font-size: 0;
+.view-toggle:hover {
+  background: var(--surface-3);
 }
 
-.nav-btn--view svg {
+.view-toggle:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.view-toggle svg {
   display: block;
+  flex-shrink: 0;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .cal-btn-wrap {
@@ -2415,15 +2439,19 @@ button.month-day__num:focus-visible {
     font-size: 0.95rem;
   }
 
-  .app--fit .week-nav__actions {
-    margin-top: 0.05rem;
-    gap: 0.1rem;
+  .app--fit .week-nav__heading {
+    gap: 0.25rem;
   }
 
-  .app--fit .nav-btn--view {
-    width: 1.85rem;
-    height: 1.85rem;
-    border-radius: 0.55rem;
+  .app--fit .view-toggle {
+    gap: 0.2rem;
+    padding: 0.14rem 0.42rem 0.14rem 0.26rem;
+    font-size: 0.72rem;
+  }
+
+  .app--fit .view-toggle svg {
+    width: 0.95rem;
+    height: 0.95rem;
   }
 
   .app--fit.app--month .month-grid {
