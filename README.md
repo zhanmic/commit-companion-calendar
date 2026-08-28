@@ -7,6 +7,7 @@ Weekly practice and meet calendars for swim teams (`myswimday.com`), built on Co
 | Path | Team |
 |------|------|
 | [`/DelmarDolphins`](/DelmarDolphins) | Delmar Dolphins |
+| [`/VortexSwimClub`](/VortexSwimClub) | Vortex Swim Club |
 
 Product home (`/`) lists available teams. Each tenant owns its Commit `superTeamId` and its own practice/meet parsers under `src/tenants/<Slug>/`.
 

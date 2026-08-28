@@ -41,7 +41,9 @@ function toOccurrence(event, name, start, end, options) {
   const isTeamEvent = event.label === 'event'
   const parsed = isTeamEvent
     ? { subTeams: [], location: null }
-    : options.parsePractice(name, options.practiceNameFormat)
+    : options.parsePractice(name, options.practiceNameFormat, {
+        description: event.description,
+      })
 
   return {
     id: `${event._id}-${start.getTime()}`,

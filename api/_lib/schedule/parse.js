@@ -142,6 +142,65 @@ export function parsePracticeName(name, format, parsers) {
   }
 }
 
+export function parseVortexSubTeams(name) {
+  let scan = name.trim().toLowerCase()
+  const found = new Set()
+
+  if (/\bsenior\s+groups?\b/.test(scan)) {
+    found.add('Peak')
+    found.add('Elite')
+    found.add('Prep')
+    scan = scan.replace(/\bsenior\s+groups?\b/g, ' ')
+  }
+
+  if (/\belite\s*prep\b/.test(scan)) {
+    found.add('Prep')
+    scan = scan.replace(/\belite\s*prep\b/g, ' ')
+  }
+
+  if (/\bpeak\b/.test(scan)) found.add('Peak')
+  if (/\belite\b/.test(scan)) found.add('Elite')
+  if (/\bprep\b/.test(scan)) found.add('Prep')
+  if (/\bage\s*groups?\b/.test(scan)) found.add('Age Group')
+  if (/\bstorm\b|\bstrom\b/.test(scan)) found.add('Storm')
+  if (/\bcyclone\b/.test(scan)) found.add('Cyclone')
+  if (/\bhail\b/.test(scan)) found.add('Hail')
+  if (/\blightning\b/.test(scan)) found.add('Lightning')
+  if (/\bthunder\b/.test(scan)) found.add('Thunder')
+
+  const order = [
+    'Peak',
+    'Elite',
+    'Prep',
+    'Age Group',
+    'Storm',
+    'Cyclone',
+    'Hail',
+    'Lightning',
+    'Thunder',
+  ]
+  if (found.size === 0) return ['Other']
+  return order.filter((id) => found.has(id))
+}
+
+const VORTEX_LOCATION_PATTERNS = [
+  { match: /\bmulberry\b/i, label: 'Mulberry' },
+  { match: /\bepic\b/i, label: 'EPIC' },
+  { match: /\braintree\b/i, label: 'Raintree' },
+]
+
+export function parseVortexLocation(text) {
+  for (const { match, label } of VORTEX_LOCATION_PATTERNS) {
+    if (match.test(text)) return label
+  }
+  return null
+}
+
+export function vortexOccurrenceMatchesTeams(teams, selected) {
+  if (selected.size === 0) return false
+  return teams.some((t) => selected.has(t))
+}
+
 export function parseMeet(meet) {
   const start = new Date(meet.startDateTime)
   const end = new Date(meet.endDateTime)
@@ -164,7 +223,6 @@ export function parseMeet(meet) {
 
 /** Tenant-specific parsing hooks used by expand/digest. */
 export function getTenantParsers(tenant) {
-  // Delmar is the only digest tenant today; extend with a switch when adding teams.
   if (tenant.slug === 'DelmarDolphins') {
     return {
       parsePractice: (name, format) =>
@@ -174,6 +232,22 @@ export function getTenantParsers(tenant) {
         }),
       parseMeet,
       occurrenceMatchesTeams: delmaOccurrenceMatchesTeams,
+    }
+  }
+
+  if (tenant.slug === 'VortexSwimClub') {
+    return {
+      parsePractice: (name, _format, context) => {
+        const locationSource = [name, context?.description]
+          .filter(Boolean)
+          .join(' ')
+        return {
+          subTeams: parseVortexSubTeams(name),
+          location: parseVortexLocation(locationSource),
+        }
+      },
+      parseMeet,
+      occurrenceMatchesTeams: vortexOccurrenceMatchesTeams,
     }
   }
 

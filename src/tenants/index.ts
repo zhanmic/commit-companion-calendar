@@ -2,6 +2,7 @@ export type {
   MeetParser,
   ParsedMeet,
   ParsedPracticeName,
+  PracticeParseContext,
   PracticeParser,
   TenantConfig,
   TenantGroup,

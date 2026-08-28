@@ -23,10 +23,16 @@ export interface ParsedMeet {
   end: Date
 }
 
+/** Extra Commit fields available when expanding a practice. */
+export interface PracticeParseContext {
+  description?: string
+}
+
 /** How a tenant turns a Commit practice title into group(s) + location. */
 export type PracticeParser = (
   name: string,
   format: PracticeNameFormat,
+  context?: PracticeParseContext,
 ) => ParsedPracticeName
 
 /**
