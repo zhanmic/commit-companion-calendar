@@ -31,7 +31,7 @@
   --team-vortex-hail: #0d9488;
   --team-vortex-lightning: #65a30d;
   --team-vortex-thunder: #a21caf;
-  /* Distinct from practice group palette */
+  /* Meet / Event — Delmar-safe; Vortex overrides below (Thunder/Storm clash) */
   --team-meet: #c026d3;
   --team-event: #4f46e5;
 
@@ -80,6 +80,21 @@ html.dark {
   --team-event: #818cf8;
 
   color-scheme: dark;
+}
+
+/*
+ * Vortex packs the hue wheel (Peak…Thunder). Global meet magenta ≈ Thunder
+ * and event indigo ≈ Storm — use royal blue + gold instead so chips/rows
+ * stay distinct from every practice group.
+ */
+.app[data-tenant='VortexSwimClub'] {
+  --team-meet: #1d4ed8;
+  --team-event: #ca8a04;
+}
+
+html.dark .app[data-tenant='VortexSwimClub'] {
+  --team-meet: #60a5fa;
+  --team-event: #facc15;
 }
 
 *,

@@ -4,6 +4,7 @@ import type { TenantGroup } from '../types'
  * Vortex practice groups from Commit titles (Peak … Thunder).
  * Colors are spaced around the hue wheel so neighboring chips/rows stay distinct
  * (especially Peak/Cyclone/Hail blues and Storm/Thunder purples).
+ * Meet / Event accents are tenant-scoped in index.css (not these group vars).
  */
 export const VORTEX_GROUPS: TenantGroup[] = [
   { id: 'Peak', label: 'Peak', color: 'var(--team-sr)', alwaysShow: true },

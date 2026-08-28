@@ -261,6 +261,7 @@ export function TenantSchedule() {
   return (
     <div
       className={`app${fitMode ? ' app--fit' : ''}${fitScroll ? ' app--fit-scroll' : ''}`}
+      data-tenant={tenant.slug}
     >
       <div className="app__glow" aria-hidden />
       <header className="hero">
