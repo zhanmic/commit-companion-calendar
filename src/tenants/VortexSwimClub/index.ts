@@ -37,7 +37,7 @@ export const vortexSwimClubTenant: TenantConfig = {
   groups: VORTEX_GROUPS,
   defaultSettings: DEFAULT_SETTINGS,
   links: {
-    officialCalendar: 'https://www.teamvortex.org',
+    officialCalendar: 'https://www.teamvortex.org/practice_times',
   },
   icsFilenamePrefix: 'vortex-swim-club',
   parsePractice: parseVortexPractice,
