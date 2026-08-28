@@ -20,6 +20,8 @@ export interface CommitEvent {
   _id: string
   label: EventLabel
   name: string
+  /** Free-text from Commit; often includes pool / venue. */
+  description?: string
   startDate: string
   endDate: string
   recurring?: Recurring

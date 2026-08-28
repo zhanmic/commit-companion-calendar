@@ -33,6 +33,44 @@ export const TENANTS = [
     /** Local hour on Sunday to send weekly digests. */
     weeklySendHour: 18,
   },
+  {
+    slug: 'VortexSwimClub',
+    displayName: 'Vortex Swim Club',
+    path: '/VortexSwimClub',
+    slugAliases: ['TeamVortex', 'Vortex'],
+    superTeamId: 'WNP4xfPJL67a6k2Np',
+    defaultTimeZone: 'America/Denver',
+    groups: [
+      { id: 'Peak', label: 'Peak' },
+      { id: 'Elite', label: 'Elite' },
+      { id: 'Prep', label: 'Prep' },
+      { id: 'Age Group', label: 'Age Group' },
+      { id: 'Storm', label: 'Storm' },
+      { id: 'Cyclone', label: 'Cyclone' },
+      { id: 'Hail', label: 'Hail' },
+      { id: 'Lightning', label: 'Lightning' },
+      { id: 'Thunder', label: 'Thunder' },
+      { id: 'Other', label: 'Other' },
+    ],
+    defaultGroups: [
+      'Peak',
+      'Elite',
+      'Prep',
+      'Age Group',
+      'Storm',
+      'Cyclone',
+      'Hail',
+      'Lightning',
+      'Thunder',
+    ],
+    practiceNameFormat: {
+      mode: 'keywords',
+      separator: '-',
+      fields: ['group', 'location', 'time'],
+    },
+    dailySendHour: 7,
+    weeklySendHour: 18,
+  },
 ]
 
 export function listTenants() {

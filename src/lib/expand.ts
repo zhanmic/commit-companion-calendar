@@ -161,7 +161,9 @@ function toOccurrence(
   // Team events are filtered via the Event chip — not mapped onto practice groups.
   const parsed = isTeamEvent
     ? { subTeams: [] as string[], location: null as string | null }
-    : options.parsePractice(name, options.practiceNameFormat)
+    : options.parsePractice(name, options.practiceNameFormat, {
+        description: event.description,
+      })
 
   return {
     id: `${event._id}-${start.getTime()}`,

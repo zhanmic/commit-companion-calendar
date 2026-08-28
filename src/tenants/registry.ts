@@ -1,11 +1,13 @@
 import { delmarDolphinsTenant } from './DelmarDolphins'
+import { vortexSwimClubTenant } from './VortexSwimClub'
 import type { TenantConfig, TenantPublicMeta } from './types'
 
 /**
  * Register new tenants here.
  * Each tenant owns its Commit team id and practice/meet parsers.
+ * Delmar stays first so the landing demo is unchanged.
  */
-const TENANTS: TenantConfig[] = [delmarDolphinsTenant]
+const TENANTS: TenantConfig[] = [delmarDolphinsTenant, vortexSwimClubTenant]
 
 const BY_SLUG = new Map<string, TenantConfig>()
 for (const tenant of TENANTS) {
