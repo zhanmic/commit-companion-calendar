@@ -1,5 +1,11 @@
 import { useState, type CSSProperties, type KeyboardEvent } from 'react'
-import { EVENT_COLOR, MEET_COLOR, colorForGroup } from '../lib/groups'
+import {
+  EVENT_COLOR,
+  MEET_COLOR,
+  accentPracticeGroup,
+  colorForGroup,
+  practiceGroupLabel,
+} from '../lib/groups'
 import { useTenant } from '../tenants/TenantContext'
 import {
   dayHeading,
@@ -16,15 +22,13 @@ import { SessionKindIcon } from './SessionKindIcon'
 interface Props {
   week: WeekModel
   occurrences: Occurrence[]
+  /** Active group filter chips — drives multi-group accent/label. */
+  selectedGroups?: Set<string>
   /** Mobile concise list (carpool-style rows) */
   fitMode?: boolean
 }
 
 type SessionKind = 'practice' | 'meet' | 'event'
-
-function primaryTeam(teams: string[]): string | undefined {
-  return teams[0]
-}
 
 function sessionKind(occ: Occurrence): SessionKind {
   if (occ.label === 'meet') return 'meet'
@@ -51,7 +55,12 @@ function groupOccurrencesByDay(week: WeekModel, occurrences: Occurrence[]) {
     .filter((group) => group.occurrences.length > 0)
 }
 
-export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
+export function WeekSchedule({
+  week,
+  occurrences,
+  selectedGroups,
+  fitMode = false,
+}: Props) {
   const tenant = useTenant()
   const [openDayKey, setOpenDayKey] = useState<string | null>(null)
 
@@ -59,7 +68,14 @@ export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
     const kind = sessionKind(occ)
     if (kind === 'meet') return MEET_COLOR
     if (kind === 'event') return EVENT_COLOR
-    return colorForGroup(tenant, primaryTeam(occ.subTeams))
+    return colorForGroup(
+      tenant,
+      accentPracticeGroup(occ.subTeams, selectedGroups),
+    )
+  }
+
+  function teamLabel(occ: Occurrence): string {
+    return practiceGroupLabel(occ.subTeams, selectedGroups)
   }
 
   const dayGroups = groupOccurrencesByDay(week, occurrences)
@@ -86,6 +102,7 @@ export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
         openGroup.occurrences.length === 1 ? '' : 's'
       }`}
       occurrences={openGroup.occurrences}
+      selectedGroups={selectedGroups}
       onClose={() => setOpenDayKey(null)}
     />
   ) : null
@@ -133,7 +150,7 @@ export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
                   const kind = sessionKind(occ)
                   const isPractice = kind === 'practice'
                   const isMeet = kind === 'meet'
-                  const team = primaryTeam(occ.subTeams)
+                  const team = teamLabel(occ)
                   const loc = kind === 'event' ? null : occ.location
                   const time = formatTimeRangeCompact(occ.start, occ.end)
                   return (
@@ -243,7 +260,7 @@ export function WeekSchedule({ week, occurrences, fitMode = false }: Props) {
                   dayOccs.map((occ) => {
                     const kind = sessionKind(occ)
                     const isPractice = kind === 'practice'
-                    const team = primaryTeam(occ.subTeams)
+                    const team = teamLabel(occ)
                     const loc = kind === 'event' ? null : occ.location
                     return (
                       <article

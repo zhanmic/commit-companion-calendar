@@ -1,5 +1,10 @@
 import { useEffect, useId, useRef } from 'react'
-import { EVENT_COLOR, MEET_COLOR, colorForGroup } from '../lib/groups'
+import {
+  EVENT_COLOR,
+  MEET_COLOR,
+  accentPracticeGroup,
+  colorForGroup,
+} from '../lib/groups'
 import { PRODUCT_NAME } from '../product'
 import { useTenant } from '../tenants/TenantContext'
 import { formatTimeRange } from '../lib/week'
@@ -12,6 +17,8 @@ interface Props {
   title: string
   subtitle?: string
   occurrences: Occurrence[]
+  /** Active group filter chips — drives multi-group practice accent. */
+  selectedGroups?: Set<string>
   onClose: () => void
 }
 
@@ -19,6 +26,7 @@ export function DayDetailSheet({
   title,
   subtitle,
   occurrences,
+  selectedGroups,
   onClose,
 }: Props) {
   const tenant = useTenant()
@@ -85,13 +93,15 @@ export function DayDetailSheet({
                 : occ.label === 'event'
                   ? 'event'
                   : 'practice'
-            const team = occ.subTeams[0]
             const accent =
               kind === 'meet'
                 ? MEET_COLOR
                 : kind === 'event'
                   ? EVENT_COLOR
-                  : colorForGroup(tenant, team)
+                  : colorForGroup(
+                      tenant,
+                      accentPracticeGroup(occ.subTeams, selectedGroups),
+                    )
             return (
               <article
                 key={occ.id}

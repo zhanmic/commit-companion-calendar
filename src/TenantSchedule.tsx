@@ -364,6 +364,7 @@ export function TenantSchedule() {
               <WeekSchedule
                 week={week}
                 occurrences={filtered}
+                selectedGroups={selected}
                 fitMode={fitMode}
               />
             )}
