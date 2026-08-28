@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchScheduleData, fetchTeamConfig } from './api/commit'
 import { GroupFilters } from './components/GroupFilters'
+import { MonthSchedule } from './components/MonthSchedule'
 import { SettingsButton } from './components/SettingsButton'
 import { SubscribeButton } from './components/SubscribeButton'
 import { ThemeToggle } from './components/ThemeToggle'
@@ -8,6 +9,13 @@ import { WeekNav } from './components/WeekNav'
 import { WeekSchedule } from './components/WeekSchedule'
 import { expandEvents, expandMeets, expandPractices } from './lib/expand'
 import { alwaysShowGroups, groupOrder } from './lib/groups'
+import {
+  getMonthModel,
+  parseScheduleSearch,
+  pathWithScheduleSearch,
+  shiftMonth,
+  type ScheduleView,
+} from './lib/month'
 import { navigate } from './lib/routing'
 import {
   applyPublicScheduleLocks,
@@ -18,23 +26,23 @@ import {
 import { sharePage } from './lib/share'
 import {
   getWeekModel,
-  isCurrentWeek,
-  parseWeekSearch,
-  pathWithWeek,
+  instantFromDay,
   shiftWeek,
-  weekIsoFromAnchor,
 } from './lib/week'
 import { PRODUCT_NAME } from './product'
 import { useTenant } from './tenants/TenantContext'
 import type { CommitEvent, CommitMeet } from './types'
 import './App.css'
 
-/** Week schedule UI for the active tenant (e.g. /DelmarDolfins). */
+/** Week / month schedule UI for the active tenant (e.g. /DelmarDolfins). */
 export function TenantSchedule() {
   const tenant = useTenant()
-  const [anchor, setAnchor] = useState(() =>
-    parseWeekSearch(window.location.search, tenant.defaultTimeZone) ??
-    new Date(),
+  const [view, setView] = useState<ScheduleView>(
+    () => parseScheduleSearch(window.location.search, tenant.defaultTimeZone).view,
+  )
+  const [anchor, setAnchor] = useState(
+    () =>
+      parseScheduleSearch(window.location.search, tenant.defaultTimeZone).anchor,
   )
   const [events, setEvents] = useState<CommitEvent[]>([])
   const [meets, setMeets] = useState<CommitMeet[]>([])
@@ -56,21 +64,27 @@ export function TenantSchedule() {
   const [isMobile, setIsMobile] = useState(false)
   const [shareFeedback, setShareFeedback] = useState<string | null>(null)
 
-  function weekLocation(next: Date, tz: string): string {
-    const iso = weekIsoFromAnchor(next, tz)
-    return pathWithWeek(
-      window.location.pathname,
-      isCurrentWeek(next, tz) ? null : iso,
-    )
-  }
-
-  function goToWeek(next: Date, historyMode: 'push' | 'replace' = 'push') {
+  function goTo(
+    nextView: ScheduleView,
+    next: Date,
+    historyMode: 'push' | 'replace' = 'push',
+  ) {
+    setView(nextView)
     setAnchor(next)
-    const dest = weekLocation(next, timeZone)
+    const dest = pathWithScheduleSearch(
+      window.location.pathname,
+      nextView,
+      next,
+      timeZone,
+    )
     const current = window.location.pathname + window.location.search
     if (dest === current) return
     if (historyMode === 'push') window.history.pushState({}, '', dest)
     else window.history.replaceState({}, '', dest)
+  }
+
+  function goToWeek(next: Date, historyMode: 'push' | 'replace' = 'push') {
+    goTo('week', next, historyMode)
   }
 
   useEffect(() => {
@@ -79,20 +93,24 @@ export function TenantSchedule() {
 
   useEffect(() => {
     function onPopState() {
-      setAnchor(
-        parseWeekSearch(window.location.search, timeZone) ?? new Date(),
-      )
+      const parsed = parseScheduleSearch(window.location.search, timeZone)
+      setView(parsed.view)
+      setAnchor(parsed.anchor)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [timeZone])
 
   useEffect(() => {
-    if (!parseWeekSearch(window.location.search, timeZone)) return
-    const dest = weekLocation(anchor, timeZone)
+    const dest = pathWithScheduleSearch(
+      window.location.pathname,
+      view,
+      anchor,
+      timeZone,
+    )
     const current = window.location.pathname + window.location.search
     if (dest !== current) window.history.replaceState({}, '', dest)
-  }, [anchor, timeZone])
+  }, [view, anchor, timeZone])
 
   useEffect(() => {
     if (!shareFeedback) return
@@ -160,6 +178,10 @@ export function TenantSchedule() {
     () => getWeekModel(anchor, timeZone),
     [anchor, timeZone],
   )
+  const month = useMemo(
+    () => getMonthModel(anchor, timeZone),
+    [anchor, timeZone],
+  )
 
   const expandOptions = useMemo(
     () => ({
@@ -170,45 +192,47 @@ export function TenantSchedule() {
     [timeZone, settings.practiceNameFormat, tenant],
   )
 
-  const weekOccurrences = useMemo(() => {
+  const range = view === 'month' ? month : week
+
+  const rangeOccurrences = useMemo(() => {
     const practices = expandPractices(
       events,
-      week.rangeStart,
-      week.rangeEnd,
+      range.rangeStart,
+      range.rangeEnd,
       expandOptions,
     )
 
     const teamEvents = settings.includeTeamEvents
       ? expandEvents(
           events.filter((e) => e.label === 'event'),
-          week.rangeStart,
-          week.rangeEnd,
+          range.rangeStart,
+          range.rangeEnd,
           expandOptions,
         )
       : []
 
     const meetOccurrences = settings.queryMeets
-      ? expandMeets(meets, week.rangeStart, week.rangeEnd, tenant.parseMeet)
+      ? expandMeets(meets, range.rangeStart, range.rangeEnd, tenant.parseMeet)
       : []
 
     return [...practices, ...teamEvents, ...meetOccurrences].sort(
       (a, b) => a.start.getTime() - b.start.getTime(),
     )
-  }, [events, meets, week, expandOptions, settings, tenant])
+  }, [events, meets, range, expandOptions, settings, tenant])
 
   const practiceOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'practice'),
-    [weekOccurrences],
+    () => rangeOccurrences.filter((o) => o.label === 'practice'),
+    [rangeOccurrences],
   )
 
   const eventOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'event'),
-    [weekOccurrences],
+    () => rangeOccurrences.filter((o) => o.label === 'event'),
+    [rangeOccurrences],
   )
 
   const meetOccurrences = useMemo(
-    () => weekOccurrences.filter((o) => o.label === 'meet'),
-    [weekOccurrences],
+    () => rangeOccurrences.filter((o) => o.label === 'meet'),
+    [rangeOccurrences],
   )
 
   const availableTeams = useMemo(() => {
@@ -253,14 +277,21 @@ export function TenantSchedule() {
     tenant,
   ])
 
-  /** Phone → concise carpool-style rows for any group selection. */
   const fitMode = isMobile
-  /** Few sessions fill the screen; more sessions scroll inside the list. */
-  const fitScroll = fitMode && filtered.length > 8
+  const fitScroll = fitMode && view === 'week' && filtered.length > 8
+  const isMonth = view === 'month'
+  const countPeriod = isMonth ? 'this month' : 'this week'
+
+  function onToggleView() {
+    if (view === 'week') goTo('month', anchor)
+    else goToWeek(anchor)
+  }
 
   return (
     <div
-      className={`app${fitMode ? ' app--fit' : ''}${fitScroll ? ' app--fit-scroll' : ''}`}
+      className={`app${fitMode ? ' app--fit' : ''}${fitScroll ? ' app--fit-scroll' : ''}${
+        isMonth ? ' app--month' : ''
+      }`}
       data-tenant={tenant.slug}
     >
       <div className="app__glow" aria-hidden />
@@ -311,15 +342,27 @@ export function TenantSchedule() {
             <ThemeToggle />
           </div>
         </div>
-        <p className="hero__sub">Weekly view by group.</p>
+        <p className="hero__sub">
+          {isMonth ? 'Monthly view by group.' : 'Weekly view by group.'}
+        </p>
       </header>
 
       <main className="panel">
         <WeekNav
-          label={week.label}
-          onPrev={() => goToWeek(shiftWeek(anchor, -1))}
-          onNext={() => goToWeek(shiftWeek(anchor, 1))}
-          onToday={() => goToWeek(new Date())}
+          label={isMonth ? month.label : week.label}
+          view={view}
+          onPrev={() =>
+            isMonth
+              ? goTo('month', shiftMonth(anchor, -1, timeZone))
+              : goToWeek(shiftWeek(anchor, -1))
+          }
+          onNext={() =>
+            isMonth
+              ? goTo('month', shiftMonth(anchor, 1, timeZone))
+              : goToWeek(shiftWeek(anchor, 1))
+          }
+          onToday={() => (isMonth ? goTo('month', new Date()) : goToWeek(new Date()))}
+          onToggleView={onToggleView}
         />
 
         {loading ? (
@@ -333,6 +376,7 @@ export function TenantSchedule() {
               selected={selected}
               onChange={setSelected}
               counts={counts}
+              countPeriod={countPeriod}
               eventFilter={
                 settings.includeTeamEvents
                   ? {
@@ -351,13 +395,25 @@ export function TenantSchedule() {
                     }
                   : null
               }
-              weekCalendar={{
-                occurrences: filtered,
-                calendarName: `${tenant.displayName} · ${week.label}`,
-              }}
+              weekCalendar={
+                isMonth
+                  ? null
+                  : {
+                      occurrences: filtered,
+                      calendarName: `${tenant.displayName} · ${week.label}`,
+                    }
+              }
             />
 
-            {filtered.length === 0 ? (
+            {isMonth ? (
+              <MonthSchedule
+                month={month}
+                occurrences={filtered}
+                selectedGroups={selected}
+                fitMode={fitMode}
+                onOpenWeek={(day) => goToWeek(instantFromDay(day, timeZone))}
+              />
+            ) : filtered.length === 0 ? (
               <div className="state">
                 No sessions this week for the selected groups.
               </div>

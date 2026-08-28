@@ -3,16 +3,23 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
 export const TEAM_TZ = 'America/New_York'
 
+export interface CalendarDay {
+  year: number
+  month: number
+  date: number
+  key: string
+}
+
 export interface WeekModel {
   /** Real UTC instants for filtering/expansion */
   rangeStart: Date
   rangeEnd: Date
   /** Local calendar days (Y/M/D in team TZ) for column headers */
-  days: Array<{ year: number; month: number; date: number; key: string }>
+  days: CalendarDay[]
   label: string
 }
 
-function localParts(date: Date, timeZone: string) {
+export function localParts(date: Date, timeZone: string) {
   const z = toZonedTime(date, timeZone)
   return {
     year: z.getFullYear(),
@@ -22,13 +29,20 @@ function localParts(date: Date, timeZone: string) {
   }
 }
 
-function atLocalMidnight(
+export function atLocalMidnight(
   year: number,
   month: number,
   date: number,
   timeZone: string,
 ): Date {
   return fromZonedTime(new Date(year, month, date, 0, 0, 0, 0), timeZone)
+}
+
+export function instantFromDay(
+  day: CalendarDay,
+  timeZone: string = TEAM_TZ,
+): Date {
+  return atLocalMidnight(day.year, day.month, day.date, timeZone)
 }
 
 export function getWeekModel(anchor: Date, timeZone: string = TEAM_TZ): WeekModel {

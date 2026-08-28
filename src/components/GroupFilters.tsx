@@ -30,6 +30,8 @@ interface Props {
     occurrences: Occurrence[]
     calendarName: string
   } | null
+  /** Spoken/visible count window, e.g. "this week" or "this month". */
+  countPeriod?: string
 }
 
 export function GroupFilters({
@@ -40,6 +42,7 @@ export function GroupFilters({
   eventFilter = null,
   meetFilter = null,
   weekCalendar = null,
+  countPeriod = 'this week',
 }: Props) {
   const tenant = useTenant()
   const teams = groupOrder(tenant).filter((t) => available.includes(t))
@@ -96,14 +99,14 @@ export function GroupFilters({
                     } as CSSProperties
                   }
                   aria-pressed={active}
-                  aria-label={`${team}, ${count} this week`}
+                  aria-label={`${team}, ${count} ${countPeriod}`}
                   onClick={() => toggle(team)}
                 >
                   <span className="filter-chip__dot" aria-hidden />
                   <span className="filter-chip__label">{team}</span>
                   <span
                     className="filter-chip__count"
-                    aria-label={`${count} this week`}
+                    aria-label={`${count} ${countPeriod}`}
                   >
                     {count}
                   </span>
@@ -128,14 +131,14 @@ export function GroupFilters({
                   }`}
                   style={{ '--chip-color': EVENT_COLOR } as CSSProperties}
                   aria-pressed={eventFilter.selected}
-                  aria-label={`Events, ${eventFilter.count} this week`}
+                  aria-label={`Events, ${eventFilter.count} ${countPeriod}`}
                   onClick={() => eventFilter.onChange(!eventFilter.selected)}
                 >
                   <span className="filter-chip__dot" aria-hidden />
                   <span className="filter-chip__label">Event</span>
                   <span
                     className="filter-chip__count"
-                    aria-label={`${eventFilter.count} this week`}
+                    aria-label={`${eventFilter.count} ${countPeriod}`}
                   >
                     {eventFilter.count}
                   </span>
@@ -150,14 +153,14 @@ export function GroupFilters({
                   }`}
                   style={{ '--chip-color': MEET_COLOR } as CSSProperties}
                   aria-pressed={meetFilter.selected}
-                  aria-label={`Meets, ${meetFilter.count} this week`}
+                  aria-label={`Meets, ${meetFilter.count} ${countPeriod}`}
                   onClick={() => meetFilter.onChange(!meetFilter.selected)}
                 >
                   <span className="filter-chip__dot" aria-hidden />
                   <span className="filter-chip__label">Meet</span>
                   <span
                     className="filter-chip__count"
-                    aria-label={`${meetFilter.count} this week`}
+                    aria-label={`${meetFilter.count} ${countPeriod}`}
                   >
                     {meetFilter.count}
                   </span>
