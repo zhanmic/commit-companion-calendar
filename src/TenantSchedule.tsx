@@ -29,6 +29,7 @@ import {
   instantFromDay,
   shiftWeek,
 } from './lib/week'
+import { LegalFooter } from './legal/LegalPage'
 import { PRODUCT_NAME } from './product'
 import { useTenant } from './tenants/TenantContext'
 import type { CommitEvent, CommitMeet } from './types'
@@ -443,6 +444,8 @@ export function TenantSchedule() {
             </>
           ) : null}
           <span>{timeZone.replace(/_/g, ' ')}</span>
+          <span>·</span>
+          <LegalFooter />
         </footer>
       </main>
     </div>

@@ -21,6 +21,22 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 - Optional meets & team events toggle
 - Per-tenant practice title parsing (field split or keywords)
 - Optional daily/weekly schedule email digests (Resend + Upstash Redis)
+- Public policy pages: [`/service`](/service), [`/support`](/support), [`/terms`](/terms), [`/privacy`](/privacy)
+
+**Prerequisite:** teams must use [Commit Swimming](https://www.commitswimming.com) with a public schedule. See the [Service description](/service).
+
+## Billing & paid onboarding
+
+Sales-assisted Stripe Checkout (per team). Operator docs:
+
+- [`docs/billing-runbook.md`](docs/billing-runbook.md) — Stripe setup, checkout/portal API, webhook stub
+- [`docs/paid-tenant-onboarding.md`](docs/paid-tenant-onboarding.md) — go-live checklist
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/billing/checkout` | Create Checkout Session (`Bearer BILLING_ADMIN_SECRET`) |
+| `POST /api/billing/portal` | Create Customer Portal session |
+| `POST /api/billing/webhook` | Stripe webhook (logs events; entitlement gating deferred) |
 
 ## Develop
 
@@ -53,6 +69,9 @@ npm run preview
 | `GET /api/cron/send-daily` | Manual — daily digests only (`?force=1` to ignore local hour) |
 | `GET /api/cron/send-weekly` | Manual — weekly digests only (`?force=1` to ignore local hour) |
 | `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
+| `POST /api/billing/checkout` | Sales Checkout Session (`Bearer BILLING_ADMIN_SECRET`) |
+| `POST /api/billing/portal` | Stripe Customer Portal session |
+| `POST /api/billing/webhook` | Stripe webhook (logs; entitlement deferred) |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
 
 ## Contact inbox (`sales@mail.myswimday.com` → Gmail)
@@ -98,6 +117,7 @@ Requires env vars from [`.env.example`](.env.example):
 - **Upstash Redis** — `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 - **Cron** — `CRON_SECRET` (Vercel Cron calls `/api/cron/send-digests`)
 - **Links** — `APP_BASE_URL` (e.g. `https://myswimday.com`)
+- **Stripe (optional until charging)** — `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`, `BILLING_ADMIN_SECRET` (see billing runbook)
 
 ### Digest send times (per tenant timezone)
 

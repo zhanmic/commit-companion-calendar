@@ -1,11 +1,13 @@
 import { getTenantBySlug } from '../tenants/registry'
+import { isLegalSlug, type LegalSlug } from '../legal/legalMeta'
 
 export type AppRoute =
   | { kind: 'home' }
   | { kind: 'tenant'; slug: string }
+  | { kind: 'legal'; page: LegalSlug }
   | { kind: 'notFound'; path: string }
 
-/** Parse the browser path into a product or tenant route. */
+/** Parse the browser path into a product, legal, or tenant route. */
 export function parsePath(pathname: string): AppRoute {
   const clean = pathname.replace(/\/+$/, '') || '/'
   if (clean === '/') return { kind: 'home' }
@@ -13,6 +15,7 @@ export function parsePath(pathname: string): AppRoute {
   const segments = clean.split('/').filter(Boolean)
   if (segments.length === 1) {
     const slug = segments[0]
+    if (isLegalSlug(slug)) return { kind: 'legal', page: slug }
     if (getTenantBySlug(slug)) return { kind: 'tenant', slug }
   }
 
