@@ -1452,6 +1452,11 @@ button.month-day__num:focus-visible {
   color: var(--cyan);
 }
 
+.month-event--static {
+  cursor: default;
+  pointer-events: none;
+}
+
 .month-dots {
   display: flex;
   justify-content: center;
@@ -2498,6 +2503,32 @@ button.month-day__num:focus-visible {
   .app--fit .month-dot {
     width: 0.32rem;
     height: 0.32rem;
+  }
+
+  .app--fit .month-grid--text .month-day {
+    align-items: stretch;
+  }
+
+  .app--fit .month-grid--text .month-day__events {
+    gap: 0.08rem;
+    width: 100%;
+  }
+
+  .app--fit .month-grid--text .month-event {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0.05rem 0.16rem 0.05rem 0.28rem;
+    font-size: 0.58rem;
+    border-radius: 0.2rem;
+  }
+
+  .app--fit .month-grid--text .month-event__title,
+  .app--fit .month-grid--text .month-event__time {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .app--fit .filters__row--kinds {

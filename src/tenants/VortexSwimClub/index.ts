@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
   defaultGroups: [...VORTEX_NAMED_GROUP_IDS],
   defaultShowEvents: false,
   defaultShowMeets: false,
+  monthDetailLevel: 'dots',
   practiceNameFormat: {
     mode: 'keywords',
     separator: '-',

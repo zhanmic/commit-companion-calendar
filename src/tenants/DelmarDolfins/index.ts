@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
   defaultGroups: ['Sr'],
   defaultShowEvents: false,
   defaultShowMeets: false,
+  monthDetailLevel: 'dots',
   practiceNameFormat: {
     mode: 'fields',
     separator: '-',

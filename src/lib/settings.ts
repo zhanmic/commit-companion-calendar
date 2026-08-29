@@ -27,9 +27,36 @@ export interface ScheduleSettings {
   defaultShowEvents: boolean
   /** Whether the Meet filter chip is selected on page load. */
   defaultShowMeets: boolean
+  /** How much to show in each month-view day cell. */
+  monthDetailLevel: MonthDetailLevel
   /** How to parse practice titles into group + location. */
   practiceNameFormat: PracticeNameFormat
 }
+
+/** Compact marks → group/event name → name plus venue when known. */
+export type MonthDetailLevel = 'dots' | 'group' | 'location'
+
+export const MONTH_DETAIL_OPTIONS: Array<{
+  value: MonthDetailLevel
+  label: string
+  description: string
+}> = [
+  {
+    value: 'dots',
+    label: 'Dots',
+    description: 'Color marks only — most compact on a phone',
+  },
+  {
+    value: 'group',
+    label: 'Group',
+    description: 'Show the group or event name in each day',
+  },
+  {
+    value: 'location',
+    label: 'Location',
+    description: 'Group plus pool or venue when the schedule has one',
+  },
+]
 
 export const DEFAULT_PRACTICE_NAME_FORMAT: PracticeNameFormat = {
   mode: 'fields',
@@ -61,6 +88,10 @@ export const NAME_FIELD_OPTIONS: Array<{ value: NameField; label: string }> = [
   { value: 'ignore', label: 'Ignore' },
 ]
 
+function isMonthDetailLevel(value: unknown): value is MonthDetailLevel {
+  return value === 'dots' || value === 'group' || value === 'location'
+}
+
 function isPracticeParseMode(value: unknown): value is PracticeParseMode {
   return value === 'fields' || value === 'keywords'
 }
@@ -85,6 +116,7 @@ function cloneSettings(settings: ScheduleSettings): ScheduleSettings {
   return {
     ...settings,
     defaultGroups: [...settings.defaultGroups],
+    monthDetailLevel: settings.monthDetailLevel,
     practiceNameFormat: {
       ...settings.practiceNameFormat,
       fields: [...settings.practiceNameFormat.fields],
@@ -176,6 +208,9 @@ function normalizeSettings(
       typeof parsed.defaultShowMeets === 'boolean'
         ? parsed.defaultShowMeets
         : defaults.defaultShowMeets,
+    monthDetailLevel: isMonthDetailLevel(parsed.monthDetailLevel)
+      ? parsed.monthDetailLevel
+      : defaults.monthDetailLevel,
     practiceNameFormat: normalizePracticeNameFormat(
       parsed.practiceNameFormat,
       tenant,
