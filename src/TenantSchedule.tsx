@@ -411,6 +411,7 @@ export function TenantSchedule() {
                 occurrences={filtered}
                 selectedGroups={selected}
                 fitMode={fitMode}
+                detailLevel={settings.monthDetailLevel}
                 onOpenWeek={(day) => goToWeek(instantFromDay(day, timeZone))}
               />
             ) : filtered.length === 0 ? (

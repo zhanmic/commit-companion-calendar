@@ -6,6 +6,7 @@ import {
   colorForGroup,
   practiceGroupLabel,
 } from '../lib/groups'
+import type { MonthDetailLevel } from '../lib/settings'
 import type { MonthModel, MonthWeek } from '../lib/month'
 import { useTenant } from '../tenants/TenantContext'
 import {
@@ -26,6 +27,8 @@ interface Props {
   occurrences: Occurrence[]
   selectedGroups?: Set<string>
   fitMode?: boolean
+  /** How much text to show in day cells. */
+  detailLevel?: MonthDetailLevel
   onOpenWeek: (day: CalendarDay) => void
 }
 
@@ -70,6 +73,7 @@ export function MonthSchedule({
   occurrences,
   selectedGroups,
   fitMode = false,
+  detailLevel = 'dots',
   onOpenWeek,
 }: Props) {
   const tenant = useTenant()
@@ -113,6 +117,19 @@ export function MonthSchedule({
     onOpenWeek(week.days[0])
   }
 
+  /** Desktop keeps titles even on “Dots”; phones honor the compact setting. */
+  const cellDetail: MonthDetailLevel =
+    !fitMode && detailLevel === 'dots' ? 'group' : detailLevel
+  const showDots = cellDetail === 'dots'
+  const showLocation = cellDetail === 'location'
+  const eventLimit = fitMode ? 2 : DESKTOP_EVENT_LIMIT
+
+  function eventMeta(occ: Occurrence): string | null {
+    if (showLocation && occ.location) return occ.location
+    if (!fitMode) return formatStart(occ)
+    return null
+  }
+
   const detailSheet = openDetail ? (
     <DayDetailSheet
       title={openDetail.title}
@@ -126,7 +143,9 @@ export function MonthSchedule({
   return (
     <>
       <div
-        className={`month-grid${fitMode ? ' month-grid--fit' : ''}`}
+        className={`month-grid${fitMode ? ' month-grid--fit' : ''}${
+          showDots ? '' : ' month-grid--text'
+        }`}
         role="grid"
         aria-label={month.label}
       >
@@ -177,7 +196,7 @@ export function MonthSchedule({
                 0,
                 MOBILE_DOT_LIMIT,
               )
-              const shown = dayOccs.slice(0, DESKTOP_EVENT_LIMIT)
+              const shown = dayOccs.slice(0, eventLimit)
               const overflow = dayOccs.length - shown.length
 
               return (
@@ -209,7 +228,7 @@ export function MonthSchedule({
                     </button>
                   )}
 
-                  {fitMode ? (
+                  {showDots ? (
                     <div className="month-dots" aria-hidden>
                       {dots.map((color, i) => (
                         <span
@@ -223,7 +242,26 @@ export function MonthSchedule({
                     <div className="month-day__events">
                       {shown.map((occ) => {
                         const title = eventTitle(occ, selectedGroups)
-                        const time = formatStart(occ)
+                        const meta = eventMeta(occ)
+                        const label = [title, meta].filter(Boolean).join(', ')
+                        if (fitMode) {
+                          return (
+                            <span
+                              key={occ.id}
+                              className="month-event month-event--static"
+                              style={
+                                {
+                                  '--card-accent': sessionAccent(occ),
+                                } as CSSProperties
+                              }
+                            >
+                              <span className="month-event__title">{title}</span>
+                              {meta ? (
+                                <span className="month-event__time">{meta}</span>
+                              ) : null}
+                            </span>
+                          )
+                        }
                         return (
                           <button
                             key={occ.id}
@@ -234,22 +272,30 @@ export function MonthSchedule({
                                 '--card-accent': sessionAccent(occ),
                               } as CSSProperties
                             }
-                            aria-label={`${title}, ${time}`}
+                            aria-label={label}
                             onClick={() => openSessionDetail(day, occ)}
                           >
                             <span className="month-event__title">{title}</span>
-                            <span className="month-event__time">{time}</span>
+                            {meta ? (
+                              <span className="month-event__time">{meta}</span>
+                            ) : null}
                           </button>
                         )
                       })}
                       {overflow > 0 ? (
-                        <button
-                          type="button"
-                          className="month-event month-event--more"
-                          onClick={() => openDayDetail(day, dayOccs)}
-                        >
-                          +{overflow} more
-                        </button>
+                        fitMode ? (
+                          <span className="month-event month-event--more month-event--static">
+                            +{overflow} more
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="month-event month-event--more"
+                            onClick={() => openDayDetail(day, dayOccs)}
+                          >
+                            +{overflow} more
+                          </button>
+                        )
                       ) : null}
                     </div>
                   )}

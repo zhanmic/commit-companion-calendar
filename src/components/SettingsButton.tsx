@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { isScheduleAdmin } from '../lib/admin'
 import { groupOrder } from '../lib/groups'
 import {
+  MONTH_DETAIL_OPTIONS,
   NAME_FIELD_OPTIONS,
   PRACTICE_PARSE_MODE_OPTIONS,
+  type MonthDetailLevel,
   type NameField,
   type PracticeParseMode,
   type ScheduleSettings,
@@ -232,6 +234,37 @@ export function SettingsButton({
             >
               Meet
             </button>
+          </div>
+
+          <p className="settings__heading settings__heading--spaced">
+            Month view
+          </p>
+          <div
+            className="settings__stack"
+            role="radiogroup"
+            aria-label="Month view detail"
+          >
+            {MONTH_DETAIL_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={settings.monthDetailLevel === option.value}
+                className={`settings__choice${
+                  settings.monthDetailLevel === option.value
+                    ? ' settings__choice--active'
+                    : ''
+                }`}
+                onClick={() =>
+                  patch({ monthDetailLevel: option.value as MonthDetailLevel })
+                }
+              >
+                <span className="settings__choice-label">{option.label}</span>
+                <span className="settings__choice-hint">
+                  {option.description}
+                </span>
+              </button>
+            ))}
           </div>
 
           <p className="settings__heading settings__heading--spaced">
