@@ -38,9 +38,12 @@ Sales-assisted Stripe Checkout (per team). Operator docs:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `POST /api/billing/checkout` | Create Checkout Session (`Bearer BILLING_ADMIN_SECRET`) |
+| `POST /api/billing/checkout` | Create Checkout Session (ops secret or team admin) |
 | `POST /api/billing/portal` | Create Customer Portal session |
+| `POST /api/billing/team-session` | Verify team-admin password / token |
 | `POST /api/billing/webhook` | Stripe webhook (logs events; entitlement gating deferred) |
+
+These paths rewrite to a **single** `/api/billing` serverless function (Hobby 12-function limit).
 
 ## Develop
 
@@ -69,12 +72,11 @@ npm run preview
 | `POST /api/send-now` | Email current digest now (active subscribers only) |
 | `GET /api/unsubscribe?token=…` | Unsubscribe via email link |
 | `POST /api/unsubscribe` | Unsubscribe from the week-view UI (`email` + `tenantSlug`) |
-| `GET /api/cron/send-digests` | Cron tick — send digests due in each tenant’s local time |
-| `GET /api/cron/send-daily` | Manual — daily digests only (`?force=1` to ignore local hour) |
-| `GET /api/cron/send-weekly` | Manual — weekly digests only (`?force=1` to ignore local hour) |
+| `GET /api/cron/send-digests` | Cron tick — send digests due in each tenant’s local time (`?frequency=daily\|weekly&force=1` for manual) |
 | `POST /api/inbound` | Resend webhook — forward `sales@` mail to Gmail |
-| `POST /api/billing/checkout` | Sales Checkout Session (`Bearer BILLING_ADMIN_SECRET`) |
+| `POST /api/billing/checkout` | Sales Checkout Session (rewrites to `/api/billing`) |
 | `POST /api/billing/portal` | Stripe Customer Portal session |
+| `POST /api/billing/team-session` | Verify team-admin password / `?ta=` token |
 | `POST /api/billing/webhook` | Stripe webhook (logs; entitlement deferred) |
 | Commit `website-data-2a` / `2b` | Team config & schedule (per tenant `superTeamId`) |
 
