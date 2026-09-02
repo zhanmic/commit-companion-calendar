@@ -18,6 +18,8 @@ import {
 } from '../lib/teamAdmin'
 import { useTenant } from '../tenants/TenantContext'
 
+type SettingsTab = 'calendar' | 'team'
+
 interface SettingsButtonProps {
   className?: string
   settings: ScheduleSettings
@@ -32,9 +34,9 @@ export function SettingsButton({
   const tenant = useTenant()
   const groups = groupOrder(tenant)
   const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<SettingsTab>('calendar')
   const [admin, setAdmin] = useState(false)
   const [teamAdmin, setTeamAdmin] = useState(false)
-  const [manageOpen, setManageOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [manageBusy, setManageBusy] = useState(false)
   const [manageError, setManageError] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export function SettingsButton({
 
   useEffect(() => {
     if (!open) {
-      setManageOpen(false)
+      setTab('calendar')
       setPassword('')
       setManageError(null)
     }
@@ -136,7 +138,6 @@ export function SettingsButton({
     }
     setTeamAdmin(true)
     setPassword('')
-    setManageOpen(false)
     setOpen(false)
   }
 
@@ -182,300 +183,343 @@ export function SettingsButton({
           role="dialog"
           aria-label="Settings"
         >
-          <p className="settings__heading">Team</p>
-          {teamAdmin ? (
-            <div className="settings__team">
-              <p className="settings__switch-hint">
-                You’re signed in as team admin for {tenant.displayName}.
-              </p>
-              <button
-                type="button"
-                className="settings__manage-btn"
-                onClick={openTeamBilling}
-              >
-                Open team billing
-              </button>
-            </div>
-          ) : manageOpen ? (
-            <form className="settings__team" onSubmit={onManageTeamSubmit}>
-              <p className="settings__switch-hint">
-                Enter the team password to manage subscription and billing.
-              </p>
-              <label className="settings__field">
-                <span className="settings__field-label">Team password</span>
-                <input
-                  type="password"
-                  className="settings__input"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  disabled={manageBusy}
-                />
-              </label>
-              {manageError ? (
-                <p className="settings__team-error" role="alert">
-                  {manageError}
-                </p>
+          <div className="settings__tabs" role="tablist" aria-label="Settings">
+            <button
+              type="button"
+              role="tab"
+              id={`${panelId}-tab-calendar`}
+              aria-selected={tab === 'calendar'}
+              aria-controls={`${panelId}-panel-calendar`}
+              className={`settings__tab${
+                tab === 'calendar' ? ' settings__tab--active' : ''
+              }`}
+              onClick={() => setTab('calendar')}
+            >
+              Calendar
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id={`${panelId}-tab-team`}
+              aria-selected={tab === 'team'}
+              aria-controls={`${panelId}-panel-team`}
+              className={`settings__tab${
+                tab === 'team' ? ' settings__tab--active' : ''
+              }`}
+              onClick={() => {
+                setTab('team')
+                setManageError(null)
+              }}
+            >
+              Team
+            </button>
+          </div>
+
+          {tab === 'calendar' ? (
+            <div
+              id={`${panelId}-panel-calendar`}
+              role="tabpanel"
+              aria-labelledby={`${panelId}-tab-calendar`}
+              className="settings__tab-panel"
+            >
+              {admin ? (
+                <>
+                  <p className="settings__heading">Schedule</p>
+
+                  <label className="settings__switch">
+                    <input
+                      type="checkbox"
+                      checked={settings.includeTeamEvents}
+                      onChange={(e) =>
+                        patch({ includeTeamEvents: e.target.checked })
+                      }
+                    />
+                    <span>
+                      <span className="settings__switch-label">
+                        Include team events
+                      </span>
+                      <span className="settings__switch-hint">
+                        Calendar items like meetings, breaks, and cancellations
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className="settings__switch">
+                    <input
+                      type="checkbox"
+                      checked={settings.queryMeets}
+                      onChange={(e) =>
+                        patch({ queryMeets: e.target.checked })
+                      }
+                    />
+                    <span>
+                      <span className="settings__switch-label">
+                        Query meets
+                      </span>
+                      <span className="settings__switch-hint">
+                        Fetch Commit meet entries and show them on the week
+                      </span>
+                    </span>
+                  </label>
+                </>
               ) : null}
-              <div className="settings__team-actions">
-                <button
-                  type="submit"
-                  className="settings__manage-btn"
-                  disabled={manageBusy}
-                >
-                  {manageBusy ? 'Checking…' : 'Continue'}
-                </button>
-                <button
-                  type="button"
-                  className="settings__text-btn"
-                  disabled={manageBusy}
-                  onClick={() => {
-                    setManageOpen(false)
-                    setPassword('')
-                    setManageError(null)
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="settings__team">
-              <p className="settings__switch-hint">
-                For coaches and club admins — subscription and payment.
-              </p>
-              <button
-                type="button"
-                className="settings__manage-btn"
-                onClick={() => {
-                  setManageOpen(true)
-                  setManageError(null)
-                }}
+
+              <p
+                className={`settings__heading${
+                  admin ? ' settings__heading--spaced' : ''
+                }`}
               >
-                Manage team
-              </button>
-            </div>
-          )}
-
-          {admin ? (
-            <>
-              <p className="settings__heading settings__heading--spaced">
-                Schedule
+                Defaults on load
               </p>
-
-              <label className="settings__switch">
-                <input
-                  type="checkbox"
-                  checked={settings.includeTeamEvents}
-                  onChange={(e) =>
-                    patch({ includeTeamEvents: e.target.checked })
-                  }
-                />
-                <span>
-                  <span className="settings__switch-label">
-                    Include team events
-                  </span>
-                  <span className="settings__switch-hint">
-                    Calendar items like meetings, breaks, and cancellations
-                  </span>
-                </span>
-              </label>
-
-              <label className="settings__switch">
-                <input
-                  type="checkbox"
-                  checked={settings.queryMeets}
-                  onChange={(e) => patch({ queryMeets: e.target.checked })}
-                />
-                <span>
-                  <span className="settings__switch-label">Query meets</span>
-                  <span className="settings__switch-hint">
-                    Fetch Commit meet entries and show them on the week
-                  </span>
-                </span>
-              </label>
-            </>
-          ) : null}
-
-          <p className="settings__heading settings__heading--spaced">
-            Defaults on load
-          </p>
-          <p className="settings__switch-hint">
-            Selected on page load. Change here, then reload to apply.
-          </p>
-          <div
-            className="settings__groups"
-            role="group"
-            aria-label="Default groups"
-          >
-            {groups.map((team) => {
-              const active = settings.defaultGroups.includes(team)
-              return (
+              <p className="settings__switch-hint">
+                Selected on page load. Change here, then reload to apply.
+              </p>
+              <div
+                className="settings__groups"
+                role="group"
+                aria-label="Default groups"
+              >
+                {groups.map((team) => {
+                  const active = settings.defaultGroups.includes(team)
+                  return (
+                    <button
+                      key={team}
+                      type="button"
+                      className={`settings__group-chip${
+                        active ? ' settings__group-chip--active' : ''
+                      }`}
+                      aria-pressed={active}
+                      onClick={() => toggleDefaultGroup(team)}
+                    >
+                      {team}
+                    </button>
+                  )
+                })}
+              </div>
+              <div
+                className="settings__groups"
+                role="group"
+                aria-label="Default event and meet filters"
+              >
                 <button
-                  key={team}
                   type="button"
                   className={`settings__group-chip${
-                    active ? ' settings__group-chip--active' : ''
+                    settings.defaultShowEvents
+                      ? ' settings__group-chip--active'
+                      : ''
+                  }${
+                    settings.includeTeamEvents
+                      ? ''
+                      : ' settings__group-chip--disabled'
                   }`}
-                  aria-pressed={active}
-                  onClick={() => toggleDefaultGroup(team)}
+                  aria-pressed={settings.defaultShowEvents}
+                  aria-disabled={!settings.includeTeamEvents}
+                  disabled={!settings.includeTeamEvents}
+                  onClick={() =>
+                    patch({ defaultShowEvents: !settings.defaultShowEvents })
+                  }
                 >
-                  {team}
+                  Event
                 </button>
-              )
-            })}
-          </div>
-          <div
-            className="settings__groups"
-            role="group"
-            aria-label="Default event and meet filters"
-          >
-            <button
-              type="button"
-              className={`settings__group-chip${
-                settings.defaultShowEvents
-                  ? ' settings__group-chip--active'
-                  : ''
-              }${
-                settings.includeTeamEvents
-                  ? ''
-                  : ' settings__group-chip--disabled'
-              }`}
-              aria-pressed={settings.defaultShowEvents}
-              aria-disabled={!settings.includeTeamEvents}
-              disabled={!settings.includeTeamEvents}
-              onClick={() =>
-                patch({ defaultShowEvents: !settings.defaultShowEvents })
-              }
-            >
-              Event
-            </button>
-            <button
-              type="button"
-              className={`settings__group-chip${
-                settings.defaultShowMeets
-                  ? ' settings__group-chip--active'
-                  : ''
-              }${
-                settings.queryMeets ? '' : ' settings__group-chip--disabled'
-              }`}
-              aria-pressed={settings.defaultShowMeets}
-              aria-disabled={!settings.queryMeets}
-              disabled={!settings.queryMeets}
-              onClick={() =>
-                patch({ defaultShowMeets: !settings.defaultShowMeets })
-              }
-            >
-              Meet
-            </button>
-          </div>
+                <button
+                  type="button"
+                  className={`settings__group-chip${
+                    settings.defaultShowMeets
+                      ? ' settings__group-chip--active'
+                      : ''
+                  }${
+                    settings.queryMeets
+                      ? ''
+                      : ' settings__group-chip--disabled'
+                  }`}
+                  aria-pressed={settings.defaultShowMeets}
+                  aria-disabled={!settings.queryMeets}
+                  disabled={!settings.queryMeets}
+                  onClick={() =>
+                    patch({ defaultShowMeets: !settings.defaultShowMeets })
+                  }
+                >
+                  Meet
+                </button>
+              </div>
 
-          <p className="settings__heading settings__heading--spaced">
-            Month view
-          </p>
-          <div
-            className="settings__stack"
-            role="radiogroup"
-            aria-label="Month view detail"
-          >
-            {MONTH_DETAIL_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={settings.monthDetailLevel === option.value}
-                className={`settings__choice${
-                  settings.monthDetailLevel === option.value
-                    ? ' settings__choice--active'
-                    : ''
-                }`}
-                onClick={() =>
-                  patch({ monthDetailLevel: option.value as MonthDetailLevel })
-                }
+              <p className="settings__heading settings__heading--spaced">
+                Month view
+              </p>
+              <div
+                className="settings__stack"
+                role="radiogroup"
+                aria-label="Month view detail"
               >
-                <span className="settings__choice-label">{option.label}</span>
-                <span className="settings__choice-hint">
-                  {option.description}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <p className="settings__heading settings__heading--spaced">
-            Practice name format
-          </p>
-          <div
-            className="settings__stack"
-            role="radiogroup"
-            aria-label="Practice name format"
-          >
-            {PRACTICE_PARSE_MODE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={format.mode === option.value}
-                className={`settings__choice${
-                  format.mode === option.value ? ' settings__choice--active' : ''
-                }`}
-                onClick={() =>
-                  patchFormat({ mode: option.value as PracticeParseMode })
-                }
-              >
-                <span className="settings__choice-label">{option.label}</span>
-                <span className="settings__choice-hint">
-                  {option.description}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {format.mode === 'fields' ? (
-            <div className="settings__format">
-              <label className="settings__field">
-                <span className="settings__field-label">Separator</span>
-                <input
-                  type="text"
-                  className="settings__input"
-                  value={format.separator}
-                  maxLength={3}
-                  aria-label="Name separator"
-                  onChange={(e) => {
-                    const next = e.target.value
-                    if (next.length > 0) patchFormat({ separator: next })
-                  }}
-                />
-              </label>
-
-              <p className="settings__field-label">Field order</p>
-              <div className="settings__fields">
-                {format.fields.map((field, index) => (
-                  <label key={`${field}-${index}`} className="settings__field">
-                    <span className="settings__field-index">{index + 1}</span>
-                    <select
-                      className="settings__select"
-                      value={field}
-                      aria-label={`Field ${index + 1}`}
-                      onChange={(e) =>
-                        setFieldAt(index, e.target.value as NameField)
-                      }
-                    >
-                      {NAME_FIELD_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                {MONTH_DETAIL_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={settings.monthDetailLevel === option.value}
+                    className={`settings__choice${
+                      settings.monthDetailLevel === option.value
+                        ? ' settings__choice--active'
+                        : ''
+                    }`}
+                    onClick={() =>
+                      patch({
+                        monthDetailLevel: option.value as MonthDetailLevel,
+                      })
+                    }
+                  >
+                    <span className="settings__choice-label">
+                      {option.label}
+                    </span>
+                    <span className="settings__choice-hint">
+                      {option.description}
+                    </span>
+                  </button>
                 ))}
               </div>
-              <p className="settings__switch-hint">
-                Example: Sr - BCHS - 5:30 → group Sr, location BCHS; time is
-                ignored (API times are used).
+
+              <p className="settings__heading settings__heading--spaced">
+                Practice name format
               </p>
+              <div
+                className="settings__stack"
+                role="radiogroup"
+                aria-label="Practice name format"
+              >
+                {PRACTICE_PARSE_MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={format.mode === option.value}
+                    className={`settings__choice${
+                      format.mode === option.value
+                        ? ' settings__choice--active'
+                        : ''
+                    }`}
+                    onClick={() =>
+                      patchFormat({
+                        mode: option.value as PracticeParseMode,
+                      })
+                    }
+                  >
+                    <span className="settings__choice-label">
+                      {option.label}
+                    </span>
+                    <span className="settings__choice-hint">
+                      {option.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {format.mode === 'fields' ? (
+                <div className="settings__format">
+                  <label className="settings__field">
+                    <span className="settings__field-label">Separator</span>
+                    <input
+                      type="text"
+                      className="settings__input"
+                      value={format.separator}
+                      maxLength={3}
+                      aria-label="Name separator"
+                      onChange={(e) => {
+                        const next = e.target.value
+                        if (next.length > 0) patchFormat({ separator: next })
+                      }}
+                    />
+                  </label>
+
+                  <p className="settings__field-label">Field order</p>
+                  <div className="settings__fields">
+                    {format.fields.map((field, index) => (
+                      <label
+                        key={`${field}-${index}`}
+                        className="settings__field"
+                      >
+                        <span className="settings__field-index">
+                          {index + 1}
+                        </span>
+                        <select
+                          className="settings__select"
+                          value={field}
+                          aria-label={`Field ${index + 1}`}
+                          onChange={(e) =>
+                            setFieldAt(index, e.target.value as NameField)
+                          }
+                        >
+                          {NAME_FIELD_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="settings__switch-hint">
+                    Example: Sr - BCHS - 5:30 → group Sr, location BCHS; time is
+                    ignored (API times are used).
+                  </p>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          ) : (
+            <div
+              id={`${panelId}-panel-team`}
+              role="tabpanel"
+              aria-labelledby={`${panelId}-tab-team`}
+              className="settings__tab-panel"
+            >
+              {teamAdmin ? (
+                <div className="settings__team">
+                  <p className="settings__switch-hint">
+                    You’re signed in as team admin for {tenant.displayName}.
+                  </p>
+                  <button
+                    type="button"
+                    className="settings__manage-btn"
+                    onClick={openTeamBilling}
+                  >
+                    Open team billing
+                  </button>
+                </div>
+              ) : (
+                <form className="settings__team" onSubmit={onManageTeamSubmit}>
+                  <p className="settings__switch-hint">
+                    Enter the team password to manage subscription and billing
+                    for {tenant.displayName}.
+                  </p>
+                  <label className="settings__field">
+                    <span className="settings__field-label">
+                      Team password
+                    </span>
+                    <input
+                      type="password"
+                      className="settings__input"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      disabled={manageBusy}
+                    />
+                  </label>
+                  {manageError ? (
+                    <p className="settings__team-error" role="alert">
+                      {manageError}
+                    </p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    className="settings__manage-btn"
+                    disabled={manageBusy}
+                  >
+                    {manageBusy ? 'Checking…' : 'Continue'}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
         </div>
       ) : null}
     </div>

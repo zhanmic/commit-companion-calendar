@@ -822,6 +822,47 @@
   margin-top: 0.95rem;
 }
 
+.settings__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  margin: 0 0 0.85rem;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.settings__tab {
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+}
+
+.settings__tab:hover {
+  color: var(--ink);
+}
+
+.settings__tab--active {
+  background: color-mix(in srgb, var(--cyan) 18%, transparent);
+  color: var(--cyan-soft);
+}
+
+.settings__tab:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.settings__tab-panel {
+  min-height: 0;
+}
+
 .settings__team {
   display: grid;
   gap: 0.55rem;
