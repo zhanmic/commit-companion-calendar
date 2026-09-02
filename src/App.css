@@ -822,6 +822,68 @@
   margin-top: 0.95rem;
 }
 
+.settings__team {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.25rem;
+}
+
+.settings__manage-btn {
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
+  color: var(--cyan-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings__manage-btn:hover {
+  border-color: color-mix(in srgb, var(--cyan) 65%, var(--line));
+}
+
+.settings__manage-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings__manage-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.settings__team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.settings__text-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.settings__text-btn:hover {
+  color: var(--cyan-soft);
+  text-decoration: underline;
+}
+
+.settings__team-error {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--error);
+}
+
 .settings__switch {
   display: grid;
   grid-template-columns: auto 1fr;

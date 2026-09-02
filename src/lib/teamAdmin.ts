@@ -1,10 +1,12 @@
 import { PRODUCT_STORAGE_PREFIX } from '../product'
 
+export const TEAM_ADMIN_EVENT = 'msd:team-admin'
+
 function storageKey(tenantSlug: string) {
   return `${PRODUCT_STORAGE_PREFIX}:teamAdmin:${tenantSlug.toLowerCase()}`
 }
 
-/** Stored team-admin token for a tenant (from ?ta= after server verify). */
+/** Stored team-admin token for a tenant (from ?ta= or Settings password). */
 export function getTeamAdminToken(tenantSlug: string): string {
   if (typeof window === 'undefined') return ''
   try {
@@ -27,17 +29,69 @@ export function setTeamAdminToken(tenantSlug: string, token: string): void {
 
 export function clearTeamAdminToken(tenantSlug: string): void {
   setTeamAdminToken(tenantSlug, '')
+  notifyTeamAdminChanged(tenantSlug, false)
 }
 
 /**
  * Team admin — swim club contact who manages payment for that tenant.
- * Unlock with `?ta=<teamAdminToken>` on the tenant URL (verified server-side).
- * Disable with `?ta=0`.
+ * Unlock with Settings → Manage team (password), or `?ta=<token>` on the URL.
+ * Disable with Sign out or `?ta=0`.
  *
  * Separate from operator `?admin=1` (schedule setup).
  */
 export function hasTeamAdminSession(tenantSlug: string): boolean {
   return Boolean(getTeamAdminToken(tenantSlug))
+}
+
+export function notifyTeamAdminChanged(
+  tenantSlug: string,
+  active: boolean,
+  options?: { openBilling?: boolean },
+): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent(TEAM_ADMIN_EVENT, {
+      detail: {
+        tenantSlug,
+        active,
+        openBilling: Boolean(options?.openBilling),
+      },
+    }),
+  )
+}
+
+/** Verify password (teamAdminToken) and start a team-admin session. */
+export async function unlockTeamAdminWithPassword(
+  tenantSlug: string,
+  password: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const token = password.trim()
+  if (!token) {
+    return { ok: false, error: 'Enter the team password.' }
+  }
+
+  try {
+    const res = await fetch('/api/billing/team-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantSlug, token }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string
+      ok?: boolean
+    }
+    if (!res.ok || !data.ok) {
+      return {
+        ok: false,
+        error: data.error || 'Incorrect team password.',
+      }
+    }
+    setTeamAdminToken(tenantSlug, token)
+    notifyTeamAdminChanged(tenantSlug, true, { openBilling: true })
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'Network error — try again.' }
+  }
 }
 
 function stripTaParam(): void {
@@ -87,12 +141,14 @@ export async function syncTeamAdminFromUrl(
       stripTaParam()
       if (!res.ok || !data.ok) {
         clearTeamAdminToken(tenantSlug)
+        notifyTeamAdminChanged(tenantSlug, false)
         return {
           active: false,
           error: data.error || 'Invalid team admin link.',
         }
       }
       setTeamAdminToken(tenantSlug, token)
+      notifyTeamAdminChanged(tenantSlug, true)
       return { active: true, error: null }
     }
 

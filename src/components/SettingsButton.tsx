@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { isScheduleAdmin } from '../lib/admin'
 import { groupOrder } from '../lib/groups'
 import {
@@ -10,6 +10,12 @@ import {
   type PracticeParseMode,
   type ScheduleSettings,
 } from '../lib/settings'
+import {
+  TEAM_ADMIN_EVENT,
+  hasTeamAdminSession,
+  notifyTeamAdminChanged,
+  unlockTeamAdminWithPassword,
+} from '../lib/teamAdmin'
 import { useTenant } from '../tenants/TenantContext'
 
 interface SettingsButtonProps {
@@ -27,13 +33,45 @@ export function SettingsButton({
   const groups = groupOrder(tenant)
   const [open, setOpen] = useState(false)
   const [admin, setAdmin] = useState(false)
+  const [teamAdmin, setTeamAdmin] = useState(false)
+  const [manageOpen, setManageOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [manageBusy, setManageBusy] = useState(false)
+  const [manageError, setManageError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const format = settings.practiceNameFormat
 
   useEffect(() => {
     setAdmin(isScheduleAdmin())
-  }, [])
+    setTeamAdmin(hasTeamAdminSession(tenant.slug))
+  }, [tenant.slug])
+
+  useEffect(() => {
+    function onTeamAdmin(event: Event) {
+      const detail = (event as CustomEvent).detail as {
+        tenantSlug?: string
+        active?: boolean
+      }
+      if (
+        !detail?.tenantSlug ||
+        detail.tenantSlug.toLowerCase() !== tenant.slug.toLowerCase()
+      ) {
+        return
+      }
+      setTeamAdmin(Boolean(detail.active))
+    }
+    window.addEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
+    return () => window.removeEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
+  }, [tenant.slug])
+
+  useEffect(() => {
+    if (!open) {
+      setManageOpen(false)
+      setPassword('')
+      setManageError(null)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -86,6 +124,27 @@ export function SettingsButton({
     })
   }
 
+  async function onManageTeamSubmit(event: FormEvent) {
+    event.preventDefault()
+    setManageBusy(true)
+    setManageError(null)
+    const result = await unlockTeamAdminWithPassword(tenant.slug, password)
+    setManageBusy(false)
+    if (!result.ok) {
+      setManageError(result.error)
+      return
+    }
+    setTeamAdmin(true)
+    setPassword('')
+    setManageOpen(false)
+    setOpen(false)
+  }
+
+  function openTeamBilling() {
+    notifyTeamAdminChanged(tenant.slug, true, { openBilling: true })
+    setOpen(false)
+  }
+
   return (
     <div
       ref={rootRef}
@@ -123,9 +182,87 @@ export function SettingsButton({
           role="dialog"
           aria-label="Settings"
         >
+          <p className="settings__heading">Team</p>
+          {teamAdmin ? (
+            <div className="settings__team">
+              <p className="settings__switch-hint">
+                You’re signed in as team admin for {tenant.displayName}.
+              </p>
+              <button
+                type="button"
+                className="settings__manage-btn"
+                onClick={openTeamBilling}
+              >
+                Open team billing
+              </button>
+            </div>
+          ) : manageOpen ? (
+            <form className="settings__team" onSubmit={onManageTeamSubmit}>
+              <p className="settings__switch-hint">
+                Enter the team password to manage subscription and billing.
+              </p>
+              <label className="settings__field">
+                <span className="settings__field-label">Team password</span>
+                <input
+                  type="password"
+                  className="settings__input"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  disabled={manageBusy}
+                />
+              </label>
+              {manageError ? (
+                <p className="settings__team-error" role="alert">
+                  {manageError}
+                </p>
+              ) : null}
+              <div className="settings__team-actions">
+                <button
+                  type="submit"
+                  className="settings__manage-btn"
+                  disabled={manageBusy}
+                >
+                  {manageBusy ? 'Checking…' : 'Continue'}
+                </button>
+                <button
+                  type="button"
+                  className="settings__text-btn"
+                  disabled={manageBusy}
+                  onClick={() => {
+                    setManageOpen(false)
+                    setPassword('')
+                    setManageError(null)
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="settings__team">
+              <p className="settings__switch-hint">
+                For coaches and club admins — subscription and payment.
+              </p>
+              <button
+                type="button"
+                className="settings__manage-btn"
+                onClick={() => {
+                  setManageOpen(true)
+                  setManageError(null)
+                }}
+              >
+                Manage team
+              </button>
+            </div>
+          )}
+
           {admin ? (
             <>
-              <p className="settings__heading">Schedule</p>
+              <p className="settings__heading settings__heading--spaced">
+                Schedule
+              </p>
 
               <label className="settings__switch">
                 <input
@@ -161,9 +298,7 @@ export function SettingsButton({
             </>
           ) : null}
 
-          <p
-            className={`settings__heading${admin ? ' settings__heading--spaced' : ''}`}
-          >
+          <p className="settings__heading settings__heading--spaced">
             Defaults on load
           </p>
           <p className="settings__switch-hint">
