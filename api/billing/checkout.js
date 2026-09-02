@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization',
+      'Content-Type, Authorization, X-Billing-Admin',
     )
     res.end()
     return
@@ -38,9 +38,11 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     sendJson(res, 200, {
       configured: isStripeConfigured(),
-      adminSecret: Boolean(process.env.BILLING_ADMIN_SECRET),
+      adminSecret: Boolean(
+        process.env.BILLING_ADMIN_SECRET || process.env.BILLING_UI_SECRET,
+      ),
       webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
-      note: 'POST with Bearer BILLING_ADMIN_SECRET to create a Checkout Session.',
+      note: 'POST with Bearer BILLING_ADMIN_SECRET or BILLING_UI_SECRET (or X-Billing-Admin).',
     })
     return
   }

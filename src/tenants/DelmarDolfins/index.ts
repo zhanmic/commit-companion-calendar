@@ -44,6 +44,7 @@ export const delmarDolfinsTenant: TenantConfig = {
   parsePractice: parseDelmaPractice,
   parseMeet: parseDelmaMeet,
   occurrenceMatchesTeams: delmaOccurrenceMatchesTeams,
+  // After Stripe Checkout: billingStatus: 'active', stripeCustomerId: 'cus_…'
 }
 
 /** @deprecated Use `delmarDolfinsTenant`. */

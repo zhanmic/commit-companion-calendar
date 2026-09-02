@@ -529,6 +529,259 @@
   color: var(--error);
 }
 
+.billing {
+  position: relative;
+  display: inline-flex;
+}
+
+.billing__button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--toggle-border);
+  border-radius: 999px;
+  background: var(--toggle-bg);
+  color: var(--toggle-fg);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.billing__button:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--toggle-border));
+  transform: translateY(-1px);
+}
+
+.billing__button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.billing__button--active {
+  border-color: color-mix(in srgb, var(--cyan) 40%, var(--toggle-border));
+}
+
+.billing__icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.billing__dot {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+.billing__dot--on {
+  background: var(--cyan);
+}
+
+.billing__panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  z-index: 20;
+  width: min(19rem, calc(100vw - 1.5rem));
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(12px);
+  animation: rise 0.2s ease both;
+}
+
+.billing__heading {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.billing__status {
+  margin: 0 0 0.45rem;
+}
+
+.billing__badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.billing__badge--on {
+  color: var(--cyan-soft);
+}
+
+.billing__badge--warn {
+  color: color-mix(in srgb, #c45c26 85%, var(--ink));
+}
+
+.billing__copy {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.billing__form {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.billing__field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.billing__field-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.billing__input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.billing__input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.billing__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.billing__hint code {
+  font-size: 0.72rem;
+}
+
+.billing__key-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.billing__submit {
+  border: 0;
+  border-radius: 0.55rem;
+  background: var(--cyan);
+  color: #042028;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.billing__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.billing__submit:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.billing__submit--secondary {
+  background: transparent;
+  color: var(--cyan-soft);
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  width: 100%;
+}
+
+.billing__actions {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.billing__link-box {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.55rem;
+}
+
+.billing__link {
+  color: var(--cyan-soft);
+  font-size: 0.85rem;
+  font-weight: 650;
+  word-break: break-all;
+}
+
+.billing__text-btn {
+  border: 0;
+  background: transparent;
+  color: var(--cyan-soft);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+.billing__text-btn:hover {
+  text-decoration: underline;
+}
+
+.billing__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
+  align-items: center;
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.billing__feedback {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.billing__feedback--error {
+  color: var(--error);
+}
+
 .settings {
   position: relative;
 }

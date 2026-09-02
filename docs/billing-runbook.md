@@ -23,8 +23,21 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | `STRIPE_PRICE_ID` | Monthly price id (`price_…`) |
 | `STRIPE_PRICE_ID_ANNUAL` | Optional yearly price id |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
-| `BILLING_ADMIN_SECRET` | Shared secret for creating Checkout / Portal sessions |
+| `BILLING_ADMIN_SECRET` | Shared secret for creating Checkout / Portal sessions (curl) |
+| `BILLING_UI_SECRET` | Secret for admin Billing panel (`?admin=1`); may match admin secret |
 | `STRIPE_CHECKOUT_REQUIRE_TOS` | Set to `1` after Dashboard TOS URL is configured |
+
+## Admin Billing UI
+
+On a tenant calendar with `?admin=1`:
+
+1. Open the **Billing** (card) control next to Settings.
+2. Enter `BILLING_UI_SECRET` once (stored in this browser).
+3. **Not subscribed** → **Get payment link** (opens Stripe Checkout; copy link to email the club).
+4. After they pay: in tenant config set `billingStatus: 'active'` and `stripeCustomerId: 'cus_…'` (from Stripe), redeploy.
+5. **Subscribed** → panel shows Active + **Manage billing** (Customer Portal).
+
+Status is manual until webhook entitlement lands. Missing `billingStatus` = not subscribed.
 
 Health: `GET /api/billing/checkout` and `GET /api/billing/webhook` report which env vars are set (no secrets).
 

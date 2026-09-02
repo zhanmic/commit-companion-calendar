@@ -3,6 +3,9 @@
  *
  * Entitlement gating (billingStatus on tenants / digest soft-gate) is deferred —
  * see docs/billing-runbook.md. Webhooks are recorded to logs for now.
+ *
+ * Auth: Bearer BILLING_ADMIN_SECRET (curl/ops) or BILLING_UI_SECRET
+ * (admin Billing panel via Authorization or X-Billing-Admin).
  */
 import Stripe from 'stripe'
 import { timingSafeEqual } from 'node:crypto'
@@ -35,29 +38,43 @@ export function stripePriceIdForInterval(interval) {
   return stripePriceId()
 }
 
-export function billingAdminAuthorized(req) {
-  const expected = process.env.BILLING_ADMIN_SECRET
-  if (!expected) return false
+function getQuerySecret(req) {
+  if (typeof req?.url !== 'string') return ''
+  try {
+    return (
+      new URL(req.url, 'https://myswimday.com').searchParams.get('secret') || ''
+    )
+  } catch {
+    return ''
+  }
+}
+
+function candidateSecrets(req) {
   const header = req.headers?.authorization || req.headers?.Authorization || ''
   const bearer =
     typeof header === 'string' && header.startsWith('Bearer ')
       ? header.slice(7).trim()
       : ''
-  const query =
-    typeof req.url === 'string'
-      ? (() => {
-          try {
-            return (
-              new URL(req.url, 'https://myswimday.com').searchParams.get(
-                'secret',
-              ) || ''
-            )
-          } catch {
-            return ''
-          }
-        })()
-      : ''
-  return secretsEqual(bearer, expected) || secretsEqual(query, expected)
+  const billingHeader = getHeader(req, 'x-billing-admin') || ''
+  const query = getQuerySecret(req)
+  return [bearer, billingHeader, query].filter(Boolean)
+}
+
+/** True if request presents BILLING_ADMIN_SECRET or BILLING_UI_SECRET. */
+export function billingAdminAuthorized(req) {
+  const allowed = [
+    process.env.BILLING_ADMIN_SECRET,
+    process.env.BILLING_UI_SECRET,
+  ].filter((s) => typeof s === 'string' && s.length > 0)
+
+  if (!allowed.length) return false
+
+  for (const candidate of candidateSecrets(req)) {
+    for (const expected of allowed) {
+      if (secretsEqual(candidate, expected)) return true
+    }
+  }
+  return false
 }
 
 function secretsEqual(a, b) {

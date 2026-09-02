@@ -47,6 +47,17 @@ export interface TenantLinks {
 }
 
 /**
+ * Manual team subscription state until Stripe webhooks persist entitlement.
+ * Missing / unknown → treat as not subscribed.
+ */
+export type TenantBillingStatus =
+  | 'none'
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+
+/**
  * Full tenant definition. New teams add a module under `src/tenants/<Slug>/`
  * and register it in `registry.ts`.
  */
@@ -72,6 +83,13 @@ export interface TenantConfig {
   links: TenantLinks
   /** Prefix for downloaded .ics filenames. */
   icsFilenamePrefix: string
+  /**
+   * Team subscription status for admin Billing UI.
+   * Set to `active` and fill `stripeCustomerId` after Stripe payment.
+   */
+  billingStatus?: TenantBillingStatus
+  /** Stripe Customer id (`cus_…`) for Customer Portal when subscribed. */
+  stripeCustomerId?: string
   parsePractice: PracticeParser
   parseMeet: MeetParser
   /**
@@ -88,4 +106,24 @@ export interface TenantPublicMeta {
   slug: string
   displayName: string
   path: string
+}
+
+export function normalizeBillingStatus(
+  value: TenantBillingStatus | string | undefined | null,
+): TenantBillingStatus {
+  if (
+    value === 'trialing' ||
+    value === 'active' ||
+    value === 'past_due' ||
+    value === 'canceled'
+  ) {
+    return value
+  }
+  return 'none'
+}
+
+export function isBillingSubscribed(
+  status: TenantBillingStatus | string | undefined | null,
+): boolean {
+  return normalizeBillingStatus(status) === 'active'
 }

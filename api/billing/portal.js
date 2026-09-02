@@ -2,11 +2,15 @@
  * POST /api/billing/portal
  *
  * Create a Stripe Customer Portal session so a team admin can update card
- * or cancel. Auth: Authorization: Bearer $BILLING_ADMIN_SECRET
+ * or cancel.
  *
- * Body: { customerId: string, returnUrl?: string }
+ * Auth: Bearer BILLING_ADMIN_SECRET | BILLING_UI_SECRET, or X-Billing-Admin
+ *
+ * Body: { customerId?: string, tenantSlug?: string, returnUrl?: string }
+ * Provide customerId or a tenantSlug that has stripeCustomerId configured.
  */
 import { appBaseUrl, readJsonBody, sendJson } from '../_lib/http.js'
+import { getTenantBySlug } from '../_lib/tenants.js'
 import {
   billingAdminAuthorized,
   getStripe,
@@ -19,7 +23,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization',
+      'Content-Type, Authorization, X-Billing-Admin',
     )
     res.end()
     return
@@ -43,10 +47,30 @@ export default async function handler(req, res) {
   }
 
   const body = readJsonBody(req)
-  const customerId =
+  let customerId =
     typeof body?.customerId === 'string' ? body.customerId.trim() : ''
+
+  if (!customerId && typeof body?.tenantSlug === 'string') {
+    const tenant = getTenantBySlug(body.tenantSlug.trim())
+    if (!tenant) {
+      sendJson(res, 400, { error: 'Unknown tenantSlug' })
+      return
+    }
+    customerId =
+      typeof tenant.stripeCustomerId === 'string'
+        ? tenant.stripeCustomerId.trim()
+        : ''
+    if (!customerId) {
+      sendJson(res, 400, {
+        error:
+          'This team has no stripeCustomerId yet. After Checkout, set it on the tenant config.',
+      })
+      return
+    }
+  }
+
   if (!customerId) {
-    sendJson(res, 400, { error: 'customerId is required' })
+    sendJson(res, 400, { error: 'customerId or tenantSlug is required' })
     return
   }
 

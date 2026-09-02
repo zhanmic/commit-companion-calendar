@@ -25,9 +25,10 @@ Use this before a team moves from pilot to paid production.
 
 ## 4. Payment
 
-- [ ] Create Checkout Session via `POST /api/billing/checkout` (see [billing-runbook.md](./billing-runbook.md)) **or** send a Stripe Payment Link / invoice
+- [ ] Create Checkout Session via admin Billing UI (`?admin=1` → Get payment link) or `POST /api/billing/checkout` (see [billing-runbook.md](./billing-runbook.md)) **or** send a Stripe Payment Link / invoice
 - [ ] Payment completed in Stripe (`checkout.session.completed` / active subscription)
-- [ ] Record tenant slug ↔ Stripe customer / subscription id in ops sheet (entitlement DB deferred)
+- [ ] Set on tenant config (frontend + `api/_lib/tenants.js`): `billingStatus: 'active'`, `stripeCustomerId: 'cus_…'` — then redeploy so the Billing panel shows **Subscribed / Manage**
+- [ ] Record tenant slug ↔ Stripe customer / subscription id in ops sheet (auto entitlement deferred)
 
 ## 5. Share production
 

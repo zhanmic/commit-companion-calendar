@@ -79,6 +79,8 @@ export function listTenants() {
     displayName: t.displayName,
     path: t.path,
     slugAliases: t.slugAliases ? [...t.slugAliases] : undefined,
+    billingStatus: t.billingStatus || 'none',
+    hasCustomer: Boolean(t.stripeCustomerId),
   }))
 }
 
