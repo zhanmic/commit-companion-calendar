@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   return runSendDigests(req, res, { frequency, force })
 }
 
-/** Shared entry for cron tick + legacy /api/cron/send-daily|weekly. */
+/** Shared entry for cron ticks. Manual: ?frequency=daily|weekly&force=1 */
 export async function runSendDigests(
   req,
   res,

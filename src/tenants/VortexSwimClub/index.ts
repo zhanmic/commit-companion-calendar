@@ -44,4 +44,5 @@ export const vortexSwimClubTenant: TenantConfig = {
   parsePractice: parseVortexPractice,
   parseMeet: parseVortexMeet,
   occurrenceMatchesTeams: vortexOccurrenceMatchesTeams,
+  // After Stripe Checkout: billingStatus: 'active', stripeCustomerId: 'cus_…'
 }

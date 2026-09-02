@@ -4,6 +4,22 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/billing/checkout",
+      "destination": "/api/billing?op=checkout"
+    },
+    {
+      "source": "/api/billing/portal",
+      "destination": "/api/billing?op=portal"
+    },
+    {
+      "source": "/api/billing/team-session",
+      "destination": "/api/billing?op=team-session"
+    },
+    {
+      "source": "/api/billing/webhook",
+      "destination": "/api/billing?op=webhook"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

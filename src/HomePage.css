@@ -411,6 +411,64 @@
   margin-top: 0.25rem;
 }
 
+.landing-req {
+  margin: 1.35rem 0 0;
+  max-width: 40rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.landing-req a,
+.landing-inline-link {
+  color: var(--cyan-soft);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.landing-section--plans {
+  margin-top: 0.5rem;
+}
+
+.landing-plans {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .landing-plans {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.landing-plan__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.landing-plan__text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.landing-plans__note {
+  margin: 1.25rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .landing-footer {
   margin-top: 3rem;
   padding-top: 1.25rem;
@@ -422,6 +480,10 @@
 
 .landing-footer p {
   margin: 0;
+}
+
+.landing-footer__legal {
+  margin-top: 0.65rem;
 }
 
 .landing-footer__note {

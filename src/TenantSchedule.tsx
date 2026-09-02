@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchScheduleData, fetchTeamConfig } from './api/commit'
+import { BillingButton } from './components/BillingButton'
 import { GroupFilters } from './components/GroupFilters'
 import { MonthSchedule } from './components/MonthSchedule'
 import { SettingsButton } from './components/SettingsButton'
@@ -29,6 +30,7 @@ import {
   instantFromDay,
   shiftWeek,
 } from './lib/week'
+import { LegalFooter } from './legal/LegalPage'
 import { PRODUCT_NAME } from './product'
 import { useTenant } from './tenants/TenantContext'
 import type { CommitEvent, CommitMeet } from './types'
@@ -299,6 +301,7 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
+            <BillingButton />
             <SubscribeButton
               selectedGroups={selected}
               showEvents={showEvents}
@@ -443,6 +446,8 @@ export function TenantSchedule() {
             </>
           ) : null}
           <span>{timeZone.replace(/_/g, ' ')}</span>
+          <span>·</span>
+          <LegalFooter />
         </footer>
       </main>
     </div>

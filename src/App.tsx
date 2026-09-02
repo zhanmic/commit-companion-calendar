@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { HomePage } from './HomePage'
 import { NotFoundPage } from './NotFoundPage'
 import { TenantSchedule } from './TenantSchedule'
+import { LEGAL_DOCUMENTS } from './legal/content'
+import { LegalPage } from './legal/LegalPage'
 import { currentPath, parsePath, type AppRoute } from './lib/routing'
 import { getTenantBySlug } from './tenants'
 import { TenantProvider } from './tenants/TenantContext'
@@ -33,8 +35,21 @@ export default function App() {
     setRoute(readRoute())
   }, [route])
 
+  useEffect(() => {
+    if (route.kind !== 'legal') return
+    const doc = LEGAL_DOCUMENTS[route.page]
+    if (!doc) return
+    document.title = `${doc.title} · My Swim Day`
+  }, [route])
+
   if (route.kind === 'home') {
     return <HomePage />
+  }
+
+  if (route.kind === 'legal') {
+    const doc = LEGAL_DOCUMENTS[route.page]
+    if (!doc) return <NotFoundPage path={`/${route.page}`} />
+    return <LegalPage doc={doc} activeSlug={route.page} />
   }
 
   if (route.kind === 'tenant') {

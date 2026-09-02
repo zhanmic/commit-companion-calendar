@@ -6,6 +6,7 @@ import { useTheme } from './components/ThemeProvider'
 import { ThemeToggle } from './components/ThemeToggle'
 import { navigate } from './lib/routing'
 import { demoSchedulePath } from './lib/week'
+import { LegalFooter } from './legal/LegalPage'
 import {
   PRODUCT_CONTACT_EMAIL,
   PRODUCT_DESCRIPTION,
@@ -104,6 +105,83 @@ export function HomePage() {
             </p>
           </li>
         </ul>
+        <p className="landing-req">
+          <strong>Requirement:</strong> your team must use{' '}
+          <a
+            href="https://www.commitswimming.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Commit Swimming
+          </a>{' '}
+          with a public schedule.{' '}
+          <button
+            type="button"
+            className="landing-inline-link"
+            onClick={() => navigate('/service')}
+          >
+            See what’s included
+          </button>
+          .
+        </p>
+      </section>
+
+      <section className="landing-section landing-section--plans">
+        <h2 className="landing-section__title">Plans</h2>
+        <p className="landing-section__lede">
+          One subscription per team. Start with a free pilot while we wire your
+          Commit schedule — then pay monthly through Stripe when you’re ready
+          to go live.
+        </p>
+        <ul className="landing-plans">
+          <li className="landing-plan">
+            <h3 className="landing-plan__title">Per team</h3>
+            <p className="landing-plan__text">
+              Hosted calendar link, Commit sync, group filters, share links, and
+              optional email digests for families.
+            </p>
+          </li>
+          <li className="landing-plan">
+            <h3 className="landing-plan__title">Commit required</h3>
+            <p className="landing-plan__text">
+              We mirror your public Commit schedule. You keep data accurate in
+              Commit; we don’t replace it.
+            </p>
+          </li>
+          <li className="landing-plan">
+            <h3 className="landing-plan__title">Support included</h3>
+            <p className="landing-plan__text">
+              Email support with clear response targets for outages and sync
+              issues.{' '}
+              <button
+                type="button"
+                className="landing-inline-link"
+                onClick={() => navigate('/support')}
+              >
+                Support policy
+              </button>
+            </p>
+          </li>
+        </ul>
+        <p className="landing-plans__note">
+          By subscribing you accept our{' '}
+          <button
+            type="button"
+            className="landing-inline-link"
+            onClick={() => navigate('/terms')}
+          >
+            Terms
+          </button>{' '}
+          and{' '}
+          <button
+            type="button"
+            className="landing-inline-link"
+            onClick={() => navigate('/service')}
+          >
+            Service description
+          </button>
+          . Contact us for a checkout link.
+        </p>
       </section>
 
       <section className="landing-section landing-section--audience">
@@ -197,6 +275,7 @@ export function HomePage() {
           </a>{' '}
           teams · myswimday.com
         </p>
+        <LegalFooter className="landing-footer__legal" />
         <p className="landing-footer__note">
           Not affiliated with Commit Swimming.
         </p>
