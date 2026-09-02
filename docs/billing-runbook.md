@@ -35,11 +35,13 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | **Team admin** (club) | `?ta=<token>` on that tenant URL | Billing panel (pay / manage) |
 | Parent / coach | normal link | Calendar + email subscribe only |
 
-Team admin tokens live **only** in [`api/_lib/tenants.js`](../api/_lib/tenants.js) (`teamAdminToken`). They are not in the frontend bundle. Share a private link like:
+Team admin tokens live **only** in [`api/_lib/tenants.js`](../api/_lib/tenants.js) (`teamAdminToken`). They are not in the frontend bundle.
 
-`https://myswimday.com/DelmarDolfins?ta=<token>`
+**Unlock (either):**
+- Settings → **Manage team** → enter team password (same value as `teamAdminToken`)
+- Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<token>`
 
-After unlock, `?ta=` is stripped and the session stays in that browser until they tap **Sign out** or open `?ta=0`.
+After unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
 
 ## Admin Billing UI (team admin)
 

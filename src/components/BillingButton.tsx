@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { navigate } from '../lib/routing'
 import {
+  TEAM_ADMIN_EVENT,
   clearTeamAdminToken,
   getTeamAdminToken,
   hasTeamAdminSession,
@@ -86,6 +87,32 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
     return () => {
       cancelled = true
     }
+  }, [tenant.slug])
+
+  useEffect(() => {
+    function onTeamAdmin(event: Event) {
+      const detail = (event as CustomEvent).detail as {
+        tenantSlug?: string
+        active?: boolean
+        openBilling?: boolean
+      }
+      if (
+        !detail?.tenantSlug ||
+        detail.tenantSlug.toLowerCase() !== tenant.slug.toLowerCase()
+      ) {
+        return
+      }
+      setTeamAdmin(Boolean(detail.active))
+      setUnlockError(null)
+      if (detail.active && detail.openBilling) {
+        setOpen(true)
+      }
+      if (!detail.active) {
+        setOpen(false)
+      }
+    }
+    window.addEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
+    return () => window.removeEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
   }, [tenant.slug])
 
   useEffect(() => {
