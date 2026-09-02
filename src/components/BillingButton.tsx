@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import {
-  clearStoredBillingKey,
-  getStoredBillingKey,
-  setStoredBillingKey,
-} from '../lib/billingKey'
-import { isScheduleAdmin } from '../lib/admin'
 import { navigate } from '../lib/routing'
+import {
+  clearTeamAdminToken,
+  getTeamAdminToken,
+  hasTeamAdminSession,
+  syncTeamAdminFromUrl,
+} from '../lib/teamAdmin'
 import { PRODUCT_CONTACT_EMAIL } from '../product'
 import {
   isBillingSubscribed,
@@ -50,10 +50,9 @@ function statusLabel(status: TenantBillingStatus): string {
 
 export function BillingButton({ className = '' }: BillingButtonProps) {
   const tenant = useTenant()
-  const [admin, setAdmin] = useState(false)
+  const [teamAdmin, setTeamAdmin] = useState(false)
+  const [unlockError, setUnlockError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
-  const [billingKey, setBillingKey] = useState('')
-  const [keyDraft, setKeyDraft] = useState('')
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -70,16 +69,30 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
     !subscribed || status === 'past_due' || status === 'trialing'
 
   useEffect(() => {
-    setAdmin(isScheduleAdmin())
-    setBillingKey(getStoredBillingKey())
-  }, [])
+    let cancelled = false
+    void (async () => {
+      const result = await syncTeamAdminFromUrl(tenant.slug)
+      if (cancelled) return
+      setTeamAdmin(result.active)
+      setUnlockError(result.error)
+      if (result.active && result.error === null) {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('billing') === 'success') {
+          setOpen(true)
+          setMessage('Payment completed — status updates after operator confirms.')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tenant.slug])
 
   useEffect(() => {
     if (!open) return
     setMessage(null)
     setError(null)
     setCheckoutUrl(null)
-    setKeyDraft('')
   }, [open])
 
   useEffect(() => {
@@ -103,43 +116,39 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
     }
   }, [open])
 
-  if (!admin) return null
-
-  function saveKey(event: FormEvent) {
-    event.preventDefault()
-    const next = keyDraft.trim()
-    if (!next) {
-      setError('Enter the billing key from Vercel (BILLING_UI_SECRET).')
-      return
+  if (!teamAdmin) {
+    if (unlockError) {
+      return (
+        <p className="billing-unlock-error" role="status">
+          {unlockError}
+        </p>
+      )
     }
-    setStoredBillingKey(next)
-    setBillingKey(next)
-    setKeyDraft('')
-    setError(null)
-    setMessage('Billing key saved on this device.')
+    return null
   }
 
-  function clearKey() {
-    clearStoredBillingKey()
-    setBillingKey('')
-    setMessage('Billing key cleared.')
+  function leaveTeamAdmin() {
+    clearTeamAdminToken(tenant.slug)
+    setTeamAdmin(false)
+    setOpen(false)
   }
 
   async function billingFetch(
     path: string,
     body: Record<string, unknown>,
-  ): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; error: string }> {
-    const key = getStoredBillingKey()
-    if (!key) {
-      return { ok: false, error: 'Save a billing key first.' }
+  ): Promise<
+    { ok: true; data: Record<string, unknown> } | { ok: false; error: string }
+  > {
+    const token = getTeamAdminToken(tenant.slug)
+    if (!token) {
+      return { ok: false, error: 'Team admin session expired. Re-open your link.' }
     }
     try {
       const res = await fetch(path, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${key}`,
-          'X-Billing-Admin': key,
+          'X-Team-Admin': token,
         },
         body: JSON.stringify(body),
       })
@@ -298,45 +307,25 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
           </p>
           <p className="billing__copy">{statusCopy(status)}</p>
 
-          {!billingKey ? (
-            <form className="billing__form" onSubmit={saveKey}>
-              <label className="billing__field">
-                <span className="billing__field-label">Billing key</span>
-                <input
-                  className="billing__input"
-                  type="password"
-                  autoComplete="off"
-                  value={keyDraft}
-                  onChange={(e) => setKeyDraft(e.target.value)}
-                  placeholder="BILLING_UI_SECRET"
-                />
-              </label>
-              <p className="billing__hint">
-                Required once on this browser to create Stripe links. Same value
-                as Vercel <code>BILLING_UI_SECRET</code>.
-              </p>
-              <button type="submit" className="billing__submit">
-                Save key
-              </button>
-            </form>
-          ) : (
-            <div className="billing__key-row">
-              <span className="billing__hint">Billing key saved</span>
-              <button
-                type="button"
-                className="billing__text-btn"
-                onClick={clearKey}
-              >
-                Clear
-              </button>
-            </div>
-          )}
+          <div className="billing__key-row">
+            <span className="billing__hint">
+              Team admin
+              {hasTeamAdminSession(tenant.slug) ? ' · this browser' : ''}
+            </span>
+            <button
+              type="button"
+              className="billing__text-btn"
+              onClick={leaveTeamAdmin}
+            >
+              Sign out
+            </button>
+          </div>
 
           {showPay ? (
             <form className="billing__form" onSubmit={onGetPaymentLink}>
               <label className="billing__field">
                 <span className="billing__field-label">
-                  Admin email (optional)
+                  Receipt email (optional)
                 </span>
                 <input
                   className="billing__input"
@@ -345,13 +334,13 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="coach@example.com"
-                  disabled={!billingKey || busy}
+                  disabled={busy}
                 />
               </label>
               <button
                 type="submit"
                 className="billing__submit"
-                disabled={!billingKey || busy}
+                disabled={busy}
               >
                 {busy ? 'Working…' : 'Get payment link'}
               </button>
@@ -363,15 +352,15 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
               <button
                 type="button"
                 className={`billing__submit${showPay ? ' billing__submit--secondary' : ''}`}
-                disabled={!billingKey || busy || (!hasCustomer && subscribed)}
+                disabled={busy || (!hasCustomer && subscribed)}
                 onClick={() => void onManageBilling()}
               >
                 {busy ? 'Working…' : 'Manage billing'}
               </button>
               {subscribed && !hasCustomer ? (
                 <p className="billing__hint">
-                  Set <code>stripeCustomerId</code> on this tenant after
-                  Checkout so Manage works.
+                  Billing portal unlocks after My Swim Day confirms your
+                  payment.
                 </p>
               ) : null}
             </div>
@@ -434,7 +423,10 @@ export function BillingButton({ className = '' }: BillingButtonProps) {
             </p>
           ) : null}
           {error ? (
-            <p className="billing__feedback billing__feedback--error" role="alert">
+            <p
+              className="billing__feedback billing__feedback--error"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}

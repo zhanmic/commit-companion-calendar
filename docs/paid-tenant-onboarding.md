@@ -11,6 +11,7 @@ Use this before a team moves from pilot to paid production.
 
 ## 2. Terms acceptance
 
+- [ ] Share team-admin billing link: `https://myswimday.com/{slug}?ta=<teamAdminToken>` (token in `api/_lib/tenants.js`)
 - [ ] Admin has reviewed [Service description](https://myswimday.com/service) (included / not included, Commit prerequisite)
 - [ ] Admin accepts [Terms](https://myswimday.com/terms) (Checkout TOS checkbox and/or email confirmation)
 - [ ] Point them at [Support](https://myswimday.com/support) and [Privacy](https://myswimday.com/privacy)
@@ -25,7 +26,7 @@ Use this before a team moves from pilot to paid production.
 
 ## 4. Payment
 
-- [ ] Create Checkout Session via admin Billing UI (`?admin=1` → Get payment link) or `POST /api/billing/checkout` (see [billing-runbook.md](./billing-runbook.md)) **or** send a Stripe Payment Link / invoice
+- [ ] Club opens Billing via their `?ta=` link → **Get payment link**, **or** you create Checkout via `POST /api/billing/checkout` with ops secret (see [billing-runbook.md](./billing-runbook.md))
 - [ ] Payment completed in Stripe (`checkout.session.completed` / active subscription)
 - [ ] Set on tenant config (frontend + `api/_lib/tenants.js`): `billingStatus: 'active'`, `stripeCustomerId: 'cus_…'` — then redeploy so the Billing panel shows **Subscribed / Manage**
 - [ ] Record tenant slug ↔ Stripe customer / subscription id in ops sheet (auto entitlement deferred)

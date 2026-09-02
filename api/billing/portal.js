@@ -4,7 +4,7 @@
  * Create a Stripe Customer Portal session so a team admin can update card
  * or cancel.
  *
- * Auth: Bearer BILLING_ADMIN_SECRET | BILLING_UI_SECRET, or X-Billing-Admin
+ * Auth: ops secret (Bearer / X-Billing-Admin) or X-Team-Admin for that tenant.
  *
  * Body: { customerId?: string, tenantSlug?: string, returnUrl?: string }
  * Provide customerId or a tenantSlug that has stripeCustomerId configured.
@@ -13,6 +13,7 @@ import { appBaseUrl, readJsonBody, sendJson } from '../_lib/http.js'
 import { getTenantBySlug } from '../_lib/tenants.js'
 import {
   billingAdminAuthorized,
+  billingAuthorizedForTenant,
   getStripe,
   isStripeConfigured,
 } from '../_lib/stripe.js'
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-Billing-Admin',
+      'Content-Type, Authorization, X-Billing-Admin, X-Team-Admin',
     )
     res.end()
     return
@@ -36,22 +37,15 @@ export default async function handler(req, res) {
     return
   }
 
-  if (!billingAdminAuthorized(req)) {
-    sendJson(res, 401, { error: 'Unauthorized' })
-    return
-  }
-
-  if (!isStripeConfigured()) {
-    sendJson(res, 503, { error: 'Stripe is not configured.' })
-    return
-  }
-
   const body = readJsonBody(req)
+  const tenantSlug =
+    typeof body?.tenantSlug === 'string' ? body.tenantSlug.trim() : ''
+
   let customerId =
     typeof body?.customerId === 'string' ? body.customerId.trim() : ''
 
-  if (!customerId && typeof body?.tenantSlug === 'string') {
-    const tenant = getTenantBySlug(body.tenantSlug.trim())
+  if (!customerId && tenantSlug) {
+    const tenant = getTenantBySlug(tenantSlug)
     if (!tenant) {
       sendJson(res, 400, { error: 'Unknown tenantSlug' })
       return
@@ -63,7 +57,7 @@ export default async function handler(req, res) {
     if (!customerId) {
       sendJson(res, 400, {
         error:
-          'This team has no stripeCustomerId yet. After Checkout, set it on the tenant config.',
+          'This team has no stripeCustomerId yet. After Checkout, the operator sets it on the tenant config.',
       })
       return
     }
@@ -74,9 +68,30 @@ export default async function handler(req, res) {
     return
   }
 
+  if (tenantSlug) {
+    if (
+      !billingAuthorizedForTenant(
+        req,
+        tenantSlug,
+        typeof body?.teamAdminToken === 'string' ? body.teamAdminToken : '',
+      )
+    ) {
+      sendJson(res, 401, { error: 'Unauthorized' })
+      return
+    }
+  } else if (!billingAdminAuthorized(req)) {
+    sendJson(res, 401, { error: 'Unauthorized' })
+    return
+  }
+
+  if (!isStripeConfigured()) {
+    sendJson(res, 503, { error: 'Stripe is not configured.' })
+    return
+  }
+
   const base = appBaseUrl(req)
   const returnUrl =
-    typeof body.returnUrl === 'string' && body.returnUrl
+    typeof body?.returnUrl === 'string' && body.returnUrl
       ? body.returnUrl
       : `${base}/`
 

@@ -27,17 +27,29 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | `BILLING_UI_SECRET` | Secret for admin Billing panel (`?admin=1`); may match admin secret |
 | `STRIPE_CHECKOUT_REQUIRE_TOS` | Set to `1` after Dashboard TOS URL is configured |
 
-## Admin Billing UI
+## Roles
 
-On a tenant calendar with `?admin=1`:
+| Role | Unlock | Sees |
+|------|--------|------|
+| **Operator** (you) | `?admin=1` | Advanced schedule Settings (Commit toggles, etc.) — **not** Billing |
+| **Team admin** (club) | `?ta=<token>` on that tenant URL | Billing panel (pay / manage) |
+| Parent / coach | normal link | Calendar + email subscribe only |
 
-1. Open the **Billing** (card) control next to Settings.
-2. Enter `BILLING_UI_SECRET` once (stored in this browser).
-3. **Not subscribed** → **Get payment link** (opens Stripe Checkout; copy link to email the club).
-4. After they pay: in tenant config set `billingStatus: 'active'` and `stripeCustomerId: 'cus_…'` (from Stripe), redeploy.
-5. **Subscribed** → panel shows Active + **Manage billing** (Customer Portal).
+Team admin tokens live **only** in [`api/_lib/tenants.js`](../api/_lib/tenants.js) (`teamAdminToken`). They are not in the frontend bundle. Share a private link like:
 
-Status is manual until webhook entitlement lands. Missing `billingStatus` = not subscribed.
+`https://myswimday.com/DelmarDolfins?ta=<token>`
+
+After unlock, `?ta=` is stripped and the session stays in that browser until they tap **Sign out** or open `?ta=0`.
+
+## Admin Billing UI (team admin)
+
+1. Send the club their `?ta=` link.
+2. They open **Billing** (card icon) next to Settings.
+3. **Not subscribed** → **Get payment link** (Stripe Checkout).
+4. After they pay: you set `billingStatus: 'active'` and `stripeCustomerId: 'cus_…'` on the tenant (frontend + server registry), redeploy.
+5. **Subscribed** → **Manage billing** (Customer Portal).
+
+Ops can still create Checkout via curl with `BILLING_ADMIN_SECRET` (see below).
 
 Health: `GET /api/billing/checkout` and `GET /api/billing/webhook` report which env vars are set (no secrets).
 

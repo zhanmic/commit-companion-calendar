@@ -2,7 +2,7 @@
  * POST /api/billing/checkout
  *
  * Sales-assisted Stripe Checkout Session for a team subscription.
- * Auth: Authorization: Bearer $BILLING_ADMIN_SECRET
+ * Auth: ops secret (Bearer / X-Billing-Admin) or X-Team-Admin for that tenant.
  *
  * Body: {
  *   tenantSlug: string,
@@ -17,7 +17,7 @@
 import { appBaseUrl, readJsonBody, sendJson } from '../_lib/http.js'
 import { getTenantBySlug } from '../_lib/tenants.js'
 import {
-  billingAdminAuthorized,
+  billingAuthorizedForTenant,
   getStripe,
   isStripeConfigured,
   stripePriceIdForInterval,
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-Billing-Admin',
+      'Content-Type, Authorization, X-Billing-Admin, X-Team-Admin',
     )
     res.end()
     return
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
         process.env.BILLING_ADMIN_SECRET || process.env.BILLING_UI_SECRET,
       ),
       webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
-      note: 'POST with Bearer BILLING_ADMIN_SECRET or BILLING_UI_SECRET (or X-Billing-Admin).',
+      note: 'POST with ops secret or X-Team-Admin (tenant teamAdminToken).',
     })
     return
   }
@@ -51,19 +51,6 @@ export default async function handler(req, res) {
     res.statusCode = 405
     res.setHeader('Allow', 'GET, POST, OPTIONS')
     res.end('Method Not Allowed')
-    return
-  }
-
-  if (!billingAdminAuthorized(req)) {
-    sendJson(res, 401, { error: 'Unauthorized' })
-    return
-  }
-
-  if (!isStripeConfigured()) {
-    sendJson(res, 503, {
-      error:
-        'Stripe is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID.',
-    })
     return
   }
 
@@ -77,6 +64,25 @@ export default async function handler(req, res) {
     typeof body.tenantSlug === 'string' ? body.tenantSlug.trim() : ''
   if (!tenantSlug) {
     sendJson(res, 400, { error: 'tenantSlug is required' })
+    return
+  }
+
+  if (
+    !billingAuthorizedForTenant(
+      req,
+      tenantSlug,
+      typeof body.teamAdminToken === 'string' ? body.teamAdminToken : '',
+    )
+  ) {
+    sendJson(res, 401, { error: 'Unauthorized' })
+    return
+  }
+
+  if (!isStripeConfigured()) {
+    sendJson(res, 503, {
+      error:
+        'Stripe is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID.',
+    })
     return
   }
 

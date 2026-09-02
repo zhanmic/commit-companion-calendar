@@ -32,7 +32,9 @@ Sales-assisted Stripe Checkout (per team). Operator docs:
 - [`docs/billing-runbook.md`](docs/billing-runbook.md) — Stripe setup, checkout/portal API, **admin Billing UI**, webhook stub
 - [`docs/paid-tenant-onboarding.md`](docs/paid-tenant-onboarding.md) — go-live checklist
 
-**Admin UI:** open a tenant with `?admin=1`, use the Billing (card) control → not subscribed shows **Get payment link**; after you set `billingStatus: 'active'` + `stripeCustomerId` on the tenant, it shows **Manage billing**.
+**Roles:** `?admin=1` = operator schedule setup only. Team billing uses a private `?ta=<token>` link per tenant (see billing runbook). Token is stored in `api/_lib/tenants.js` only.
+
+**Team admin UI:** open the shared `?ta=` link → Billing (card) control → not subscribed shows **Get payment link**; after you set `billingStatus: 'active'` + `stripeCustomerId`, it shows **Manage billing**.
 
 | Endpoint | Purpose |
 |----------|---------|

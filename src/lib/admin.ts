@@ -3,9 +3,11 @@ import { PRODUCT_STORAGE_PREFIX } from '../product'
 const ADMIN_STORAGE_KEY = `${PRODUCT_STORAGE_PREFIX}:admin`
 
 /**
- * Lightweight admin unlock for advanced schedule settings.
- * Enable with `?admin=1` on any tenant URL (stored for this browser).
- * Disable with `?admin=0`.
+ * Operator admin — for you (My Swim Day) only.
+ * Unlocks advanced schedule settings (Commit-related toggles, parsers UI).
+ * Enable with `?admin=1` (stored for this browser). Disable with `?admin=0`.
+ *
+ * Does **not** unlock team Billing. Team admins use `?ta=<token>` — see teamAdmin.ts.
  */
 export function isScheduleAdmin(): boolean {
   if (typeof window === 'undefined') return false
