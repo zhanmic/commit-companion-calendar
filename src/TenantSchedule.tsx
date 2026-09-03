@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchScheduleData, fetchTeamConfig } from './api/commit'
-import { BillingButton } from './components/BillingButton'
 import { GroupFilters } from './components/GroupFilters'
 import { MonthSchedule } from './components/MonthSchedule'
 import { SettingsButton } from './components/SettingsButton'
@@ -327,7 +326,6 @@ export function TenantSchedule() {
         <div className="hero__top">
           <div className="hero__controls">
             <SettingsButton settings={settings} onChange={setSettings} />
-            <BillingButton />
             <SubscribeButton
               selectedGroups={selected}
               showEvents={showEvents}

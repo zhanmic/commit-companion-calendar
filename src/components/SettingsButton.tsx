@@ -16,11 +16,11 @@ import {
 } from '../lib/settings'
 import {
   TEAM_ADMIN_EVENT,
-  hasTeamAdminSession,
-  notifyTeamAdminChanged,
+  syncTeamAdminFromUrl,
   unlockTeamAdminWithPassword,
 } from '../lib/teamAdmin'
 import { useTenant } from '../tenants/TenantContext'
+import { TeamBillingPanel } from './TeamBillingPanel'
 
 type SettingsTab = 'calendar' | 'team'
 
@@ -52,9 +52,21 @@ export function SettingsButton({
     let cancelled = false
     void (async () => {
       await syncOperatorAdminFromUrl()
+      const teamResult = await syncTeamAdminFromUrl(tenant.slug)
       if (cancelled) return
       setAdmin(isScheduleAdmin())
-      setTeamAdmin(hasTeamAdminSession(tenant.slug))
+      setTeamAdmin(teamResult.active)
+      if (teamResult.error) {
+        setManageError(teamResult.error)
+        setOpen(true)
+        setTab('team')
+      } else if (teamResult.active) {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('billing') === 'success' || params.get('billing') === 'cancel') {
+          setOpen(true)
+          setTab('team')
+        }
+      }
     })()
     return () => {
       cancelled = true
@@ -76,6 +88,7 @@ export function SettingsButton({
       const detail = (event as CustomEvent).detail as {
         tenantSlug?: string
         active?: boolean
+        openBilling?: boolean
       }
       if (
         !detail?.tenantSlug ||
@@ -84,6 +97,14 @@ export function SettingsButton({
         return
       }
       setTeamAdmin(Boolean(detail.active))
+      if (detail.active && detail.openBilling) {
+        setOpen(true)
+        setTab('team')
+        setManageError(null)
+      }
+      if (!detail.active) {
+        setManageError(null)
+      }
     }
     window.addEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
     return () => window.removeEventListener(TEAM_ADMIN_EVENT, onTeamAdmin)
@@ -160,12 +181,7 @@ export function SettingsButton({
     }
     setTeamAdmin(true)
     setPassword('')
-    setOpen(false)
-  }
-
-  function openTeamBilling() {
-    notifyTeamAdminChanged(tenant.slug, true, { openBilling: true })
-    setOpen(false)
+    setTab('team')
   }
 
   return (
@@ -495,16 +511,7 @@ export function SettingsButton({
             >
               {teamAdmin ? (
                 <div className="settings__team">
-                  <p className="settings__switch-hint">
-                    You’re signed in as team admin for {tenant.displayName}.
-                  </p>
-                  <button
-                    type="button"
-                    className="settings__manage-btn"
-                    onClick={openTeamBilling}
-                  >
-                    Open team billing
-                  </button>
+                  <TeamBillingPanel />
                 </div>
               ) : (
                 <form className="settings__team" onSubmit={onManageTeamSubmit}>

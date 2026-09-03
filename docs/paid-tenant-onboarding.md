@@ -27,9 +27,9 @@ Use this before a team moves from pilot to paid production.
 
 ## 4. Payment
 
-- [ ] Club opens Billing via their `?ta=` link → **Get payment link**, **or** you create Checkout via `POST /api/billing/checkout` with ops secret (see [billing-runbook.md](./billing-runbook.md))
+- [ ] Club opens Settings → **Team** (or uses their `?ta=` link) → **Get payment link**, **or** you create Checkout via `POST /api/billing/checkout` with ops secret (see [billing-runbook.md](./billing-runbook.md))
 - [ ] Payment completed in Stripe (`checkout.session.completed` / active subscription)
-- [ ] Set on tenant config (frontend + `api/_lib/tenants.js`): `billingStatus: 'active'`, `stripeCustomerId: 'cus_…'` — then redeploy so the Billing panel shows **Subscribed / Manage**
+- [ ] Set on tenant config (frontend + `api/_lib/tenants.js`): `billingStatus: 'active'`, `stripeCustomerId: 'cus_…'` — then redeploy so Settings → Team shows **Subscribed / Manage**
 - [ ] Record tenant slug ↔ Stripe customer / subscription id in ops sheet (auto entitlement deferred)
 
 ## 5. Share production

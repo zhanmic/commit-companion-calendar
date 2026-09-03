@@ -11,7 +11,7 @@ const ADMIN_STORAGE_KEY = `${PRODUCT_STORAGE_PREFIX}:operatorAdmin`
  * Unlock with `?admin=<OPERATOR_ADMIN_PASSWORD>` (verified server-side).
  * Disable with `?admin=0`. Legacy `?admin=1` no longer grants access.
  *
- * Does **not** unlock team Billing — see teamAdmin.ts.
+ * Does **not** unlock team billing (Settings → Team) — see teamAdmin.ts.
  */
 
 export function getOperatorAdminPassword(): string {

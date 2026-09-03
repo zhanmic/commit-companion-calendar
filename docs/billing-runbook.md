@@ -35,7 +35,7 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | Role | Unlock | Sees |
 |------|--------|------|
 | **Operator** (you) | `?admin=<OPERATOR_ADMIN_PASSWORD>` | Advanced schedule Settings (Commit toggles). Clear with `?admin=0`. |
-| **Team admin** (club) | Settings → **Team** tab + password, or `?ta=<password>` | Billing panel (pay / manage) |
+| **Team admin** (club) | Settings → **Team** tab + password, or `?ta=<password>` | Settings → Team payment controls |
 | Parent / coach | normal link | Calendar + email subscribe only |
 
 ### Where passwords live
@@ -61,12 +61,12 @@ Rotate by changing the env value and redeploying (old links/passwords stop worki
 - Settings → **Team** → enter team password
 - Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<password>`
 
-After team unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
+After team unlock, Settings → **Team** shows payment controls. Session stays in that browser until **Sign out** or `?ta=0`.
 
 ## Admin Billing UI (team admin)
 
 1. Set `TEAM_ADMIN_TOKENS` on Vercel; tell the club the password (or send a `?ta=` link).
-2. They open Settings → **Team** (or Billing after unlock).
+2. They open Settings → **Team** (opens automatically after a `?ta=` unlock).
 3. **Not subscribed** → **Get payment link** (Stripe Checkout).
 4. After they pay: you set `billingStatus: 'active'` and `stripeCustomerId: 'cus_…'` on the tenant (frontend + server registry), redeploy.
 5. **Subscribed** → **Manage billing** (Customer Portal).

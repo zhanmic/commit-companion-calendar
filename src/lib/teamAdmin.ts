@@ -34,10 +34,11 @@ export function clearTeamAdminToken(tenantSlug: string): void {
 
 /**
  * Team admin — swim club contact who manages payment for that tenant.
- * Unlock with Settings → Manage team (password), or `?ta=<token>` on the URL.
+ * Unlock with Settings → Team (password), or `?ta=<token>` on the URL.
+ * Billing UI lives in Settings → Team after unlock.
  * Disable with Sign out or `?ta=0`.
  *
- * Separate from operator `?admin=1` (schedule setup).
+ * Separate from operator admin (schedule setup).
  */
 export function hasTeamAdminSession(tenantSlug: string): boolean {
   return Boolean(getTeamAdminToken(tenantSlug))
@@ -148,7 +149,7 @@ export async function syncTeamAdminFromUrl(
         }
       }
       setTeamAdminToken(tenantSlug, token)
-      notifyTeamAdminChanged(tenantSlug, true)
+      notifyTeamAdminChanged(tenantSlug, true, { openBilling: true })
       return { active: true, error: null }
     }
 
