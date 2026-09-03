@@ -32,7 +32,7 @@ Sales-assisted Stripe Checkout (per team). Operator docs:
 - [`docs/billing-runbook.md`](docs/billing-runbook.md) — Stripe setup, checkout/portal API, **admin Billing UI**, webhook stub
 - [`docs/paid-tenant-onboarding.md`](docs/paid-tenant-onboarding.md) — go-live checklist
 
-**Roles:** `?admin=1` = operator schedule setup (**no password**, browser flag). Team billing = Settings → **Team** password or `?ta=` — passwords live in Vercel env `TEAM_ADMIN_TOKENS` (not git). See billing runbook.
+**Roles:** Operator schedule tools = `?admin=<OPERATOR_ADMIN_PASSWORD>` (env). Team billing = Settings → **Team** password or `?ta=` via `TEAM_ADMIN_TOKENS` (env). See billing runbook.
 
 **Team admin UI:** unlock via Settings → Team → password → Billing shows **Get payment link** / **Manage billing**. After pay, set `billingStatus: 'active'` + `stripeCustomerId` on the tenant.
 

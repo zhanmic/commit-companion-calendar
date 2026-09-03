@@ -27,13 +27,14 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | `BILLING_UI_SECRET` | Optional second ops secret (can match admin secret) |
 | `TEAM_ADMIN_TOKENS` | JSON map of team passwords, e.g. `{"DelmarDolfins":"…"}` |
 | `TEAM_ADMIN_TOKEN_<SLUG>` | Optional per-team password override |
+| `OPERATOR_ADMIN_PASSWORD` | Password for operator schedule admin (`?admin=<password>`) |
 | `STRIPE_CHECKOUT_REQUIRE_TOS` | Set to `1` after Dashboard TOS URL is configured |
 
 ## Roles
 
 | Role | Unlock | Sees |
 |------|--------|------|
-| **Operator** (you) | `?admin=1` | Advanced schedule Settings (Commit toggles, etc.) — **not** Billing. **No password** — flag stored in this browser only. |
+| **Operator** (you) | `?admin=<OPERATOR_ADMIN_PASSWORD>` | Advanced schedule Settings (Commit toggles). Clear with `?admin=0`. |
 | **Team admin** (club) | Settings → **Team** tab + password, or `?ta=<password>` | Billing panel (pay / manage) |
 | Parent / coach | normal link | Calendar + email subscribe only |
 
@@ -41,23 +42,26 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 
 | Secret | Where |
 |--------|--------|
-| Operator (`?admin=1`) | **No password.** Opening `?admin=1` sets `localStorage` (`ccc:admin`). |
-| Team admin password | **Vercel env** `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`). Never commit to git. |
-| After unlock | Browser `localStorage` for that tenant until Sign out / `?ta=0` |
+| Operator admin | Vercel env `OPERATOR_ADMIN_PASSWORD`. Unlock URL: `?admin=<password>`. |
+| Team admin | Vercel env `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`). |
+| After unlock | Browser `localStorage` until Sign out / `?admin=0` / `?ta=0` |
+
+Legacy `?admin=1` (no password) **no longer works**.
 
 Example Vercel env:
 
 ```bash
+OPERATOR_ADMIN_PASSWORD=$(openssl rand -hex 16)
 TEAM_ADMIN_TOKENS={"DelmarDolfins":"choose-a-long-secret","VortexSwimClub":"another-long-secret"}
 ```
 
-Generate with `openssl rand -hex 16`. Rotate by changing the env value and redeploying (old links/passwords stop working).
+Rotate by changing the env value and redeploying (old links/passwords stop working).
 
-**Unlock (either):**
+**Team unlock (either):**
 - Settings → **Team** → enter team password
 - Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<password>`
 
-After unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
+After team unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
 
 ## Admin Billing UI (team admin)
 

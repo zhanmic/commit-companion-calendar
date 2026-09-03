@@ -16,6 +16,10 @@
       "destination": "/api/billing?op=team-session"
     },
     {
+      "source": "/api/billing/operator-session",
+      "destination": "/api/billing?op=operator-session"
+    },
+    {
       "source": "/api/billing/webhook",
       "destination": "/api/billing?op=webhook"
     },

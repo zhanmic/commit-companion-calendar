@@ -19,6 +19,10 @@ import {
 } from './lib/month'
 import { navigate } from './lib/routing'
 import {
+  OPERATOR_ADMIN_EVENT,
+  syncOperatorAdminFromUrl,
+} from './lib/admin'
+import {
   applyPublicScheduleLocks,
   getStoredSettings,
   setStoredSettings,
@@ -92,6 +96,28 @@ export function TenantSchedule() {
   useEffect(() => {
     document.title = `${tenant.displayName} · ${PRODUCT_NAME}`
   }, [tenant])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      await syncOperatorAdminFromUrl()
+      if (cancelled) return
+      // Re-apply locks after operator unlock/clear from ?admin=
+      setSettings((prev) => applyPublicScheduleLocks(prev))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tenant.slug])
+
+  useEffect(() => {
+    function onOperatorAdmin() {
+      setSettings((prev) => applyPublicScheduleLocks(prev))
+    }
+    window.addEventListener(OPERATOR_ADMIN_EVENT, onOperatorAdmin)
+    return () =>
+      window.removeEventListener(OPERATOR_ADMIN_EVENT, onOperatorAdmin)
+  }, [])
 
   useEffect(() => {
     function onPopState() {

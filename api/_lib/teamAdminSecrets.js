@@ -8,7 +8,7 @@
  *   TEAM_ADMIN_TOKEN_DELMARDOLFINS=…
  *   (slug uppercased; non [A-Z0-9] → _)
  *
- * Operator schedule admin (?admin=1) has no password — browser flag only.
+ * Operator schedule admin uses OPERATOR_ADMIN_PASSWORD (separate module).
  */
 import { timingSafeEqual } from 'node:crypto'
 import { getTenantBySlug } from './tenants.js'
