@@ -2,20 +2,26 @@
  * Single Hobby-plan billing function.
  *
  * Routes (via vercel.json rewrite or ?op=):
- *   GET/POST /api/billing/checkout      → op=checkout
- *   POST     /api/billing/portal        → op=portal
- *   POST     /api/billing/team-session  → op=team-session
- *   GET/POST /api/billing/webhook       → op=webhook
+ *   GET/POST /api/billing/checkout           → op=checkout
+ *   POST     /api/billing/portal             → op=portal
+ *   POST     /api/billing/team-session       → op=team-session
+ *   POST     /api/billing/operator-session   → op=operator-session
+ *   GET/POST /api/billing/webhook            → op=webhook
  *
- * Auth: ops secret, or X-Team-Admin for tenant-scoped ops.
+ * Auth: ops secret, team admin password, or operator admin password.
  */
 import { appBaseUrl, queryParam, readJsonBody, sendJson } from './_lib/http.js'
 import { getTenantBySlug } from './_lib/tenants.js'
+import {
+  hasOperatorAdminPassword,
+  verifyOperatorAdminPassword,
+} from './_lib/operatorAdmin.js'
 import {
   billingAdminAuthorized,
   billingAuthorizedForTenant,
   getHeader,
   getStripe,
+  hasTeamAdminPassword,
   isStripeConfigured,
   readRawBody,
   stripePriceIdForInterval,
@@ -70,13 +76,20 @@ export default async function handler(req, res) {
       sendJson(res, 200, {
         ok: true,
         configured: isStripeConfigured(),
-        ops: ['checkout', 'portal', 'team-session', 'webhook'],
+        ops: [
+          'checkout',
+          'portal',
+          'team-session',
+          'operator-session',
+          'webhook',
+        ],
         note: 'Use /api/billing/<op> or /api/billing?op=<op>',
       })
       return
     }
     sendJson(res, 400, {
-      error: 'Missing billing op. Use /api/billing/checkout|portal|team-session|webhook',
+      error:
+        'Missing billing op. Use /api/billing/checkout|portal|team-session|operator-session|webhook',
     })
     return
   }
@@ -84,6 +97,7 @@ export default async function handler(req, res) {
   if (op === 'checkout') return handleCheckout(req, res)
   if (op === 'portal') return handlePortal(req, res)
   if (op === 'team-session') return handleTeamSession(req, res)
+  if (op === 'operator-session') return handleOperatorSession(req, res)
   if (op === 'webhook') return handleWebhook(req, res)
 
   sendJson(res, 404, { error: `Unknown billing op "${op}"` })
@@ -97,7 +111,7 @@ async function handleCheckout(req, res) {
         process.env.BILLING_ADMIN_SECRET || process.env.BILLING_UI_SECRET,
       ),
       webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
-      note: 'POST with ops secret or X-Team-Admin (tenant teamAdminToken).',
+      note: 'POST with ops secret or X-Team-Admin (TEAM_ADMIN_TOKENS).',
     })
     return
   }
@@ -330,7 +344,7 @@ async function handleTeamSession(req, res) {
     return
   }
 
-  if (!tenant.teamAdminToken) {
+  if (!hasTeamAdminPassword(tenantSlug)) {
     sendJson(res, 403, {
       error: 'Team admin access is not configured for this team yet.',
     })
@@ -347,6 +361,39 @@ async function handleTeamSession(req, res) {
     tenantSlug: tenant.slug,
     displayName: tenant.displayName,
   })
+}
+
+async function handleOperatorSession(req, res) {
+  if (req.method !== 'POST') {
+    res.statusCode = 405
+    res.setHeader('Allow', 'POST, OPTIONS')
+    res.end('Method Not Allowed')
+    return
+  }
+
+  const body = readJsonBody(req)
+  const password =
+    typeof body?.password === 'string' ? body.password.trim() : ''
+
+  if (!password) {
+    sendJson(res, 400, { error: 'password is required' })
+    return
+  }
+
+  if (!hasOperatorAdminPassword()) {
+    sendJson(res, 403, {
+      error:
+        'Operator admin is not configured. Set OPERATOR_ADMIN_PASSWORD in env.',
+    })
+    return
+  }
+
+  if (!verifyOperatorAdminPassword(password)) {
+    sendJson(res, 401, { error: 'Invalid operator password.' })
+    return
+  }
+
+  sendJson(res, 200, { ok: true })
 }
 
 async function handleWebhook(req, res) {

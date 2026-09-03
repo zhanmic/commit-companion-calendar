@@ -1,5 +1,9 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import { isScheduleAdmin } from '../lib/admin'
+import {
+  OPERATOR_ADMIN_EVENT,
+  isScheduleAdmin,
+  syncOperatorAdminFromUrl,
+} from '../lib/admin'
 import { groupOrder } from '../lib/groups'
 import {
   MONTH_DETAIL_OPTIONS,
@@ -45,9 +49,27 @@ export function SettingsButton({
   const format = settings.practiceNameFormat
 
   useEffect(() => {
-    setAdmin(isScheduleAdmin())
-    setTeamAdmin(hasTeamAdminSession(tenant.slug))
+    let cancelled = false
+    void (async () => {
+      await syncOperatorAdminFromUrl()
+      if (cancelled) return
+      setAdmin(isScheduleAdmin())
+      setTeamAdmin(hasTeamAdminSession(tenant.slug))
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [tenant.slug])
+
+  useEffect(() => {
+    function onOperatorAdmin(event: Event) {
+      const detail = (event as CustomEvent).detail as { active?: boolean }
+      setAdmin(Boolean(detail?.active))
+    }
+    window.addEventListener(OPERATOR_ADMIN_EVENT, onOperatorAdmin)
+    return () =>
+      window.removeEventListener(OPERATOR_ADMIN_EVENT, onOperatorAdmin)
+  }, [])
 
   useEffect(() => {
     function onTeamAdmin(event: Event) {

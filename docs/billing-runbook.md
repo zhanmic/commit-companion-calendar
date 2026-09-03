@@ -24,29 +24,49 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | `STRIPE_PRICE_ID_ANNUAL` | Optional yearly price id |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
 | `BILLING_ADMIN_SECRET` | Shared secret for creating Checkout / Portal sessions (curl) |
-| `BILLING_UI_SECRET` | Secret for admin Billing panel (`?admin=1`); may match admin secret |
+| `BILLING_UI_SECRET` | Optional second ops secret (can match admin secret) |
+| `TEAM_ADMIN_TOKENS` | JSON map of team passwords, e.g. `{"DelmarDolfins":"…"}` |
+| `TEAM_ADMIN_TOKEN_<SLUG>` | Optional per-team password override |
+| `OPERATOR_ADMIN_PASSWORD` | Password for operator schedule admin (`?admin=<password>`) |
 | `STRIPE_CHECKOUT_REQUIRE_TOS` | Set to `1` after Dashboard TOS URL is configured |
 
 ## Roles
 
 | Role | Unlock | Sees |
 |------|--------|------|
-| **Operator** (you) | `?admin=1` | Advanced schedule Settings (Commit toggles, etc.) — **not** Billing |
-| **Team admin** (club) | `?ta=<token>` on that tenant URL | Billing panel (pay / manage) |
+| **Operator** (you) | `?admin=<OPERATOR_ADMIN_PASSWORD>` | Advanced schedule Settings (Commit toggles). Clear with `?admin=0`. |
+| **Team admin** (club) | Settings → **Team** tab + password, or `?ta=<password>` | Billing panel (pay / manage) |
 | Parent / coach | normal link | Calendar + email subscribe only |
 
-Team admin tokens live **only** in [`api/_lib/tenants.js`](../api/_lib/tenants.js) (`teamAdminToken`). They are not in the frontend bundle.
+### Where passwords live
 
-**Unlock (either):**
-- Settings → **Manage team** → enter team password (same value as `teamAdminToken`)
-- Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<token>`
+| Secret | Where |
+|--------|--------|
+| Operator admin | Vercel env `OPERATOR_ADMIN_PASSWORD`. Unlock URL: `?admin=<password>`. |
+| Team admin | Vercel env `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`). |
+| After unlock | Browser `localStorage` until Sign out / `?admin=0` / `?ta=0` |
 
-After unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
+Legacy `?admin=1` (no password) **no longer works**.
+
+Example Vercel env:
+
+```bash
+OPERATOR_ADMIN_PASSWORD=$(openssl rand -hex 16)
+TEAM_ADMIN_TOKENS={"DelmarDolfins":"choose-a-long-secret","VortexSwimClub":"another-long-secret"}
+```
+
+Rotate by changing the env value and redeploying (old links/passwords stop working).
+
+**Team unlock (either):**
+- Settings → **Team** → enter team password
+- Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<password>`
+
+After team unlock, Billing opens. Session stays in that browser until **Sign out** or `?ta=0`.
 
 ## Admin Billing UI (team admin)
 
-1. Send the club their `?ta=` link.
-2. They open **Billing** (card icon) next to Settings.
+1. Set `TEAM_ADMIN_TOKENS` on Vercel; tell the club the password (or send a `?ta=` link).
+2. They open Settings → **Team** (or Billing after unlock).
 3. **Not subscribed** → **Get payment link** (Stripe Checkout).
 4. After they pay: you set `billingStatus: 'active'` and `stripeCustomerId: 'cus_…'` on the tenant (frontend + server registry), redeploy.
 5. **Subscribed** → **Manage billing** (Customer Portal).
