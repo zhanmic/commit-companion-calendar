@@ -6,11 +6,14 @@
  *
  * Auth:
  * - Ops: Bearer BILLING_ADMIN_SECRET or BILLING_UI_SECRET
- * - Team admin: X-Team-Admin matching tenant.teamAdminToken (server registry only)
+ * - Team admin: X-Team-Admin matching TEAM_ADMIN_TOKENS / TEAM_ADMIN_TOKEN_<SLUG>
  */
 import Stripe from 'stripe'
 import { timingSafeEqual } from 'node:crypto'
-import { getTenantBySlug } from './tenants.js'
+import {
+  hasTeamAdminPassword,
+  verifyTeamAdminPassword,
+} from './teamAdminSecrets.js'
 
 let stripeClient = null
 
@@ -80,24 +83,21 @@ export function billingAdminAuthorized(req) {
 }
 
 /**
- * Team admin token for a specific tenant (from X-Team-Admin or body.teamAdminToken).
- * Tokens live only on the server tenant registry — not in the frontend bundle.
+ * Team admin password for a specific tenant (from X-Team-Admin or body.teamAdminToken).
+ * Passwords live in Vercel/env — see TEAM_ADMIN_TOKENS.
  */
 export function teamAdminAuthorized(req, tenantSlug, bodyToken) {
   if (!tenantSlug || typeof tenantSlug !== 'string') return false
-  const tenant = getTenantBySlug(tenantSlug.trim())
-  const expected =
-    typeof tenant?.teamAdminToken === 'string' ? tenant.teamAdminToken : ''
-  if (!expected) return false
+  if (!hasTeamAdminPassword(tenantSlug)) return false
 
   const headerToken = getHeader(req, 'x-team-admin') || ''
   const candidates = [headerToken, bodyToken].filter(
     (t) => typeof t === 'string' && t.trim(),
   )
-  return candidates.some((t) => secretsEqual(t.trim(), expected))
+  return candidates.some((t) => verifyTeamAdminPassword(tenantSlug, t.trim()))
 }
 
-/** Ops secret or matching team-admin token for this tenant. */
+/** Ops secret or matching team-admin password for this tenant. */
 export function billingAuthorizedForTenant(req, tenantSlug, bodyToken) {
   return (
     billingAdminAuthorized(req) ||
@@ -106,13 +106,10 @@ export function billingAuthorizedForTenant(req, tenantSlug, bodyToken) {
 }
 
 export function verifyTeamAdminToken(tenantSlug, token) {
-  if (!tenantSlug || !token) return false
-  const tenant = getTenantBySlug(tenantSlug)
-  const expected =
-    typeof tenant?.teamAdminToken === 'string' ? tenant.teamAdminToken : ''
-  if (!expected) return false
-  return secretsEqual(String(token).trim(), expected)
+  return verifyTeamAdminPassword(tenantSlug, token)
 }
+
+export { hasTeamAdminPassword }
 
 function secretsEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false

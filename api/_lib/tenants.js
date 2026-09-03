@@ -32,11 +32,6 @@ export const TENANTS = [
     dailySendHour: 7,
     /** Local hour on Sunday to send weekly digests. */
     weeklySendHour: 18,
-    /**
-     * Team admin unlock token — share as /DelmarDolfins?ta=<token>
-     * Server-only; never put this in the frontend tenant module.
-     */
-    teamAdminToken: '042b6989b7476c6a5424ae6506db389b',
   },
   {
     slug: 'VortexSwimClub',
@@ -75,7 +70,6 @@ export const TENANTS = [
     },
     dailySendHour: 7,
     weeklySendHour: 18,
-    teamAdminToken: '34909442fbb8f8a6bbb243ca6087a3a6',
   },
 ]
 

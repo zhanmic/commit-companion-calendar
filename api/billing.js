@@ -16,6 +16,7 @@ import {
   billingAuthorizedForTenant,
   getHeader,
   getStripe,
+  hasTeamAdminPassword,
   isStripeConfigured,
   readRawBody,
   stripePriceIdForInterval,
@@ -97,7 +98,7 @@ async function handleCheckout(req, res) {
         process.env.BILLING_ADMIN_SECRET || process.env.BILLING_UI_SECRET,
       ),
       webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
-      note: 'POST with ops secret or X-Team-Admin (tenant teamAdminToken).',
+      note: 'POST with ops secret or X-Team-Admin (TEAM_ADMIN_TOKENS).',
     })
     return
   }
@@ -330,7 +331,7 @@ async function handleTeamSession(req, res) {
     return
   }
 
-  if (!tenant.teamAdminToken) {
+  if (!hasTeamAdminPassword(tenantSlug)) {
     sendJson(res, 403, {
       error: 'Team admin access is not configured for this team yet.',
     })
