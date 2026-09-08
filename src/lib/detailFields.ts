@@ -1,6 +1,11 @@
 import { format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
-import type { CommitEvent, CommitMeet, DetailField } from '../types'
+import type {
+  CommitEvent,
+  CommitMeet,
+  DetailField,
+  SubTeam,
+} from '../types'
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function pushField(
@@ -30,21 +35,20 @@ function formatRecurring(event: CommitEvent, timeZone: string): string | null {
   return parts.join(' · ')
 }
 
-/**
- * Fields for the day sheet. Name, start–end and groups already have their own
- * (colored) treatment in the card header, so they are omitted here.
- */
 export function buildEventDetailFields(
   event: CommitEvent,
   occurrenceName: string,
+  subTeams: SubTeam[],
   location: string | null,
   timeZone: string,
 ): DetailField[] {
+  // Name / start–end are already shown on the day-sheet card header — omit here.
   const fields: DetailField[] = []
   if (occurrenceName.trim() !== event.name.trim()) {
     pushField(fields, 'Series name', event.name)
   }
   pushField(fields, 'Type', event.label)
+  pushField(fields, 'Groups', subTeams.join(', '))
   pushField(fields, 'Location', location)
   pushField(fields, 'Recurs', formatRecurring(event, timeZone))
   return fields

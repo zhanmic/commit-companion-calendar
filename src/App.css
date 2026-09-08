@@ -1696,7 +1696,7 @@ button.month-day__num:focus-visible {
 }
 
 /*
- * Group color coding, shared by week rows, month cells and the day sheet.
+ * Group color coding, shared by week rows and month cells.
  * A session's fill/accent stays on its first group; the words themselves split
  * by color so "Hail / Thunder" reads as both chips at a glance. Colors are
  * nudged toward the page ink so small uppercase labels stay legible on the
@@ -1714,10 +1714,6 @@ button.month-day__num:focus-visible {
 .group-label__sep {
   color: var(--muted);
   font-weight: 600;
-}
-
-.group-name {
-  color: color-mix(in srgb, var(--group-color, var(--cyan)) 82%, var(--ink));
 }
 
 .month-event {
@@ -2547,15 +2543,6 @@ button.month-day__num:focus-visible {
   font-weight: 600;
   color: var(--cyan-soft);
   white-space: nowrap;
-}
-
-.day-sheet__card-groups {
-  display: block;
-  margin-bottom: 0.15rem;
-  font-size: 0.72rem;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .day-sheet__card-title {

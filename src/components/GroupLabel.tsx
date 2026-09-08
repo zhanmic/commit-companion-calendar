@@ -1,10 +1,5 @@
 import { Fragment, type CSSProperties } from 'react'
-import {
-  colorForGroup,
-  findGroup,
-  highlightGroupsInName,
-  visiblePracticeGroups,
-} from '../lib/groups'
+import { colorForGroup, findGroup, visiblePracticeGroups } from '../lib/groups'
 import { useTenant } from '../tenants/TenantContext'
 
 function colorStyle(color: string): CSSProperties {
@@ -51,34 +46,5 @@ export function GroupLabel({
         </Fragment>
       ))}
     </span>
-  )
-}
-
-interface GroupColoredNameProps {
-  name: string
-  groups: string[]
-}
-
-/** A session title with its group words tinted to match their chips. */
-export function GroupColoredName({ name, groups }: GroupColoredNameProps) {
-  const tenant = useTenant()
-  const segments = highlightGroupsInName(tenant, name, groups)
-
-  return (
-    <>
-      {segments.map((segment, index) =>
-        segment.color ? (
-          <span
-            key={`${index}-${segment.text}`}
-            className="group-name"
-            style={colorStyle(segment.color)}
-          >
-            {segment.text}
-          </span>
-        ) : (
-          <Fragment key={`${index}-${segment.text}`}>{segment.text}</Fragment>
-        ),
-      )}
-    </>
   )
 }
