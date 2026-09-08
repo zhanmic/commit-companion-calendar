@@ -11,6 +11,7 @@ import { formatTimeRange } from '../lib/week'
 import type { Occurrence } from '../types'
 import type { CSSProperties } from 'react'
 import { AddToCalendarButton } from './AddToCalendarButton'
+import { GroupColoredName, GroupLabel } from './GroupLabel'
 import { SessionKindIcon } from './SessionKindIcon'
 
 interface Props {
@@ -135,7 +136,20 @@ export function DayDetailSheet({
                     className="day-sheet__cal"
                   />
                 </div>
-                <h3 className="day-sheet__card-title">{occ.name}</h3>
+                {kind === 'practice' ? (
+                  <GroupLabel
+                    groups={occ.subTeams}
+                    selectedGroups={selectedGroups}
+                    className="day-sheet__card-groups"
+                  />
+                ) : null}
+                <h3 className="day-sheet__card-title">
+                  {kind === 'practice' ? (
+                    <GroupColoredName name={occ.name} groups={occ.subTeams} />
+                  ) : (
+                    occ.name
+                  )}
+                </h3>
                 <dl className="day-sheet__fields">
                   {occ.fields.map((field) => (
                     <div key={`${occ.id}-${field.label}`} className="day-sheet__field">

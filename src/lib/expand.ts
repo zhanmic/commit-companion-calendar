@@ -191,7 +191,6 @@ function toOccurrence(
     fields: buildEventDetailFields(
       event,
       name,
-      parsed.subTeams,
       parsed.location,
       options.timeZone,
     ),
