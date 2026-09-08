@@ -1,7 +1,6 @@
 import { format, getWeek } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
 import {
-  TEAM_TZ,
   atLocalMidnight,
   getWeekModel,
   isCurrentWeek,
@@ -53,7 +52,7 @@ function dayOnOrAfter(
 
 export function getMonthModel(
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): MonthModel {
   const parts = localParts(anchor, timeZone)
   const year = parts.year
@@ -103,7 +102,7 @@ export function getMonthModel(
 export function shiftMonth(
   anchor: Date,
   deltaMonths: number,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date {
   const parts = localParts(anchor, timeZone)
   return atLocalMidnight(parts.year, parts.month + deltaMonths, 1, timeZone)
@@ -111,7 +110,7 @@ export function shiftMonth(
 
 export function monthIsoFromAnchor(
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): string {
   const parts = localParts(anchor, timeZone)
   return `${parts.year}-${pad2(parts.month + 1)}`
@@ -119,7 +118,7 @@ export function monthIsoFromAnchor(
 
 export function dateFromMonthIso(
   iso: string,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date | null {
   const m = /^(\d{4})-(\d{2})$/.exec(iso.trim())
   if (!m) return null
@@ -131,7 +130,7 @@ export function dateFromMonthIso(
 
 export function isCurrentMonth(
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
   now: Date = new Date(),
 ): boolean {
   return monthIsoFromAnchor(anchor, timeZone) === monthIsoFromAnchor(now, timeZone)
@@ -139,7 +138,7 @@ export function isCurrentMonth(
 
 export function parseMonthSearch(
   search: string,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date | null {
   const raw = search.startsWith('?') ? search.slice(1) : search
   const iso = new URLSearchParams(raw).get(MONTH_QUERY_PARAM)
@@ -154,7 +153,7 @@ export function isMonthViewSearch(search: string): boolean {
 
 export function parseScheduleSearch(
   search: string,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): { view: ScheduleView; anchor: Date } {
   if (isMonthViewSearch(search)) {
     return {
@@ -173,7 +172,7 @@ export function pathWithScheduleSearch(
   pathname: string,
   view: ScheduleView,
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): string {
   const path = pathname || '/'
   if (view === 'week') {

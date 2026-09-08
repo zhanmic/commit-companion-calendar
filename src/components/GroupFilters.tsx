@@ -29,6 +29,8 @@ interface Props {
   weekCalendar?: {
     occurrences: Occurrence[]
     calendarName: string
+    /** Team timezone written as the TZID of the exported events. */
+    timeZone: string
   } | null
   /** Spoken/visible count window, e.g. "this week" or "this month". */
   countPeriod?: string
@@ -174,6 +176,7 @@ export function GroupFilters({
                 label="Add to Calendar"
                 calendarName={weekCalendar.calendarName}
                 calendarOptions={{
+                  timeZone: weekCalendar.timeZone,
                   sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
                   filenamePrefix: tenant.icsFilenamePrefix,
                 }}

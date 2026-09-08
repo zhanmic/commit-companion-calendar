@@ -5,7 +5,6 @@ import {
   PRODUCT_NAME,
 } from '../product'
 import type { Occurrence } from '../types'
-import { TEAM_TZ } from './week'
 
 function pad(value: number, size = 2): string {
   return String(value).padStart(size, '0')
@@ -64,7 +63,7 @@ function occurrenceUid(occ: Occurrence): string {
 
 export function buildIcsEvent(
   occ: Occurrence,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
   now = new Date(),
   sourceLabel: string = PRODUCT_NAME,
 ): string {
@@ -91,7 +90,7 @@ export function buildIcsEvent(
 export function buildIcsCalendar(
   occurrences: Occurrence[],
   calendarName = PRODUCT_NAME,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
   sourceLabel: string = PRODUCT_NAME,
 ): string {
   const now = new Date()
@@ -177,8 +176,9 @@ function openInlineCalendarApi(ics: string): boolean {
 }
 
 export interface OfferCalendarOptions {
+  /** Team timezone — the ICS wall times are written with this TZID. */
+  timeZone: string
   calendarName?: string
-  timeZone?: string
   sourceLabel?: string
   filenamePrefix?: string
 }
@@ -190,12 +190,12 @@ export interface OfferCalendarOptions {
  */
 export async function offerCalendarFile(
   occurrences: Occurrence[],
-  options: OfferCalendarOptions = {},
+  options: OfferCalendarOptions,
 ): Promise<'opened' | 'downloaded' | 'empty'> {
   if (occurrences.length === 0) return 'empty'
 
   const calendarName = options.calendarName ?? PRODUCT_NAME
-  const timeZone = options.timeZone ?? TEAM_TZ
+  const timeZone = options.timeZone
   const sourceLabel = options.sourceLabel ?? PRODUCT_NAME
   const filenamePrefix = options.filenamePrefix ?? 'schedule'
 

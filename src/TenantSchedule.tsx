@@ -428,6 +428,7 @@ export function TenantSchedule() {
                   : {
                       occurrences: filtered,
                       calendarName: `${tenant.displayName} · ${week.label}`,
+                      timeZone,
                     }
               }
             />
@@ -436,6 +437,7 @@ export function TenantSchedule() {
               <MonthSchedule
                 month={month}
                 occurrences={filtered}
+                timeZone={timeZone}
                 selectedGroups={selected}
                 fitMode={fitMode}
                 detailLevel={settings.monthDetailLevel}
@@ -449,6 +451,7 @@ export function TenantSchedule() {
               <WeekSchedule
                 week={week}
                 occurrences={filtered}
+                timeZone={timeZone}
                 selectedGroups={selected}
                 fitMode={fitMode}
               />

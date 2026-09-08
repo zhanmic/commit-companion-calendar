@@ -5,8 +5,6 @@ import type { CommitEvent, CommitMeet, Occurrence } from '../types'
 import { buildEventDetailFields, buildMeetDetailFields } from './detailFields'
 import type { PracticeNameFormat } from './settings'
 
-const DEFAULT_TZ = 'America/New_York'
-
 function parseUtc(iso: string): Date {
   return new Date(iso)
 }
@@ -46,7 +44,8 @@ function advanceByPeriod(date: Date, period: string): Date {
 }
 
 export interface ExpandPracticeOptions {
-  timeZone?: string
+  /** Team timezone — recurrence days and cancellations are keyed to it. */
+  timeZone: string
   practiceNameFormat: PracticeNameFormat
   parsePractice: PracticeParser
 }
@@ -62,7 +61,7 @@ export function expandEvents(
   rangeEnd: Date,
   options: ExpandPracticeOptions,
 ): Occurrence[] {
-  const timeZone = options.timeZone ?? DEFAULT_TZ
+  const timeZone = options.timeZone
   const results: Occurrence[] = []
 
   for (const event of events) {
@@ -179,6 +178,7 @@ function toOccurrence(
       name,
       parsed.subTeams,
       parsed.location,
+      options.timeZone,
     ),
   }
 }

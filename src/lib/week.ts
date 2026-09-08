@@ -1,8 +1,6 @@
 import { addDays, format, isSameDay } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
-export const TEAM_TZ = 'America/New_York'
-
 export interface CalendarDay {
   year: number
   month: number
@@ -40,12 +38,12 @@ export function atLocalMidnight(
 
 export function instantFromDay(
   day: CalendarDay,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date {
   return atLocalMidnight(day.year, day.month, day.date, timeZone)
 }
 
-export function getWeekModel(anchor: Date, timeZone: string = TEAM_TZ): WeekModel {
+export function getWeekModel(anchor: Date, timeZone: string): WeekModel {
   const parts = localParts(anchor, timeZone)
   const weekStartDate = parts.date - parts.day // Sunday-based
   const start = atLocalMidnight(parts.year, parts.month, weekStartDate, timeZone)
@@ -96,7 +94,7 @@ export function getWeekModel(anchor: Date, timeZone: string = TEAM_TZ): WeekMode
   }
 }
 
-export function formatTimeRange(start: Date, end: Date, timeZone: string = TEAM_TZ) {
+export function formatTimeRange(start: Date, end: Date, timeZone: string) {
   const s = toZonedTime(start, timeZone)
   const e = toZonedTime(end, timeZone)
   return `${format(s, 'h:mm a')} – ${format(e, 'h:mm a')}`
@@ -106,7 +104,7 @@ export function formatTimeRange(start: Date, end: Date, timeZone: string = TEAM_
 export function formatTimeRangeCompact(
   start: Date,
   end: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ) {
   const s = toZonedTime(start, timeZone)
   const e = toZonedTime(end, timeZone)
@@ -120,7 +118,7 @@ export function formatTimeRangeCompact(
 
 export function dayHeading(
   day: WeekModel['days'][number],
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ) {
   const instant = atLocalMidnight(day.year, day.month, day.date, timeZone)
   const local = toZonedTime(instant, timeZone)
@@ -137,7 +135,7 @@ export function dayHeading(
 export function isOccurrenceOnDay(
   occStart: Date,
   day: WeekModel['days'][number],
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ) {
   const local = toZonedTime(occStart, timeZone)
   return (
@@ -175,7 +173,7 @@ export function isoDateFromParts(
 /** Parse `YYYY-MM-DD` into a local-midnight instant in `timeZone`. */
 export function dateFromIso(
   iso: string,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim())
   if (!m) return null
@@ -189,7 +187,7 @@ export function dateFromIso(
 /** Sunday of the week containing `anchor`, as `YYYY-MM-DD`. */
 export function weekIsoFromAnchor(
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): string {
   const day = getWeekModel(anchor, timeZone).days[0]
   return isoDateFromParts(day.year, day.month, day.date)
@@ -197,7 +195,7 @@ export function weekIsoFromAnchor(
 
 export function isCurrentWeek(
   anchor: Date,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
   now: Date = new Date(),
 ): boolean {
   return weekIsoFromAnchor(anchor, timeZone) === weekIsoFromAnchor(now, timeZone)
@@ -206,7 +204,7 @@ export function isCurrentWeek(
 /** Read `?week=YYYY-MM-DD` from a query string. Any day in the week is accepted. */
 export function parseWeekSearch(
   search: string,
-  timeZone: string = TEAM_TZ,
+  timeZone: string,
 ): Date | null {
   const raw = search.startsWith('?') ? search.slice(1) : search
   const iso = new URLSearchParams(raw).get(WEEK_QUERY_PARAM)
