@@ -1696,11 +1696,11 @@ button.month-day__num:focus-visible {
 }
 
 /*
- * Group color coding, shared by week rows and month cells.
- * A session's fill/accent stays on its first group; the words themselves split
- * by color so "Hail / Thunder" reads as both chips at a glance. Colors are
- * nudged toward the page ink so small uppercase labels stay legible on the
- * accent-tinted card backgrounds in either theme.
+ * Group color coding, shared by week rows, month cells, and the day sheet's
+ * Groups row. A session's fill/accent stays on its first group; the words
+ * themselves split by color so "Hail / Thunder" reads as both chips at a
+ * glance. Colors are nudged toward the page ink so small uppercase labels stay
+ * legible on the accent-tinted card backgrounds in either theme.
  */
 .group-label {
   display: inline;
@@ -2583,6 +2583,11 @@ button.month-day__num:focus-visible {
   line-height: 1.35;
   color: var(--ink);
   word-break: break-word;
+}
+
+/* Only the Groups row is tinted — the card title stays plain ink. */
+.day-sheet__field-groups .group-label__name {
+  font-weight: 650;
 }
 
 @media (min-width: 721px) {

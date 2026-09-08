@@ -48,7 +48,14 @@ export function buildEventDetailFields(
     pushField(fields, 'Series name', event.name)
   }
   pushField(fields, 'Type', event.label)
-  pushField(fields, 'Groups', subTeams.join(', '))
+  if (subTeams.length) {
+    // `groups` lets the day sheet tint each name; `value` is the plain fallback.
+    fields.push({
+      label: 'Groups',
+      value: subTeams.join(', '),
+      groups: subTeams,
+    })
+  }
   pushField(fields, 'Location', location)
   pushField(fields, 'Recurs', formatRecurring(event, timeZone))
   return fields

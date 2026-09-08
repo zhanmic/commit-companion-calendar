@@ -11,6 +11,8 @@ interface GroupLabelProps {
   /** Active filter chips — narrows a shared session to the chosen groups. */
   selectedGroups?: Set<string>
   className?: string
+  /** Text between names. Keep the spaces — they let long labels wrap. */
+  separator?: string
 }
 
 /**
@@ -21,6 +23,7 @@ export function GroupLabel({
   groups,
   selectedGroups,
   className = '',
+  separator = ' / ',
 }: GroupLabelProps) {
   const tenant = useTenant()
   const shown = visiblePracticeGroups(groups, selectedGroups)
@@ -30,12 +33,8 @@ export function GroupLabel({
     <span className={`group-label ${className}`.trim()}>
       {shown.map((id, index) => (
         <Fragment key={id}>
-          {/* Real spaces around the slash keep long labels wrappable. */}
           {index > 0 ? (
-            <>
-              {' '}
-              <span className="group-label__sep">/</span>{' '}
-            </>
+            <span className="group-label__sep">{separator}</span>
           ) : null}
           <span
             className="group-label__name"
