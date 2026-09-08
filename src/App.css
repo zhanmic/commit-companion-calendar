@@ -1974,7 +1974,13 @@ button.month-day__num:focus-visible {
 
 .day-group {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /*
+   * Each day is its own grid, so an auto gutter would size to that day's own
+   * label ("Fri 9/11" vs "Thu 9/10") and the session accent bars would step in
+   * and out down the list. Fixed width fits the widest label ("Wed 12/28") and
+   * keeps every bar on one vertical line.
+   */
+  grid-template-columns: 2.4rem 1fr;
   gap: 0.55rem 0.65rem;
   align-items: stretch;
   min-height: 0;
