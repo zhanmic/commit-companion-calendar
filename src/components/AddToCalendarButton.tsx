@@ -11,8 +11,8 @@ interface Props {
   className?: string
   /** Optional calendar display name inside the .ics file. */
   calendarName?: string
-  /** Extra ICS options (timezone, source label, filename prefix). */
-  calendarOptions?: Omit<OfferCalendarOptions, 'calendarName'>
+  /** ICS options (team timezone, source label, filename prefix). */
+  calendarOptions: Omit<OfferCalendarOptions, 'calendarName'>
 }
 
 export function AddToCalendarButton({

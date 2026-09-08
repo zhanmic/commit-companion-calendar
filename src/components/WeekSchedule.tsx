@@ -22,6 +22,8 @@ import { SessionKindIcon } from './SessionKindIcon'
 interface Props {
   week: WeekModel
   occurrences: Occurrence[]
+  /** Team timezone — practice times are the team's local times, not the viewer's. */
+  timeZone: string
   /** Active group filter chips — drives multi-group accent/label. */
   selectedGroups?: Set<string>
   /** Mobile concise list (carpool-style rows) */
@@ -48,13 +50,19 @@ function sessionKindTitle(kind: SessionKind): string {
   return 'Practice'
 }
 
-function groupOccurrencesByDay(week: WeekModel, occurrences: Occurrence[]) {
+function groupOccurrencesByDay(
+  week: WeekModel,
+  occurrences: Occurrence[],
+  timeZone: string,
+) {
   return week.days
     .map((day) => {
-      const dayOccs = occurrences.filter((o) => isOccurrenceOnDay(o.start, day))
+      const dayOccs = occurrences.filter((o) =>
+        isOccurrenceOnDay(o.start, day, timeZone),
+      )
       return {
         day,
-        heading: dayHeading(day),
+        heading: dayHeading(day, timeZone),
         occurrences: dayOccs,
       }
     })
@@ -74,6 +82,7 @@ function activateOnKey(
 export function WeekSchedule({
   week,
   occurrences,
+  timeZone,
   selectedGroups,
   fitMode = false,
 }: Props) {
@@ -117,13 +126,14 @@ export function WeekSchedule({
     })
   }
 
-  const dayGroups = groupOccurrencesByDay(week, occurrences)
+  const dayGroups = groupOccurrencesByDay(week, occurrences, timeZone)
 
   const detailSheet = openDetail ? (
     <DayDetailSheet
       title={openDetail.title}
       subtitle={openDetail.subtitle}
       occurrences={openDetail.occurrences}
+      timeZone={timeZone}
       selectedGroups={selectedGroups}
       onClose={() => setOpenDetail(null)}
     />
@@ -181,7 +191,7 @@ export function WeekSchedule({
                   const isMeet = kind === 'meet'
                   const team = teamLabel(occ)
                   const loc = kind === 'event' ? null : occ.location
-                  const time = formatTimeRangeCompact(occ.start, occ.end)
+                  const time = formatTimeRangeCompact(occ.start, occ.end, timeZone)
                   const label = [
                     sessionKindTitle(kind),
                     isPractice ? team : occ.name,
@@ -261,9 +271,9 @@ export function WeekSchedule({
     <>
       <div className="week-grid" role="list">
         {week.days.map((day) => {
-          const heading = dayHeading(day)
+          const heading = dayHeading(day, timeZone)
           const dayOccs = occurrences.filter((o) =>
-            isOccurrenceOnDay(o.start, day),
+            isOccurrenceOnDay(o.start, day, timeZone),
           )
           const hasSessions = dayOccs.length > 0
 
@@ -358,7 +368,7 @@ export function WeekSchedule({
                           )}
                         </h3>
                         <p className="practice-card__time">
-                          {formatTimeRange(occ.start, occ.end)}
+                          {formatTimeRange(occ.start, occ.end, timeZone)}
                         </p>
                       </article>
                     )

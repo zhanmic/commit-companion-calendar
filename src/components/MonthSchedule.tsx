@@ -25,6 +25,8 @@ const MOBILE_DOT_LIMIT = 3
 interface Props {
   month: MonthModel
   occurrences: Occurrence[]
+  /** Team timezone — practice times are the team's local times, not the viewer's. */
+  timeZone: string
   selectedGroups?: Set<string>
   fitMode?: boolean
   /** How much text to show in day cells. */
@@ -71,6 +73,7 @@ function eventTitle(
 export function MonthSchedule({
   month,
   occurrences,
+  timeZone,
   selectedGroups,
   fitMode = false,
   detailLevel = 'dots',
@@ -90,12 +93,12 @@ export function MonthSchedule({
   }
 
   function occsOnDay(day: CalendarDay): Occurrence[] {
-    return occurrences.filter((o) => isOccurrenceOnDay(o.start, day))
+    return occurrences.filter((o) => isOccurrenceOnDay(o.start, day, timeZone))
   }
 
   function openDayDetail(day: CalendarDay, dayOccs: Occurrence[]) {
     if (dayOccs.length === 0) return
-    const heading = dayHeading(day)
+    const heading = dayHeading(day, timeZone)
     setOpenDetail({
       title: `${heading.weekday}, ${heading.date}`,
       subtitle: `${dayOccs.length} session${dayOccs.length === 1 ? '' : 's'}`,
@@ -104,7 +107,7 @@ export function MonthSchedule({
   }
 
   function openSessionDetail(day: CalendarDay, occ: Occurrence) {
-    const heading = dayHeading(day)
+    const heading = dayHeading(day, timeZone)
     const kind = sessionKind(occ)
     setOpenDetail({
       title: `${heading.weekday}, ${heading.date}`,
@@ -126,7 +129,7 @@ export function MonthSchedule({
 
   function eventMeta(occ: Occurrence): string | null {
     if (showLocation && occ.location) return occ.location
-    if (!fitMode) return formatStart(occ)
+    if (!fitMode) return formatStart(occ, timeZone)
     return null
   }
 
@@ -135,6 +138,7 @@ export function MonthSchedule({
       title={openDetail.title}
       subtitle={openDetail.subtitle}
       occurrences={openDetail.occurrences}
+      timeZone={timeZone}
       selectedGroups={selectedGroups}
       onClose={() => setOpenDetail(null)}
     />
@@ -169,7 +173,7 @@ export function MonthSchedule({
                   onClick: () => openWeek(week),
                   onKeyDown: (event: KeyboardEvent) =>
                     activateOnKey(event, () => openWeek(week)),
-                  'aria-label': `Week of ${dayHeading(week.days[0]).date}, open week view`,
+                  'aria-label': `Week of ${dayHeading(week.days[0], timeZone).date}, open week view`,
                 }
               : {})}
           >
@@ -181,7 +185,7 @@ export function MonthSchedule({
               <button
                 type="button"
                 className="month-week__num"
-                aria-label={`Open week of ${dayHeading(week.days[0]).date}`}
+                aria-label={`Open week of ${dayHeading(week.days[0], timeZone).date}`}
                 onClick={() => openWeek(week)}
               >
                 {week.weekNumber}
@@ -189,7 +193,7 @@ export function MonthSchedule({
             )}
 
             {week.days.map((day) => {
-              const heading = dayHeading(day)
+              const heading = dayHeading(day, timeZone)
               const dayOccs = occsOnDay(day)
               const outside = day.month !== month.month
               const dots = uniqueAccents(dayOccs, sessionAccent).slice(
@@ -325,6 +329,6 @@ function uniqueAccents(
   return out
 }
 
-function formatStart(occ: Occurrence): string {
-  return formatTimeRangeCompact(occ.start, occ.end).split('–')[0] ?? ''
+function formatStart(occ: Occurrence, timeZone: string): string {
+  return formatTimeRangeCompact(occ.start, occ.end, timeZone).split('–')[0] ?? ''
 }

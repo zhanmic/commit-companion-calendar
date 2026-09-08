@@ -1,6 +1,8 @@
 import { addDays, addMonths, addYears } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 function parseUtc(iso) {
   return new Date(iso)
 }
@@ -21,6 +23,17 @@ function dayStartMs(date, timeZone) {
 
 function momentDay(date, timeZone) {
   return toZonedTime(date, timeZone).getDay()
+}
+
+/**
+ * Commit keys a cancel/override by local midnight epoch-ms, using the clock of
+ * whoever edited the practice. Snap keys to the nearest team-local midnight so
+ * an edit made from another timezone still lands on the day it cancelled.
+ */
+function nearestDayStartMs(ms, timeZone) {
+  const start = dayStartMs(new Date(ms), timeZone)
+  if (ms - start <= DAY_MS / 2) return start
+  return dayStartMs(new Date(start + DAY_MS * 1.5), timeZone)
 }
 
 function advanceByPeriod(date, period) {
@@ -79,7 +92,9 @@ export function expandEvents(events, rangeStart, rangeEnd, options) {
 
     const until = parseUtc(rec.endDate)
     const allowedDays = new Set(rec.days ?? [1, 2, 3, 4, 5])
-    const customs = new Map((rec.custom ?? []).map((c) => [c.id, c]))
+    const customs = new Map(
+      (rec.custom ?? []).map((c) => [nearestDayStartMs(c.id, timeZone), c]),
+    )
 
     let cursor = new Date(
       Date.UTC(

@@ -6,8 +6,6 @@ import type {
   DetailField,
   SubTeam,
 } from '../types'
-import { TEAM_TZ } from './week'
-
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function pushField(
@@ -20,7 +18,7 @@ function pushField(
   fields.push({ label, value: trimmed })
 }
 
-function formatRecurring(event: CommitEvent): string | null {
+function formatRecurring(event: CommitEvent, timeZone: string): string | null {
   const rec = event.recurring
   if (!rec) return null
   const days =
@@ -28,7 +26,7 @@ function formatRecurring(event: CommitEvent): string | null {
       ? rec.days.map((d) => WEEKDAY_NAMES[d] ?? String(d)).join(', ')
       : null
   const until = format(
-    toZonedTime(new Date(rec.endDate), TEAM_TZ),
+    toZonedTime(new Date(rec.endDate), timeZone),
     'MMM d, yyyy',
   )
   const parts = [rec.period]
@@ -42,6 +40,7 @@ export function buildEventDetailFields(
   occurrenceName: string,
   subTeams: SubTeam[],
   location: string | null,
+  timeZone: string,
 ): DetailField[] {
   // Name / start–end are already shown on the day-sheet card header — omit here.
   const fields: DetailField[] = []
@@ -51,7 +50,7 @@ export function buildEventDetailFields(
   pushField(fields, 'Type', event.label)
   pushField(fields, 'Groups', subTeams.join(', '))
   pushField(fields, 'Location', location)
-  pushField(fields, 'Recurs', formatRecurring(event))
+  pushField(fields, 'Recurs', formatRecurring(event, timeZone))
   return fields
 }
 

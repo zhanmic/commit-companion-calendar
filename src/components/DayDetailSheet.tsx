@@ -17,6 +17,8 @@ interface Props {
   title: string
   subtitle?: string
   occurrences: Occurrence[]
+  /** Team timezone — practice times are the team's local times, not the viewer's. */
+  timeZone: string
   /** Active group filter chips — drives multi-group practice accent. */
   selectedGroups?: Set<string>
   onClose: () => void
@@ -26,6 +28,7 @@ export function DayDetailSheet({
   title,
   subtitle,
   occurrences,
+  timeZone,
   selectedGroups,
   onClose,
 }: Props) {
@@ -116,7 +119,7 @@ export function DayDetailSheet({
                   <div className="day-sheet__card-meta">
                     <SessionKindIcon kind={kind} className="day-sheet__badge" />
                     <span className="day-sheet__card-time">
-                      {formatTimeRange(occ.start, occ.end)}
+                      {formatTimeRange(occ.start, occ.end, timeZone)}
                     </span>
                   </div>
                   <AddToCalendarButton
@@ -125,6 +128,7 @@ export function DayDetailSheet({
                     label="Add to Calendar"
                     calendarName={`${tenant.displayName} Schedule`}
                     calendarOptions={{
+                      timeZone,
                       sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
                       filenamePrefix: tenant.icsFilenamePrefix,
                     }}

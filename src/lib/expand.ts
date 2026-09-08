@@ -5,7 +5,7 @@ import type { CommitEvent, CommitMeet, Occurrence } from '../types'
 import { buildEventDetailFields, buildMeetDetailFields } from './detailFields'
 import type { PracticeNameFormat } from './settings'
 
-const DEFAULT_TZ = 'America/New_York'
+const DAY_MS = 24 * 60 * 60 * 1000
 
 function parseUtc(iso: string): Date {
   return new Date(iso)
@@ -31,6 +31,17 @@ function momentDay(date: Date, timeZone: string): number {
   return toZonedTime(date, timeZone).getDay()
 }
 
+/**
+ * Commit keys a cancel/override by local midnight epoch-ms, using the clock of
+ * whoever edited the practice. Snap keys to the nearest team-local midnight so
+ * an edit made from another timezone still lands on the day it cancelled.
+ */
+function nearestDayStartMs(ms: number, timeZone: string): number {
+  const start = dayStartMs(new Date(ms), timeZone)
+  if (ms - start <= DAY_MS / 2) return start
+  return dayStartMs(new Date(start + DAY_MS * 1.5), timeZone)
+}
+
 function advanceByPeriod(date: Date, period: string): Date {
   switch (period) {
     case 'weekly':
@@ -46,7 +57,8 @@ function advanceByPeriod(date: Date, period: string): Date {
 }
 
 export interface ExpandPracticeOptions {
-  timeZone?: string
+  /** Team timezone — recurrence days and cancellations are keyed to it. */
+  timeZone: string
   practiceNameFormat: PracticeNameFormat
   parsePractice: PracticeParser
 }
@@ -62,7 +74,7 @@ export function expandEvents(
   rangeEnd: Date,
   options: ExpandPracticeOptions,
 ): Occurrence[] {
-  const timeZone = options.timeZone ?? DEFAULT_TZ
+  const timeZone = options.timeZone
   const results: Occurrence[] = []
 
   for (const event of events) {
@@ -80,7 +92,9 @@ export function expandEvents(
 
     const until = parseUtc(rec.endDate)
     const allowedDays = new Set(rec.days ?? [1, 2, 3, 4, 5])
-    const customs = new Map((rec.custom ?? []).map((c) => [c.id, c]))
+    const customs = new Map(
+      (rec.custom ?? []).map((c) => [nearestDayStartMs(c.id, timeZone), c]),
+    )
 
     // Commit builds dtstart from UTC Y/M/D/H/M/S components of startDate
     let cursor = new Date(
@@ -179,6 +193,7 @@ function toOccurrence(
       name,
       parsed.subTeams,
       parsed.location,
+      options.timeZone,
     ),
   }
 }
