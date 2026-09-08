@@ -71,6 +71,8 @@ export type SubTeam = string
 export interface DetailField {
   label: string
   value: string
+  /** Group ids behind `value`, so the row can be rendered in group colors. */
+  groups?: SubTeam[]
 }
 
 export interface Occurrence {
