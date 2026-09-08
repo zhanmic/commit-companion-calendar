@@ -1974,15 +1974,22 @@ button.month-day__num:focus-visible {
 
 .day-group {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.55rem 0.65rem;
+  /*
+   * Each day is its own grid, so an auto gutter would size to that day's own
+   * label ("Fri 9/11" vs "Thu 9/10") and the session accent bars would step in
+   * and out down the list. Fixed width fits the widest label ("Wed 12/28") and
+   * keeps every bar on one vertical line. Labels sit flush against the card's
+   * (trimmed) left padding, so every day starts at the same x.
+   */
+  grid-template-columns: 1.95rem 1fr;
+  gap: 0.55rem 0.45rem;
   align-items: stretch;
   min-height: 0;
   overflow: hidden;
   border-radius: 0.85rem;
   border: 1px solid var(--line);
   background: var(--surface-2);
-  padding: 0.55rem 0.7rem 0.55rem 0.75rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.35rem;
 }
 
 .day-group.is-today {
@@ -1994,9 +2001,9 @@ button.month-day__num:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
   line-height: 1.15;
   white-space: nowrap;
-  padding-right: 0.15rem;
 }
 
 .day-group__weekday {
@@ -2971,8 +2978,8 @@ button.month-day__num:focus-visible {
   .app--fit .day-group {
     flex: var(--day-sessions, 1) 1 0;
     min-height: 0;
-    gap: 0.4rem 0.5rem;
-    padding: 0.35rem 0.55rem 0.35rem 0.6rem;
+    gap: 0.4rem 0.35rem;
+    padding: 0.35rem 0.55rem 0.35rem 0.3rem;
     border-radius: 0.7rem;
   }
 
@@ -3023,11 +3030,11 @@ button.month-day__num:focus-visible {
   }
 
   .app--fit .day-group__weekday {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .app--fit .day-group__date {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
   }
 
   .app--fit .day-session__kind {
