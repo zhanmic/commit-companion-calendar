@@ -17,6 +17,7 @@ import {
 } from '../lib/week'
 import type { Occurrence } from '../types'
 import { DayDetailSheet } from './DayDetailSheet'
+import { GroupLabel } from './GroupLabel'
 
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const DESKTOP_EVENT_LIMIT = 3
@@ -248,6 +249,16 @@ export function MonthSchedule({
                         const title = eventTitle(occ, selectedGroups)
                         const meta = eventMeta(occ)
                         const label = [title, meta].filter(Boolean).join(', ')
+                        const titleNode =
+                          sessionKind(occ) === 'practice' ? (
+                            <GroupLabel
+                              groups={occ.subTeams}
+                              selectedGroups={selectedGroups}
+                              className="month-event__title"
+                            />
+                          ) : (
+                            <span className="month-event__title">{title}</span>
+                          )
                         if (fitMode) {
                           return (
                             <span
@@ -259,7 +270,7 @@ export function MonthSchedule({
                                 } as CSSProperties
                               }
                             >
-                              <span className="month-event__title">{title}</span>
+                              {titleNode}
                               {meta ? (
                                 <span className="month-event__time">{meta}</span>
                               ) : null}
@@ -279,7 +290,7 @@ export function MonthSchedule({
                             aria-label={label}
                             onClick={() => openSessionDetail(day, occ)}
                           >
-                            <span className="month-event__title">{title}</span>
+                            {titleNode}
                             {meta ? (
                               <span className="month-event__time">{meta}</span>
                             ) : null}

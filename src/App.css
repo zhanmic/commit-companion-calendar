@@ -1695,6 +1695,27 @@ button.month-day__num:focus-visible {
   min-height: 0;
 }
 
+/*
+ * Group color coding, shared by week rows and month cells.
+ * A session's fill/accent stays on its first group; the words themselves split
+ * by color so "Hail / Thunder" reads as both chips at a glance. Colors are
+ * nudged toward the page ink so small uppercase labels stay legible on the
+ * accent-tinted card backgrounds in either theme.
+ */
+.group-label {
+  display: inline;
+  min-width: 0;
+}
+
+.group-label__name {
+  color: color-mix(in srgb, var(--group-color, var(--cyan)) 85%, var(--ink));
+}
+
+.group-label__sep {
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .month-event {
   display: flex;
   align-items: baseline;

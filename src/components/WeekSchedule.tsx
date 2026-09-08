@@ -16,6 +16,7 @@ import {
 } from '../lib/week'
 import type { Occurrence } from '../types'
 import { DayDetailSheet } from './DayDetailSheet'
+import { GroupLabel } from './GroupLabel'
 import { ScrollableName } from './ScrollableName'
 import { SessionKindIcon } from './SessionKindIcon'
 
@@ -242,7 +243,11 @@ export function WeekSchedule({
                       ) : (
                         <>
                           {isPractice ? (
-                            <span className="day-session__team">{team}</span>
+                            <GroupLabel
+                              groups={occ.subTeams}
+                              selectedGroups={selectedGroups}
+                              className="day-session__team"
+                            />
                           ) : (
                             <ScrollableName
                               text={occ.name}
@@ -354,7 +359,11 @@ export function WeekSchedule({
                             className="practice-card__kind"
                           />
                           {isPractice ? (
-                            <span className="practice-card__team">{team}</span>
+                            <GroupLabel
+                              groups={occ.subTeams}
+                              selectedGroups={selectedGroups}
+                              className="practice-card__team"
+                            />
                           ) : null}
                           {loc ? (
                             <span className="practice-card__loc">{loc}</span>
