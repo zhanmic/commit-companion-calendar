@@ -1978,9 +1978,8 @@ button.month-day__num:focus-visible {
    * Each day is its own grid, so an auto gutter would size to that day's own
    * label ("Fri 9/11" vs "Thu 9/10") and the session accent bars would step in
    * and out down the list. Fixed width fits the widest label ("Wed 12/28") and
-   * keeps every bar on one vertical line. The label is right-aligned inside it,
-   * so a short date ("9/8") sits as close to the bars as a long one, and the
-   * left padding is trimmed to hand the leftover width to the sessions.
+   * keeps every bar on one vertical line. Labels sit flush against the card's
+   * (trimmed) left padding, so every day starts at the same x.
    */
   grid-template-columns: 1.95rem 1fr;
   gap: 0.55rem 0.45rem;
@@ -2002,8 +2001,7 @@ button.month-day__num:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-end;
-  text-align: right;
+  align-items: flex-start;
   line-height: 1.15;
   white-space: nowrap;
 }
