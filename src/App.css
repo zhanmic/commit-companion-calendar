@@ -1979,17 +1979,18 @@ button.month-day__num:focus-visible {
    * label ("Fri 9/11" vs "Thu 9/10") and the session accent bars would step in
    * and out down the list. Fixed width fits the widest label ("Wed 12/28") and
    * keeps every bar on one vertical line. The label is right-aligned inside it,
-   * so a short date ("9/8") sits as close to the bars as a long one.
+   * so a short date ("9/8") sits as close to the bars as a long one, and the
+   * left padding is trimmed to hand the leftover width to the sessions.
    */
-  grid-template-columns: 2.1rem 1fr;
-  gap: 0.55rem 0.5rem;
+  grid-template-columns: 1.95rem 1fr;
+  gap: 0.55rem 0.45rem;
   align-items: stretch;
   min-height: 0;
   overflow: hidden;
   border-radius: 0.85rem;
   border: 1px solid var(--line);
   background: var(--surface-2);
-  padding: 0.55rem 0.7rem 0.55rem 0.75rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.35rem;
 }
 
 .day-group.is-today {
@@ -2979,8 +2980,8 @@ button.month-day__num:focus-visible {
   .app--fit .day-group {
     flex: var(--day-sessions, 1) 1 0;
     min-height: 0;
-    gap: 0.4rem 0.4rem;
-    padding: 0.35rem 0.55rem 0.35rem 0.6rem;
+    gap: 0.4rem 0.35rem;
+    padding: 0.35rem 0.55rem 0.35rem 0.3rem;
     border-radius: 0.7rem;
   }
 
@@ -3031,11 +3032,11 @@ button.month-day__num:focus-visible {
   }
 
   .app--fit .day-group__weekday {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .app--fit .day-group__date {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
   }
 
   .app--fit .day-session__kind {
