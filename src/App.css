@@ -1712,7 +1712,6 @@ button.month-day__num:focus-visible {
 }
 
 .group-label__sep {
-  padding: 0 0.22em;
   color: var(--muted);
   font-weight: 600;
 }

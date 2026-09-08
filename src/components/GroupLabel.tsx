@@ -35,7 +35,13 @@ export function GroupLabel({
     <span className={`group-label ${className}`.trim()}>
       {shown.map((id, index) => (
         <Fragment key={id}>
-          {index > 0 ? <span className="group-label__sep">/</span> : null}
+          {/* Real spaces around the slash keep long labels wrappable. */}
+          {index > 0 ? (
+            <>
+              {' '}
+              <span className="group-label__sep">/</span>{' '}
+            </>
+          ) : null}
           <span
             className="group-label__name"
             style={colorStyle(colorForGroup(tenant, id))}
