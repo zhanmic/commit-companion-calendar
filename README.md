@@ -18,6 +18,7 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 - Shareable week links (`/DelmarDolfins?week=2026-07-19`)
 - Filter by tenant-defined groups
 - Recurring practices expanded with cancel/override support
+- All times shown in the team's timezone (from Commit), not the viewer's
 - Optional meets & team events toggle
 - Per-tenant practice title parsing (field split or keywords)
 - Optional daily/weekly schedule email digests (Resend + Upstash Redis)
@@ -53,6 +54,13 @@ npm run dev
 ```
 
 Open [http://localhost:5173/DelmarDolfins](http://localhost:5173/DelmarDolfins) for the current week, or [http://localhost:5173/DelmarDolfins?week=2026-07-19](http://localhost:5173/DelmarDolfins?week=2026-07-19) for a specific week. The landing **See a live schedule** button uses that demo week.
+
+To compare a week against the team's own Commit calendar, print the expanded
+week in the team timezone:
+
+```bash
+node scripts/check-week.mjs VortexSwimClub 2026-09-07
+```
 
 ## Build
 
