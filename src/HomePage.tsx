@@ -295,8 +295,8 @@ function PhonePreview() {
           className={`phone-preview__screenshot${isDark ? '' : ' is-active'}`}
           src={homeScreenshotLight}
           alt=""
-          width={1170}
-          height={2532}
+          width={559}
+          height={1024}
           decoding="async"
           aria-hidden={isDark}
         />
@@ -306,8 +306,8 @@ function PhonePreview() {
           }`}
           src={homeScreenshotDark}
           alt=""
-          width={1170}
-          height={2532}
+          width={565}
+          height={1024}
           decoding="async"
           aria-hidden={!isDark}
         />
