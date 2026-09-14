@@ -23,11 +23,16 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 
 /**
  * First My Swim Day tenant.
- * Path: /DelmarDolfins (aliases keep old /DelmarDolphins links working).
+ * Path: /DelmarDolfins (aliases keep dolphin / missing-s typo links working).
  */
 export const delmarDolfinsTenant: TenantConfig = {
   slug: 'DelmarDolfins',
-  slugAliases: ['DelmarDolphins', 'DelmaDolphins'],
+  slugAliases: [
+    'DelmarDolphins',
+    'DelmaDolphins',
+    'DelmarDolfin',
+    'DelmarDolphin',
+  ],
   displayName: 'Delmar Dolfins',
   superTeamId: 'g8g7f3rkF8N23vXs4',
   /** New York — daily digests 7 a.m. ET, weekly Sunday 6 p.m. ET. */
