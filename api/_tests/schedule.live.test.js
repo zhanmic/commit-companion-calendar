@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import handler from './schedule.js'
-import { evaluateCounters, ipHourlyLimit, teamHourlyLimit } from './_lib/schedule/rateLimit.js'
-import { getTenantBySlug } from './_lib/tenants.js'
+import handler from '../schedule.js'
+import { evaluateCounters, ipHourlyLimit, teamHourlyLimit } from '../_lib/schedule/rateLimit.js'
+import { getTenantBySlug } from '../_lib/tenants.js'
 
 function mockReq(url) {
   return {

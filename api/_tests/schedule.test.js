@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import handler from './schedule.js'
+import handler from '../schedule.js'
 
 function mockReq(url, method = 'GET') {
   return {
