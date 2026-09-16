@@ -4,20 +4,39 @@ There is no downloadable `.shortcut` file. iPhone Shortcuts cannot be stored in 
 
 Production is on `myswimday.com`. Delmar’s short team id is `1` (same as [myswimday.com/1](https://myswimday.com/1)).
 
+## Finding “Get Contents of URL”
+
+It is **not** on the first suggested list. You have to search.
+
+1. Open the **Shortcuts** app (dark icon with overlapping squares). Not Safari, not Settings.
+2. Tap **+** (new shortcut).
+3. Tap the **search field** at the bottom (“Search Actions” / “Add Action”).
+4. Type **`contents of url`** (or just **`url`**).
+5. Choose **Get Contents of URL** — it sits in the **Web** category.
+
+Do **not** pick **Open URLs** (opens Safari) or **Get Contents of Web Page** (scrapes a website).
+
+If search still shows nothing:
+
+1. Search **`URL`** and add the **URL** action first.
+2. Paste the address into that URL action.
+3. Search again for **`contents`**. Shortcuts usually offers **Get Contents of URL** once a URL is on the canvas.
+
+On some phones the action is listed as **Get Contents of URLs** (plural). Same thing.
+
 ## Fastest version: “Hey Siri, senior practice”
 
 Always answers **today** for Delmar Sr.
 
-1. On iPhone, open **Shortcuts** → **+** (New Shortcut).
-2. Add **Get Contents of URL**.
-3. Paste this URL (leave Method as **GET**):
+1. New shortcut → search **`contents of url`** → **Get Contents of URL**.
+2. Tap **URL** inside that action and paste (leave Method as **GET**; tap **Show More** if you do not see Method):
 
    `https://myswimday.com/api/schedule?team=1&group=Sr&date=today&format=spoken`
 
-4. Add **Speak Text**. Tap the text field and choose **Contents of URL** (the previous action).
-5. Tap the shortcut name at the top, rename it **Senior practice**.
+3. Search **`speak`** → add **Speak Text**. Tap the text field → **Contents of URL** (the previous action).
+4. Tap the shortcut name at the top, rename it **Senior practice**.
    Siri uses that name: “Hey Siri, senior practice.”
-6. (Optional) Shortcut settings (ⓘ) → **Pin in Menu Bar** / add to Home Screen / allow on **Apple Watch** and **HomePod** if you use those.
+5. (Optional) Shortcut settings (ⓘ) → add to Home Screen / allow on **Apple Watch** and **HomePod**.
 
 Test with the play button in Shortcuts first. You should hear something like: *Sr practice for Delmar Dolfins today is 6:00 PM to 8:00 PM at Albany Academy.*
 
