@@ -76,4 +76,12 @@ describe('GET /api/schedule', () => {
     assert.equal(res.statusCode, 400)
     assert.match(json.error, /Invalid date/)
   })
+
+  it('rejects this weekend without a weekday', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=DelmarDolfins&group=Sr&date=this%20weekend',
+    )
+    assert.equal(res.statusCode, 400)
+    assert.match(json.error, /this Friday/)
+  })
 })

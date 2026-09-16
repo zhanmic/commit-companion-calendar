@@ -88,6 +88,49 @@ describe('resolveQueryDate', () => {
     assert.equal(range.relative, 'date')
     assert.equal(range.dayKey, '2026-09-15')
   })
+
+  it('resolves this Friday as Friday of the current team week', () => {
+    const range = resolveQueryDate('this Friday', tz, lateEt)
+    assert.equal(range.dayKey, '2026-09-18')
+    assert.equal(range.relative, 'this Friday')
+  })
+
+  it('resolves next Monday as Monday of next week', () => {
+    const range = resolveQueryDate('next Monday', tz, lateEt)
+    assert.equal(range.dayKey, '2026-09-21')
+    assert.equal(range.relative, 'next Monday')
+  })
+
+  it('resolves a bare Friday as the upcoming Friday', () => {
+    const range = resolveQueryDate('Friday', tz, lateEt)
+    assert.equal(range.dayKey, '2026-09-18')
+    assert.equal(range.relative, 'Friday')
+  })
+
+  it('treats this Monday as this week even when that day has passed', () => {
+    const range = resolveQueryDate('this Monday', tz, lateEt)
+    assert.equal(range.dayKey, '2026-09-14')
+    assert.equal(range.relative, 'this Monday')
+  })
+
+  it('accepts hyphenated and abbreviated phrases', () => {
+    const hyphen = resolveQueryDate('this-Friday', tz, lateEt)
+    const abbrev = resolveQueryDate('next mon', tz, lateEt)
+    const coming = resolveQueryDate('coming Friday', tz, lateEt)
+    assert.equal(hyphen.dayKey, '2026-09-18')
+    assert.equal(abbrev.dayKey, '2026-09-21')
+    assert.equal(coming.dayKey, '2026-09-18')
+  })
+
+  it('on Saturday, this Friday is last Friday and Friday is next week', () => {
+    const saturday = new Date('2026-09-20T02:00:00Z') // Saturday Sep 19 ET
+    const thisFri = resolveQueryDate('this Friday', tz, saturday)
+    const upcomingFri = resolveQueryDate('Friday', tz, saturday)
+    const nextMon = resolveQueryDate('next Monday', tz, saturday)
+    assert.equal(thisFri.dayKey, '2026-09-18')
+    assert.equal(upcomingFri.dayKey, '2026-09-25')
+    assert.equal(nextMon.dayKey, '2026-09-21')
+  })
 })
 
 describe('shiftDateKey', () => {
@@ -144,6 +187,22 @@ describe('buildSpoken', () => {
     assert.equal(
       text,
       'There is no Sr practice for Delmar Dolfins on Sunday, Sep 20.',
+    )
+  })
+
+  it('uses this Friday in the spoken sentence', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: 'Sr',
+      relative: 'this Friday',
+      dateLabel: 'Friday, Sep 18',
+      sessions: [
+        { startTime: '6:00 PM', endTime: '8:00 PM', location: 'Albany Academy' },
+      ],
+    })
+    assert.equal(
+      text,
+      'Sr practice for Delmar Dolfins this Friday is 6:00 PM to 8:00 PM at Albany Academy.',
     )
   })
 })

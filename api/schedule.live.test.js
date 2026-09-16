@@ -77,6 +77,21 @@ describe('live GET /api/schedule', () => {
     assert.equal(json.date, '2026-09-16')
     assert.match(json.spoken, /on Wednesday, Sep 16/)
   })
+
+  it('resolves this Friday and next Monday', async () => {
+    const friday = await call(
+      '/api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday',
+    )
+    assert.equal(friday.res.statusCode, 200, friday.res.body)
+    assert.equal(friday.json.ok, true)
+    assert.match(friday.json.spoken, /this Friday/)
+
+    const monday = await call(
+      '/api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday',
+    )
+    assert.equal(monday.res.statusCode, 200, monday.res.body)
+    assert.match(monday.json.spoken, /next Monday/)
+  })
 })
 
 describe('attack circuit', () => {

@@ -15,7 +15,7 @@
       "get": {
         "operationId": "getTeamGroupSchedule",
         "summary": "Practice times and locations for a group on a day",
-        "description": "Ask for a team's group schedule on today, tomorrow, or a calendar date. Returns structured sessions plus a `spoken` sentence for voice.",
+        "description": "Ask for a team's group schedule on today, tomorrow, this Friday, next Monday, or a calendar date. Returns structured sessions plus a `spoken` sentence for voice.",
         "parameters": [
           {
             "name": "team",
@@ -41,10 +41,10 @@
             "name": "date",
             "in": "query",
             "required": false,
-            "description": "today (default), tomorrow, yesterday, or YYYY-MM-DD in the team timezone.",
+            "description": "today (default), tomorrow, yesterday, this Friday, next Monday, Friday, or YYYY-MM-DD in the team timezone. `this` is the current Sun–Sat week; `next` is the following week; a bare weekday is the upcoming day including today.",
             "schema": {
               "type": "string",
-              "examples": ["today", "tomorrow", "2026-09-16"]
+              "examples": ["today", "tomorrow", "this Friday", "next Monday", "2026-09-16"]
             }
           },
           {

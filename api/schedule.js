@@ -217,13 +217,15 @@ function usagePayload(req) {
       query: {
         team: 'Tenant slug or alias (DelmarDolfins, DelmarDolphins, VortexSwimClub, …)',
         group: 'Practice group (Sr, senior, Jr, Jr Prep, DEVO, Peak, …)',
-        date: 'today | tomorrow | YYYY-MM-DD',
+        date: 'today | tomorrow | this Friday | next Monday | YYYY-MM-DD',
         format: 'json (default) | spoken',
       },
     },
     examples: [
       example,
       '/api/schedule?team=DelmarDolfins&group=senior&date=tomorrow',
+      '/api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday',
+      '/api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday',
       '/api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16&format=spoken',
     ],
     tenants: listTenants().map((t) => ({

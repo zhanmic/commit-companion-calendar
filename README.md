@@ -99,11 +99,15 @@ No API key. Same public practice times as the team calendar.
 ```
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=today
 GET /api/schedule?team=DelmarDolfins&group=senior&date=tomorrow
+GET /api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday
+GET /api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=today&format=spoken
 ```
 
 JSON includes `sessions[]` (`startTime`, `endTime`, `location`) and a `spoken` sentence for Siri / Alexa. OpenAPI: [`/openapi.json`](https://myswimday.com/openapi.json). Usage index: `GET /api/schedule`.
+
+`date` also accepts weekday phrases in the team timezone: **this Friday** is Friday of the current Sunday–Saturday week (same week as the calendar), **next Monday** is that weekday next week, and a bare **Friday** is the upcoming Friday including today.
 
 **Rate limits:** each team has an hourly budget of about `households × 4` requests (households default to `groups × 35`, or set `publicApiHouseholds` on the tenant). One noisy IP cannot spend the whole budget. If the team cap is exceeded, **every caller for that team gets HTTP 429** until the hour window resets — the API stops rather than amplifying an attack onto Commit. Redis (`UPSTASH_REDIS_*`) enforces the counters; without Redis the endpoint still answers (local/dev) but cannot trip the circuit. Optional env: `PUBLIC_API_ASKS_PER_HOUSEHOLD`, `PUBLIC_API_DISABLE_RATE_LIMIT=1`.
 

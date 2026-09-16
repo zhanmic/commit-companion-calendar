@@ -92,9 +92,98 @@ function rangeWithRelative(range, relative) {
   return { ...range, relative }
 }
 
+const DATE_HELP =
+  'Invalid date. Use today, tomorrow, this Friday, next Monday, or a calendar day like 2026-09-16.'
+
+/** Longest names first so "thursday" wins over "thu". */
+const WEEKDAY_NAMES = [
+  { name: 'thursday', label: 'Thursday', dow: 4 },
+  { name: 'wednesday', label: 'Wednesday', dow: 3 },
+  { name: 'saturday', label: 'Saturday', dow: 6 },
+  { name: 'tuesday', label: 'Tuesday', dow: 2 },
+  { name: 'sunday', label: 'Sunday', dow: 0 },
+  { name: 'monday', label: 'Monday', dow: 1 },
+  { name: 'friday', label: 'Friday', dow: 5 },
+  { name: 'thurs', label: 'Thursday', dow: 4 },
+  { name: 'tues', label: 'Tuesday', dow: 2 },
+  { name: 'thur', label: 'Thursday', dow: 4 },
+  { name: 'thu', label: 'Thursday', dow: 4 },
+  { name: 'wed', label: 'Wednesday', dow: 3 },
+  { name: 'tue', label: 'Tuesday', dow: 2 },
+  { name: 'sun', label: 'Sunday', dow: 0 },
+  { name: 'mon', label: 'Monday', dow: 1 },
+  { name: 'fri', label: 'Friday', dow: 5 },
+  { name: 'sat', label: 'Saturday', dow: 6 },
+]
+
+const WEEKDAY_PREFIXES = [
+  { prefix: 'thiscoming', modifier: 'upcoming' },
+  { prefix: 'nextweek', modifier: 'next' },
+  { prefix: 'thisweek', modifier: 'this' },
+  { prefix: 'coming', modifier: 'upcoming' },
+  { prefix: 'this', modifier: 'this' },
+  { prefix: 'next', modifier: 'next' },
+]
+
+export function compactDateToken(raw) {
+  return String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[+_]/g, ' ')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
 /**
- * `today` / `tomorrow` / `yesterday` / `YYYY-MM-DD` in the team timezone.
- * `relative` is used in the spoken sentence.
+ * this Friday / next Monday / Friday / this week Friday.
+ * `this` = that day in the current Sun–Sat team week (may be past).
+ * `next` = the same weekday of next week.
+ * Bare / coming = the next occurrence, including today.
+ */
+export function parseWeekdayPhrase(raw) {
+  const compact = compactDateToken(raw)
+  if (!compact) return null
+
+  for (const weekday of WEEKDAY_NAMES) {
+    if (!compact.endsWith(weekday.name)) continue
+    const prefix = compact.slice(0, -weekday.name.length)
+    if (prefix === '') {
+      return { modifier: 'upcoming', ...weekday }
+    }
+    const matched = WEEKDAY_PREFIXES.find((entry) => entry.prefix === prefix)
+    if (matched) {
+      return { modifier: matched.modifier, ...weekday }
+    }
+  }
+  return null
+}
+
+export function weekdayFromDateKey(dayKey) {
+  const year = Number(dayKey.slice(0, 4))
+  const month = Number(dayKey.slice(5, 7))
+  const date = Number(dayKey.slice(8, 10))
+  return new Date(Date.UTC(year, month - 1, date)).getUTCDay()
+}
+
+export function weekdayDateKey(todayKey, targetDow, modifier) {
+  const todayDow = weekdayFromDateKey(todayKey)
+  if (modifier === 'this' || modifier === 'next') {
+    const thisWeekKey = shiftDateKey(todayKey, targetDow - todayDow)
+    if (modifier === 'this') return thisWeekKey
+    return shiftDateKey(thisWeekKey, 7)
+  }
+  const delta = (targetDow - todayDow + 7) % 7
+  return shiftDateKey(todayKey, delta)
+}
+
+function weekdaySpoken(parsed) {
+  if (parsed.modifier === 'this') return `this ${parsed.label}`
+  if (parsed.modifier === 'next') return `next ${parsed.label}`
+  return parsed.label
+}
+
+/**
+ * `today` / `tomorrow` / `this Friday` / `next Monday` / `YYYY-MM-DD`
+ * in the team timezone. `relative` is used in the spoken sentence.
  */
 export function resolveQueryDate(raw, timeZone, now = new Date()) {
   const value = String(raw ?? 'today')
@@ -121,12 +210,23 @@ export function resolveQueryDate(raw, timeZone, now = new Date()) {
     return rangeWithRelative(range, 'date')
   }
 
-  const range = getDayRangeForDateKey(token, timeZone)
-  if (!range) {
-    return {
-      error:
-        'Invalid date. Use today, tomorrow, or a calendar day like 2026-09-16.',
+  const weekday = parseWeekdayPhrase(token)
+  if (weekday) {
+    const dayKey = weekdayDateKey(today.dayKey, weekday.dow, weekday.modifier)
+    const range = getDayRangeForDateKey(dayKey, timeZone)
+    if (!range) {
+      return { error: DATE_HELP }
     }
+    return rangeWithRelative(range, weekdaySpoken(weekday))
+  }
+
+  const isoToken = token.replace(/[/.]/g, '-').slice(0, 10)
+  const range = getDayRangeForDateKey(
+    /^\d{4}-\d{2}-\d{2}$/.test(isoToken) ? isoToken : token,
+    timeZone,
+  )
+  if (!range) {
+    return { error: DATE_HELP }
   }
 
   return rangeWithRelative(range, 'date')
@@ -155,10 +255,10 @@ export function buildSpoken({
   sessions,
 }) {
   const when =
-    relative === 'today'
-      ? 'today'
-      : relative === 'tomorrow'
-        ? 'tomorrow'
+    relative === 'today' || relative === 'tomorrow'
+      ? relative
+      : relative && relative !== 'date'
+        ? relative
         : `on ${dateLabel}`
 
   if (!sessions.length) {
