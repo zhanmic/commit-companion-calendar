@@ -10,7 +10,7 @@ export interface ScoreResult {
 }
 
 const SYSTEM = `You are a B2B sales researcher for My Swim Day (MySwimDay),
-a Commit-synced mobile week view plus daily/weekly email digests for swim teams
+a Commit-synced mobile week view, Sync to iPhone, plus daily/weekly email digests for swim teams
 already using Commit Swimming (no login or app — just a link).
 Return ONLY valid JSON with keys:
 fit_score (0-100), fit_notes (string), buyer_guess (string),
@@ -31,8 +31,8 @@ Evidence they use Commit: ${lead.evidence ?? 'unknown'}
 Confidence: ${lead.confidence ?? 'unknown'}
 Region notes: ${lead.region_notes ?? 'none'}
 
-Product angle: They already run Commit — My Swim Day gives families a mobile week view
-plus optional daily/weekly email digests. No login or app. Not affiliated with Commit.
+Product angle: They already run Commit — My Swim Day gives families a mobile week view,
+Sync to iPhone, plus optional daily/weekly email digests. No login or app. Not affiliated with Commit.
 Proof: live Delmar Dolfins calendar. Offer a free pilot for one team.
 Target buyer priority: team admin/office, head coach, website coordinator, board president.
 

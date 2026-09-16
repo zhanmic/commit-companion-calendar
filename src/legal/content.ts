@@ -27,7 +27,7 @@ export const serviceDocument: LegalDocument = {
       id: 'overview',
       title: 'Overview',
       paragraphs: [
-        `${PRODUCT_NAME} is a companion calendar for swim teams that already use Commit Swimming. It syncs from Commit’s public schedule data and presents a mobile week/month view plus optional email digests. It does not replace Commit.`,
+        `${PRODUCT_NAME} is a companion calendar for swim teams that already use Commit Swimming. It syncs from Commit’s public schedule data and presents a mobile week/month view, Sync to iPhone (a live Calendar subscription), one-off add-to-calendar files, and optional email digests. It does not replace Commit.`,
         `${PRODUCT_NAME} is an independent product and is not affiliated with, endorsed by, or part of Commit Swimming.`,
       ],
     },
@@ -57,7 +57,8 @@ export const serviceDocument: LegalDocument = {
       bullets: [
         `Hosted team calendar at myswimday.com/{shortSlug}`,
         'Sync from Commit’s public schedule API (practices, meets, and team events as configured for your tenant)',
-        'Mobile week and month views, group filters, shareable week links, .ics add-to-calendar, and iPhone Calendar subscription (ICS feed)',
+        'Mobile week and month views, group filters, and shareable week links',
+        'Sync to iPhone: live Calendar subscription (ICS feed) for the groups (and optional meets/events) selected on the team page, plus one-off .ics add-to-calendar',
         'Optional daily or weekly email digests (double opt-in) for parents and coaches',
         'Public read-only schedule API (group and/or meets and events + day → times and locations) for voice assistants, with hourly caps that scale with team size',
         'Initial tenant setup: slug, timezone, groups, and practice/meet parsers for your Commit titles',
@@ -71,6 +72,7 @@ export const serviceDocument: LegalDocument = {
         'Commit Swimming itself, Commit licenses, or Commit admin support',
         'Coaching, meet entry, registration, billing of swimmers, or team CRM',
         'Guaranteed real-time sync (near-live best effort from public Commit data)',
+        'Push updates into iPhone Calendar or other subscribed apps (those apps pull the ICS feed on their own schedule, often hours later)',
         'Custom native apps, SSO, or private/authenticated calendars (unless sold separately later)',
         'Editing or correcting schedule data inside Commit on your behalf',
         'SMS, push notifications, or unlimited email or API volume beyond fair use',
@@ -134,7 +136,7 @@ export const supportDocument: LegalDocument = {
         {
           title: 'P3 — Request',
           paragraphs: [
-            'Examples: new group filter, copy tweak, feature ask, billing receipt.',
+            'Examples: new group filter, copy tweak, Sync to iPhone / calendar subscribe question, feature ask, billing receipt.',
             'First response: within 2 business days. Resolution: best effort / next release.',
           ],
         },
@@ -182,7 +184,7 @@ export const termsDocument: LegalDocument = {
       id: 'service',
       title: 'The service',
       paragraphs: [
-        `We provide the features described in the Service description on a best-effort basis. Features may change. We do not guarantee uninterrupted availability, real-time sync, or that parsers will match every future Commit title format without adjustment.`,
+        `We provide the features described in the Service description on a best-effort basis. Features may change. We do not guarantee uninterrupted availability, real-time sync, or that parsers will match every future Commit title format without adjustment. Calendar subscriptions (Sync to iPhone and equivalent ICS feeds) update only when the calendar app next downloads the feed.`,
         `${PRODUCT_NAME} is not affiliated with Commit Swimming.`,
       ],
     },
@@ -191,6 +193,7 @@ export const termsDocument: LegalDocument = {
       title: 'Your responsibilities',
       bullets: [
         'Maintain accurate schedules in Commit',
+        'Do not put private notes in Commit titles you would not want on the public website or a subscribed calendar',
         'Obtain any consent required to email parents or coaches digests',
         'Keep payment current for paid tenants',
         'Designate an admin contact for support',
@@ -208,7 +211,7 @@ export const termsDocument: LegalDocument = {
       id: 'acceptable-use',
       title: 'Acceptable use',
       paragraphs: [
-        'You may not use the service for spam, unlawful content, unauthorized access, reverse engineering beyond applicable law, or anything that harms other tenants or the infrastructure.',
+        'You may not use the service for spam, unlawful content, unauthorized access, reverse engineering beyond applicable law, or anything that harms other tenants or the infrastructure. Calendar subscription URLs (Sync to iPhone / ICS feeds) expose the same public schedule as the team page; treat them as shareable, not secret.',
       ],
     },
     {
@@ -275,7 +278,7 @@ export const privacyDocument: LegalDocument = {
         'Email addresses and preference settings when someone subscribes to schedule digests (tenant, frequency, group filters, meet/event toggles)',
         'Confirmation and unsubscribe tokens needed to run double opt-in digests',
         'Billing-related information processed by Stripe when you subscribe (we do not store full card numbers on our servers)',
-        'Technical logs typical of hosting (IP, user agent, error logs) from our providers',
+        'Technical logs typical of hosting (IP, user agent, error logs) from our providers, including when a calendar app fetches a Sync to iPhone / ICS subscription URL',
         'Public schedule data read from Commit Swimming’s public APIs for your team',
       ],
     },
@@ -283,7 +286,7 @@ export const privacyDocument: LegalDocument = {
       id: 'use',
       title: 'How we use it',
       bullets: [
-        'Provide calendars, digests, and support',
+        'Provide calendars, email digests, iPhone Calendar feeds, and support',
         'Onboard and bill team subscriptions',
         'Prevent abuse and keep the service reliable',
         'Respond to sales and support requests',

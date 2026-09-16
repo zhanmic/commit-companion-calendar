@@ -26,7 +26,7 @@ export function HomePage() {
   const demoTenant = tenants[0]
 
   useEffect(() => {
-    document.title = `${PRODUCT_NAME} — Practice & meet calendars for Commit teams`
+    document.title = `${PRODUCT_NAME} — Practice calendars for Commit teams, with Sync to iPhone`
   }, [])
 
   return (
@@ -51,7 +51,7 @@ export function HomePage() {
         <div className="landing-hero__copy">
           <h1 className="landing-hero__brand">{PRODUCT_NAME}</h1>
           <p className="landing-hero__headline">
-            View and share practice schedule in seconds.
+            View the week in seconds — and sync it to iPhone Calendar.
           </p>
           <p className="landing-hero__sub">{PRODUCT_DESCRIPTION}</p>
           <div className="landing-hero__cta">
@@ -93,15 +93,16 @@ export function HomePage() {
           <li className="landing-point">
             <h3 className="landing-point__title">Mobile-first week view</h3>
             <p className="landing-point__text">
-              A phone-optimized calendar parents can check in seconds between
-              carpools.
+              A phone-optimized calendar parents can check in seconds — or tap
+              Sync to iPhone so practices live in the Calendar app.
             </p>
           </li>
           <li className="landing-point">
-            <h3 className="landing-point__title">Filter, share, and email</h3>
+            <h3 className="landing-point__title">Filter, share, and sync</h3>
             <p className="landing-point__text">
-              Group filters, one-tap share links, and daily or weekly email
-              digests keep every swimmer’s week clear.
+              Group filters, one-tap share links, a live iPhone Calendar
+              subscription, and daily or weekly email digests keep every
+              swimmer’s week clear.
             </p>
           </li>
         </ul>
@@ -137,8 +138,8 @@ export function HomePage() {
           <li className="landing-plan">
             <h3 className="landing-plan__title">Per team</h3>
             <p className="landing-plan__text">
-              Hosted calendar link, Commit sync, group filters, share links, and
-              optional email digests for families.
+              Hosted calendar link, Commit sync, group filters, share links,
+              Sync to iPhone, and optional email digests for families.
             </p>
           </li>
           <li className="landing-plan">
@@ -207,8 +208,9 @@ export function HomePage() {
           <li>
             <span className="landing-audience__role">Parent</span>
             <span className="landing-audience__line">
-              Open the week on your phone — or subscribe so a morning digest
-              catches last-night coach changes before practice.
+              Open the week on your phone, tap Sync to iPhone so practices stay
+              in Calendar, or subscribe so a morning digest catches last-night
+              coach changes before practice.
             </span>
           </li>
         </ul>
@@ -295,8 +297,8 @@ function PhonePreview() {
           className={`phone-preview__screenshot${isDark ? '' : ' is-active'}`}
           src={homeScreenshotLight}
           alt=""
-          width={559}
-          height={1024}
+          width={560}
+          height={1014}
           decoding="async"
           aria-hidden={isDark}
         />
@@ -306,8 +308,8 @@ function PhonePreview() {
           }`}
           src={homeScreenshotDark}
           alt=""
-          width={565}
-          height={1024}
+          width={560}
+          height={1014}
           decoding="async"
           aria-hidden={!isDark}
         />
