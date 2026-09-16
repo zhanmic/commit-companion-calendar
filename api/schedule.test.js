@@ -98,4 +98,22 @@ describe('GET /api/schedule', () => {
     assert.equal(res.statusCode, 400)
     assert.match(json.error, /Unknown group/)
   })
+
+  it('allows meets without a group', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=1&include=meets&date=today',
+    )
+    assert.notEqual(res.statusCode, 400, res.body)
+    assert.doesNotMatch(json?.error ?? '', /Missing group/)
+    if (res.statusCode === 200) {
+      assert.equal(json.include.meets, true)
+      assert.equal(json.include.practices, false)
+    }
+  })
+
+  it('rejects a bad include', async () => {
+    const { res, json } = await call('/api/schedule?team=1&include=banana')
+    assert.equal(res.statusCode, 400)
+    assert.match(json.error, /Invalid include/)
+  })
 })

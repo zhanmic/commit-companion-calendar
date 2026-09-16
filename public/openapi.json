@@ -3,7 +3,7 @@
   "info": {
     "title": "My Swim Day public schedule API",
     "version": "1.0.0",
-    "description": "Read-only practice times and locations for a team group on a given day. No API key. Hourly limits scale with team size; excess traffic returns HTTP 429 until the window resets. Intended for Siri Shortcuts, Alexa, and other assistants."
+    "description": "Read-only practice, meet, and team-event times and locations for a team on a given day. No API key. Hourly limits scale with team size; excess traffic returns HTTP 429 until the window resets. Intended for Siri Shortcuts, Alexa, and other assistants."
   },
   "servers": [
     {
@@ -14,8 +14,8 @@
     "/api/schedule": {
       "get": {
         "operationId": "getTeamGroupSchedule",
-        "summary": "Practice times and locations for a group on a day",
-        "description": "Ask for a team's group schedule on today, tomorrow, this Friday, next Monday, or a calendar date. Returns structured sessions plus a `spoken` sentence for voice.",
+        "summary": "Practice, meet, and team-event times for a day",
+        "description": "Ask for a team's schedule on today, tomorrow, this Friday, next Monday, or a calendar date. Default is practices for one or more groups. Add include=meets, events, or all. Returns structured sessions plus a `spoken` sentence for voice.",
         "parameters": [
           {
             "name": "team",
@@ -30,8 +30,8 @@
           {
             "name": "group",
             "in": "query",
-            "required": true,
-            "description": "One or more practice groups: Sr, Sr,Jr, senior and junior. Repeat group= or use groups=.",
+            "required": false,
+            "description": "One or more practice groups: Sr, Sr,Jr, senior and junior. Required when include is practices (the default) or all. Optional for include=meets / events. Repeat group= or use groups=.",
             "schema": {
               "type": "string",
               "examples": ["Sr", "senior", "Sr,Jr", "Jr Prep"]
@@ -45,6 +45,16 @@
             "schema": {
               "type": "string",
               "examples": ["today", "tomorrow", "this Friday", "next Monday", "2026-09-16"]
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "What to return. Default is practices only. Use meets, events, all, or meets,events. Alias: kind=. Group is required for practices, optional for meets/events-only.",
+            "schema": {
+              "type": "string",
+              "examples": ["meets", "events", "all", "meets,events"]
             }
           },
           {
@@ -107,7 +117,11 @@
       "ScheduleSession": {
         "type": "object",
         "properties": {
-          "kind": { "type": "string", "example": "practice" },
+          "kind": {
+            "type": "string",
+            "enum": ["practice", "meet", "event"],
+            "example": "practice"
+          },
           "name": { "type": "string" },
           "time": { "type": "string", "example": "5:30 AM – 7:00 AM" },
           "startTime": { "type": "string", "example": "5:30 AM" },
@@ -128,6 +142,24 @@
           "teamSlug": { "type": "string", "example": "DelmarDolfins" },
           "group": { "type": "string", "example": "Sr" },
           "groupLabel": { "type": "string", "example": "Sr" },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" }
+              }
+            }
+          },
+          "include": {
+            "type": "object",
+            "properties": {
+              "practices": { "type": "boolean" },
+              "events": { "type": "boolean" },
+              "meets": { "type": "boolean" }
+            }
+          },
           "date": { "type": "string", "example": "2026-09-16" },
           "dateLabel": { "type": "string", "example": "Tuesday, Sep 16" },
           "timeZone": { "type": "string", "example": "America/New_York" },

@@ -5,6 +5,8 @@
  *   /api/schedule?team=DelmarDolfins&group=Sr&date=today
  *   /api/schedule?team=DelmarDolfins&group=senior&date=tomorrow
  *   /api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16
+ *   /api/schedule?team=1&include=meets,events&date=today
+ *   /api/schedule?team=1&group=Sr,Jr&include=all&date=today
  *
  * Optional format=spoken returns the `spoken` field as text/plain (Siri Shortcuts).
  * GET without team/group returns usage + OpenAPI link.
@@ -22,10 +24,11 @@ import {
 import { isRedisConfigured, redisCommand } from './_lib/redis.js'
 import {
   buildSchedulePayload,
-  expandPracticeDay,
+  expandScheduleDay,
   fetchCommitBundle,
   filterDaySessions,
   formatSession,
+  parseInclude,
   resolveGroups,
   resolveQueryDate,
 } from './_lib/schedule/publicQuery.js'
@@ -61,6 +64,7 @@ export default async function handler(req, res) {
     ...queryParamAll(req, 'groups'),
   ].join(',')
   const dateRaw = queryParam(req, 'date') || queryParam(req, 'day')
+  const includeRaw = queryParam(req, 'include') || queryParam(req, 'kind')
 
   if (format === 'openapi') {
     sendJson(res, 200, { spec: OPENAPI_PATH, url: absoluteUrl(req, OPENAPI_PATH) })
@@ -87,13 +91,26 @@ export default async function handler(req, res) {
     return
   }
 
-  const groupResult = resolveGroups(tenant, groupRaw)
-  if (groupResult.error) {
-    sendJson(res, 400, {
-      error: groupResult.error,
-      groups: (tenant.groups ?? []).map((g) => ({ id: g.id, label: g.label })),
-    })
+  const include = parseInclude(includeRaw)
+  if (include.error) {
+    sendJson(res, 400, { error: include.error })
     return
+  }
+
+  let selectedGroups = []
+  if (include.practices) {
+    const groupResult = resolveGroups(tenant, groupRaw)
+    if (groupResult.error) {
+      sendJson(res, 400, {
+        error: groupResult.error,
+        groups: (tenant.groups ?? []).map((g) => ({ id: g.id, label: g.label })),
+      })
+      return
+    }
+    selectedGroups = groupResult.groups
+  } else if (groupRaw) {
+    const groupResult = resolveGroups(tenant, groupRaw)
+    if (!groupResult.error) selectedGroups = groupResult.groups
   }
 
   const previewRange = resolveQueryDate(dateRaw, tenant.defaultTimeZone)
@@ -131,7 +148,7 @@ export default async function handler(req, res) {
       return
     }
 
-    const { parsers, occurrences } = expandPracticeDay(
+    const { parsers, occurrences } = expandScheduleDay(
       tenant,
       bundle.schedule,
       bundle.timeZone,
@@ -139,16 +156,18 @@ export default async function handler(req, res) {
     )
     const matched = filterDaySessions(
       occurrences,
-      groupResult.groups,
+      selectedGroups,
       parsers,
+      include,
     )
     const sessions = matched.map((occ) => formatSession(occ, bundle.timeZone))
     const payload = buildSchedulePayload({
       tenant,
-      groups: groupResult.groups,
+      groups: selectedGroups,
       range,
       timeZone: bundle.timeZone,
       sessions,
+      kinds: include,
     })
 
     if (format === 'spoken' || format === 'text') {
@@ -173,7 +192,7 @@ export default async function handler(req, res) {
 }
 
 async function loadCommitBundleCached(tenant) {
-  const cacheKey = `msd:pubcache:${tenant.slug}`
+  const cacheKey = `msd:pubcache:v2:${tenant.slug}`
   if (isRedisConfigured()) {
     try {
       const raw = await redisCommand('GET', cacheKey)
@@ -186,7 +205,7 @@ async function loadCommitBundleCached(tenant) {
     }
   }
 
-  const bundle = await fetchCommitBundle(tenant, false)
+  const bundle = await fetchCommitBundle(tenant, true)
   if (isRedisConfigured()) {
     try {
       await redisCommand(
@@ -226,6 +245,7 @@ function usagePayload(req) {
         team: 'Tenant slug or alias (DelmarDolfins, DelmarDolphins, VortexSwimClub, …)',
         group: 'One or more groups: Sr, Sr,Jr, senior and junior (also group=Sr&group=Jr)',
         date: 'today | tomorrow | this Friday | next Monday | YYYY-MM-DD',
+        include: 'practice (default) | meets | events | all | meets,events',
         format: 'json (default) | spoken',
       },
     },
@@ -235,7 +255,8 @@ function usagePayload(req) {
       '/api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday',
       '/api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday',
       '/api/schedule?team=DelmarDolfins&group=Sr,Jr&date=today',
-      '/api/schedule?team=1&group=Sr&group=Jr&date=today&format=spoken',
+      '/api/schedule?team=1&group=Sr,Jr,Jr%20Prep,DEVO&date=today&include=all&format=spoken',
+      '/api/schedule?team=1&date=today&include=meets,events&format=spoken',
     ],
     tenants: listTenants().map((t) => ({
       slug: t.slug,
@@ -245,7 +266,7 @@ function usagePayload(req) {
       timeZone: t.defaultTimeZone,
     })),
     notes: [
-      'No API key. Returns the same public practice times shown on the team calendar.',
+      'No API key. Returns the same public practice, meet, and team-event times shown on the team calendar.',
       'Hourly limits scale with team size. Excess traffic pauses that team’s API (HTTP 429) until the window resets.',
     ],
   }
