@@ -9,6 +9,7 @@ import { PRODUCT_NAME } from '../product'
 import { useTenant } from '../tenants/TenantContext'
 import type { Occurrence } from '../types'
 import { AddToCalendarButton } from './AddToCalendarButton'
+import { SubscribeCalendarButton } from './SubscribeCalendarButton'
 
 interface KindFilter {
   count: number
@@ -32,6 +33,14 @@ interface Props {
     /** Team timezone written as the TZID of the exported events. */
     timeZone: string
   } | null
+  /** Live iPhone Calendar subscription for the currently selected groups. */
+  calendarSubscribe?: {
+    team: string
+    groups: string[]
+    includeMeets: boolean
+    includeEvents: boolean
+    calendarName: string
+  } | null
   /** Spoken/visible count window, e.g. "this week" or "this month". */
   countPeriod?: string
 }
@@ -44,12 +53,14 @@ export function GroupFilters({
   eventFilter = null,
   meetFilter = null,
   weekCalendar = null,
+  calendarSubscribe = null,
   countPeriod = 'this week',
 }: Props) {
   const tenant = useTenant()
   const teams = groupOrder(tenant).filter((t) => available.includes(t))
   const hasKindFilters = Boolean(eventFilter || meetFilter)
-  const showKindsRow = hasKindFilters || Boolean(weekCalendar)
+  const showKindsRow =
+    hasKindFilters || Boolean(weekCalendar) || Boolean(calendarSubscribe)
 
   function toggle(team: string) {
     const next = new Set(selected)
@@ -170,18 +181,32 @@ export function GroupFilters({
               ) : null}
             </div>
 
-            {weekCalendar ? (
-              <AddToCalendarButton
-                occurrences={weekCalendar.occurrences}
-                label="Add to Calendar"
-                calendarName={weekCalendar.calendarName}
-                calendarOptions={{
-                  timeZone: weekCalendar.timeZone,
-                  sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
-                  filenamePrefix: tenant.icsFilenamePrefix,
-                }}
-                className="filters__cal"
-              />
+            {weekCalendar || calendarSubscribe ? (
+              <div className="filters__cal">
+                {calendarSubscribe ? (
+                  <SubscribeCalendarButton
+                    query={{
+                      team: calendarSubscribe.team,
+                      groups: calendarSubscribe.groups,
+                      includeMeets: calendarSubscribe.includeMeets,
+                      includeEvents: calendarSubscribe.includeEvents,
+                    }}
+                    calendarName={calendarSubscribe.calendarName}
+                  />
+                ) : null}
+                {weekCalendar ? (
+                  <AddToCalendarButton
+                    occurrences={weekCalendar.occurrences}
+                    label="Add to Calendar"
+                    calendarName={weekCalendar.calendarName}
+                    calendarOptions={{
+                      timeZone: weekCalendar.timeZone,
+                      sourceLabel: `${tenant.displayName} · ${PRODUCT_NAME}`,
+                      filenamePrefix: tenant.icsFilenamePrefix,
+                    }}
+                  />
+                ) : null}
+              </div>
             ) : null}
           </div>
         ) : null}

@@ -57,7 +57,7 @@ export const serviceDocument: LegalDocument = {
       bullets: [
         `Hosted team calendar at myswimday.com/{shortSlug}`,
         'Sync from Commit’s public schedule API (practices, meets, and team events as configured for your tenant)',
-        'Mobile week and month views, group filters, shareable week links, and .ics add-to-calendar',
+        'Mobile week and month views, group filters, shareable week links, .ics add-to-calendar, and iPhone Calendar subscription (ICS feed)',
         'Optional daily or weekly email digests (double opt-in) for parents and coaches',
         'Public read-only schedule API (group and/or meets and events + day → times and locations) for voice assistants, with hourly caps that scale with team size',
         'Initial tenant setup: slug, timezone, groups, and practice/meet parsers for your Commit titles',

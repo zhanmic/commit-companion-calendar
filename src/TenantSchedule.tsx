@@ -431,6 +431,20 @@ export function TenantSchedule() {
                       timeZone,
                     }
               }
+              calendarSubscribe={{
+                team: tenant.shortSlug || tenant.slug,
+                groups: [...selected],
+                includeMeets: Boolean(settings.queryMeets && showMeets),
+                includeEvents: Boolean(
+                  settings.includeTeamEvents && showEvents,
+                ),
+                calendarName: subscribeCalendarName(
+                  tenant.displayName,
+                  [...selected],
+                  Boolean(settings.queryMeets && showMeets),
+                  Boolean(settings.includeTeamEvents && showEvents),
+                ),
+              }}
             />
 
             {isMonth ? (
@@ -479,4 +493,22 @@ export function TenantSchedule() {
       </main>
     </div>
   )
+}
+
+function subscribeCalendarName(
+  teamName: string,
+  groups: string[],
+  includeMeets: boolean,
+  includeEvents: boolean,
+) {
+  const extras = [
+    includeMeets ? 'meets' : null,
+    includeEvents ? 'events' : null,
+  ].filter(Boolean)
+  if (groups.length && extras.length) {
+    return `${teamName} · ${groups.join(', ')} + ${extras.join(' & ')}`
+  }
+  if (groups.length) return `${teamName} · ${groups.join(', ')}`
+  if (extras.length) return `${teamName} · ${extras.join(' & ')}`
+  return teamName
 }

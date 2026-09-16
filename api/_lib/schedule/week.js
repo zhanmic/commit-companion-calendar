@@ -123,3 +123,31 @@ export function getDayRangeForDateKey(dateKey, timeZone) {
 export function formatOccDay(start, timeZone) {
   return format(toZonedTime(start, timeZone), 'EEE MMM d')
 }
+
+/**
+ * Rolling window for an iPhone Calendar subscription: past days through
+ * N weeks ahead, in the team timezone (DST-safe local midnights).
+ */
+export function getHorizonRange(
+  now,
+  timeZone,
+  pastDays = 7,
+  futureWeeks = 8,
+) {
+  const past = Math.max(0, Math.min(31, Number(pastDays) || 0))
+  const weeks = Math.max(1, Math.min(12, Number(futureWeeks) || 8))
+  const parts = localParts(now, timeZone)
+  const rangeStart = atLocalMidnight(
+    parts.year,
+    parts.month,
+    parts.date - past,
+    timeZone,
+  )
+  const rangeEnd = atLocalMidnight(
+    parts.year,
+    parts.month,
+    parts.date + weeks * 7 + 1,
+    timeZone,
+  )
+  return { rangeStart, rangeEnd, pastDays: past, futureWeeks: weeks }
+}

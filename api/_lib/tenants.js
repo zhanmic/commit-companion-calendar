@@ -34,6 +34,7 @@ export const TENANTS = [
      * Default is groups.length × 35 households.
      */
     // publicApiHouseholds: 200,
+    icsFilenamePrefix: 'delmar-dolfins',
     practiceNameFormat: {
       mode: 'fields',
       separator: '-',
@@ -75,6 +76,7 @@ export const TENANTS = [
       'Lightning',
       'Thunder',
     ],
+    icsFilenamePrefix: 'vortex-swim-club',
     practiceNameFormat: {
       mode: 'keywords',
       separator: '-',

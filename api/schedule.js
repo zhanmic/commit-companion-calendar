@@ -21,11 +21,10 @@ import {
   sendText,
   setPublicCors,
 } from './_lib/http.js'
-import { isRedisConfigured, redisCommand } from './_lib/redis.js'
+import { loadCommitBundleCached } from './_lib/schedule/commitCache.js'
 import {
   buildSchedulePayload,
   expandScheduleDay,
-  fetchCommitBundle,
   filterDaySessions,
   formatSession,
   parseInclude,
@@ -35,7 +34,6 @@ import {
 import { consumePublicApiQuota } from './_lib/schedule/rateLimit.js'
 import { getTenantBySlug, listTenants } from './_lib/tenants.js'
 
-const CACHE_TTL_SEC = 120
 const OPENAPI_PATH = '/openapi.json'
 
 export default async function handler(req, res) {
@@ -189,40 +187,6 @@ export default async function handler(req, res) {
       rateHeaders,
     )
   }
-}
-
-async function loadCommitBundleCached(tenant) {
-  const cacheKey = `msd:pubcache:v2:${tenant.slug}`
-  if (isRedisConfigured()) {
-    try {
-      const raw = await redisCommand('GET', cacheKey)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.schedule && parsed?.timeZone) return parsed
-      }
-    } catch {
-      // continue to live fetch
-    }
-  }
-
-  const bundle = await fetchCommitBundle(tenant, true)
-  if (isRedisConfigured()) {
-    try {
-      await redisCommand(
-        'SET',
-        cacheKey,
-        JSON.stringify({
-          timeZone: bundle.timeZone,
-          schedule: bundle.schedule,
-        }),
-        'EX',
-        String(CACHE_TTL_SEC),
-      )
-    } catch {
-      // cache is optional
-    }
-  }
-  return bundle
 }
 
 function absoluteUrl(req, path) {
