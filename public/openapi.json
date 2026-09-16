@@ -1,0 +1,147 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "My Swim Day public schedule API",
+    "version": "1.0.0",
+    "description": "Read-only practice times and locations for a team group on a given day. No API key. Hourly limits scale with team size; excess traffic returns HTTP 429 until the window resets. Intended for Siri Shortcuts, Alexa, and other assistants."
+  },
+  "servers": [
+    {
+      "url": "https://myswimday.com"
+    }
+  ],
+  "paths": {
+    "/api/schedule": {
+      "get": {
+        "operationId": "getTeamGroupSchedule",
+        "summary": "Practice times and locations for a group on a day",
+        "description": "Ask for a team's group schedule on today, tomorrow, or a calendar date. Returns structured sessions plus a `spoken` sentence for voice.",
+        "parameters": [
+          {
+            "name": "team",
+            "in": "query",
+            "required": true,
+            "description": "Tenant slug or alias, e.g. DelmarDolfins or DelmarDolphins.",
+            "schema": {
+              "type": "string",
+              "examples": ["DelmarDolfins", "VortexSwimClub"]
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "required": true,
+            "description": "Practice group id, label, or nickname (Sr, senior, Jr Prep, DEVO, Peak, …).",
+            "schema": {
+              "type": "string",
+              "examples": ["Sr", "senior", "Jr Prep"]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "today (default), tomorrow, yesterday, or YYYY-MM-DD in the team timezone.",
+            "schema": {
+              "type": "string",
+              "examples": ["today", "tomorrow", "2026-09-16"]
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "json (default) or spoken (plain text of the spoken field, for Siri Shortcuts).",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "spoken", "text"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule for that team, group, and day.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Sr practice for Delmar Dolfins today is 5:30 AM to 7:00 AM at BCHS."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or unknown group, or invalid date."
+          },
+          "404": {
+            "description": "Unknown team slug."
+          },
+          "429": {
+            "description": "Team or client is over the hourly cap. Retry after the number of seconds in Retry-After."
+          },
+          "502": {
+            "description": "Upstream Commit schedule could not be loaded."
+          }
+        }
+      }
+    },
+    "/api/tenants": {
+      "get": {
+        "operationId": "listTenants",
+        "summary": "Public tenant catalog",
+        "responses": {
+          "200": {
+            "description": "Teams available on My Swim Day."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ScheduleSession": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string", "example": "practice" },
+          "name": { "type": "string" },
+          "time": { "type": "string", "example": "5:30 AM – 7:00 AM" },
+          "startTime": { "type": "string", "example": "5:30 AM" },
+          "endTime": { "type": "string", "example": "7:00 AM" },
+          "location": { "type": "string", "nullable": true, "example": "BCHS" },
+          "groups": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["Sr"]
+          }
+        }
+      },
+      "ScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "team": { "type": "string", "example": "Delmar Dolfins" },
+          "teamSlug": { "type": "string", "example": "DelmarDolfins" },
+          "group": { "type": "string", "example": "Sr" },
+          "groupLabel": { "type": "string", "example": "Sr" },
+          "date": { "type": "string", "example": "2026-09-16" },
+          "dateLabel": { "type": "string", "example": "Tuesday, Sep 16" },
+          "timeZone": { "type": "string", "example": "America/New_York" },
+          "sessions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ScheduleSession" }
+          },
+          "spoken": {
+            "type": "string",
+            "example": "Sr practice for Delmar Dolfins today is 5:30 AM to 7:00 AM at BCHS."
+          },
+          "empty": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

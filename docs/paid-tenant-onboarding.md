@@ -23,6 +23,7 @@ Use this before a team moves from pilot to paid production.
 - [ ] Assign next unused `shortSlug` (`1` Delmar, `2` Vortex, then `3`…)
 - [ ] Register in `src/tenants/registry.ts` and mirror in `api/_lib/tenants.js`
 - [ ] Timezone + digest send hours correct
+- [ ] Optional: `publicApiHouseholds` if the club is much smaller/larger than `groups × 35` (public `/api/schedule` hourly cap)
 - [ ] Open `/{shortSlug}` — week/month, groups, meets/events look right vs Commit
 - [ ] Optional: confirm a test digest subscriber
 
