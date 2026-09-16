@@ -73,18 +73,18 @@ export function icsFilename(tenant) {
   return `${slug || 'schedule'}.ics`
 }
 
-export function feedCalendarName(tenant, groups, kinds) {
-  const team = tenant?.displayName || PRODUCT_NAME
-  const labels = (groups ?? []).map((g) => g.label || g.id).filter(Boolean)
-  const extras = []
-  if (kinds?.meets) extras.push('meets')
-  if (kinds?.events) extras.push('events')
-  if (labels.length && extras.length) {
-    return `${team} · ${labels.join(', ')} + ${extras.join(' & ')}`
-  }
-  if (labels.length) return `${team} · ${labels.join(', ')}`
-  if (extras.length) return `${team} · ${extras.join(' & ')}`
-  return team
+export function feedCalendarName(tenant) {
+  return tenant?.displayName || PRODUCT_NAME
+}
+
+function occurrenceCategories(occ) {
+  const teams = Array.isArray(occ.subTeams)
+    ? occ.subTeams.map((t) => String(t).trim()).filter(Boolean)
+    : []
+  if (teams.length) return teams
+  if (occ.label === 'meet') return ['Meet']
+  if (occ.label === 'event') return ['Event']
+  return ['Practice']
 }
 
 export function buildIcsEvent(occ, timeZone, now = new Date(), sourceLabel = PRODUCT_NAME) {
@@ -95,6 +95,7 @@ export function buildIcsEvent(occ, timeZone, now = new Date(), sourceLabel = PRO
     `DTSTART;TZID=${timeZone}:${formatIcsLocal(occ.start, timeZone)}`,
     `DTEND;TZID=${timeZone}:${formatIcsLocal(occ.end, timeZone)}`,
     `SUMMARY:${escapeIcsText(occurrenceSummary(occ))}`,
+    `CATEGORIES:${occurrenceCategories(occ).map(escapeIcsText).join(',')}`,
   ]
   if (occ.location) {
     lines.push(`LOCATION:${escapeIcsText(occ.location)}`)

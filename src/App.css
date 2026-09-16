@@ -1503,6 +1503,13 @@
   line-height: 1.3;
 }
 
+.cal-subscribe__includes {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .cal-subscribe__lead,
 .cal-subscribe__or {
   margin: 0 0 0.65rem;

@@ -367,8 +367,8 @@ export function TenantSchedule() {
                   settings.includeTeamEvents && showEvents,
                 ),
               }}
-              calendarName={subscribeCalendarName(
-                tenant.displayName,
+              calendarName={tenant.displayName}
+              includesLabel={subscribeIncludesLabel(
                 [...selected],
                 Boolean(settings.queryMeets && showMeets),
                 Boolean(settings.includeTeamEvents && showEvents),
@@ -489,20 +489,18 @@ export function TenantSchedule() {
   )
 }
 
-function subscribeCalendarName(
-  teamName: string,
+function subscribeIncludesLabel(
   groups: string[],
   includeMeets: boolean,
   includeEvents: boolean,
 ) {
-  const extras = [
+  const bits = [
+    ...groups,
     includeMeets ? 'meets' : null,
     includeEvents ? 'events' : null,
   ].filter(Boolean)
-  if (groups.length && extras.length) {
-    return `${teamName} · ${groups.join(', ')} + ${extras.join(' & ')}`
-  }
-  if (groups.length) return `${teamName} · ${groups.join(', ')}`
-  if (extras.length) return `${teamName} · ${extras.join(' & ')}`
-  return teamName
+  if (bits.length === 0) return ''
+  if (bits.length === 1) return String(bits[0])
+  if (bits.length === 2) return `${bits[0]} and ${bits[1]}`
+  return `${bits.slice(0, -1).join(', ')}, and ${bits[bits.length - 1]}`
 }
