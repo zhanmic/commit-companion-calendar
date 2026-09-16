@@ -238,6 +238,16 @@ export function upsertSeed(row: SeedRow): { id: number; created: boolean } {
   return { id: Number(result.lastInsertRowid), created: true }
 }
 
+function hostnameOf(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(normalizeUrl(url))
+    return u.hostname.replace(/^www\./, '').toLowerCase()
+  } catch {
+    return null
+  }
+}
+
 export function findLeadByWebsite(websiteUrl: string): Lead | undefined {
   const website = normalizeUrl(websiteUrl)
   const hit = getDb()
@@ -251,10 +261,38 @@ export function findLeadByWebsite(websiteUrl: string): Lead | undefined {
       : website.startsWith('http://')
         ? `https://${website.slice('http://'.length)}`
         : null
-  if (!alt) return undefined
-  return getDb()
-    .prepare('SELECT * FROM leads WHERE website_url = ?')
-    .get(alt) as unknown as Lead | undefined
+  if (alt) {
+    const twin = getDb()
+      .prepare('SELECT * FROM leads WHERE website_url = ?')
+      .get(alt) as unknown as Lead | undefined
+    if (twin) return twin
+  }
+  const host = hostnameOf(website)
+  if (!host) return undefined
+  const withWww = website.replace('://', '://www.')
+  const withoutWww = website.replace('://www.', '://')
+  for (const variant of [withWww, withoutWww]) {
+    if (variant === website) continue
+    const row = getDb()
+      .prepare('SELECT * FROM leads WHERE website_url = ?')
+      .get(variant) as unknown as Lead | undefined
+    if (row) return row
+  }
+  return undefined
+}
+
+/** Match an existing lead whose website is the same host (www ignored). */
+export function findLeadByHostname(websiteUrl: string): Lead | undefined {
+  const exact = findLeadByWebsite(websiteUrl)
+  if (exact) return exact
+  const host = hostnameOf(websiteUrl)
+  if (!host) return undefined
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM leads WHERE website_url LIKE ? OR website_url LIKE ?`,
+    )
+    .all(`%://${host}%`, `%://www.${host}%`) as unknown as Lead[]
+  return rows.find((row) => hostnameOf(row.website_url) === host)
 }
 
 export function findLeadBySuperTeamId(superTeamId: string): Lead | undefined {

@@ -107,7 +107,7 @@ body {
 
 .discover-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
   margin-bottom: 0.25rem;
 }
@@ -415,13 +415,15 @@ input {
 }
 
 #add-form,
-#usas-form {
+#usas-form,
+#commitswim-form {
   display: grid;
   gap: 0.55rem;
 }
 
 #add-form label,
-#usas-form label {
+#usas-form label,
+#commitswim-form label {
   display: grid;
   gap: 0.25rem;
   font-size: 0.82rem;
@@ -429,6 +431,7 @@ input {
 }
 
 #usas-form label.check,
+#commitswim-form label.check,
 .panel.process label.check {
   display: flex;
   align-items: center;
@@ -440,6 +443,7 @@ input {
 }
 
 #usas-form label.check input,
+#commitswim-form label.check input,
 .panel.process label.check input {
   width: auto;
 }
@@ -561,6 +565,15 @@ input {
   overflow: auto;
   border: 1px solid var(--line);
   max-height: min(70vh, 42rem);
+}
+
+td.evidence-cell {
+  max-width: 9.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 table {

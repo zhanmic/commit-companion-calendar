@@ -520,7 +520,7 @@ export function formatMonthCalendarForPrompt(
   const lines = [
     `TODAY (ground truth for past vs future): ${asOf} in ${summary.timeZone}.`,
     `A date < ${asOf} is PAST (recent). A date > ${asOf} is FUTURE (upcoming). Do not call past dates upcoming.`,
-    `SOURCE: this dump is their public COMMIT Swimming calendar. They do not have a MySwimDay tenant. Cite as Commit facts; offer MySwimDay as a sync + mobile week view.`,
+    `SOURCE: this dump is their public COMMIT Swimming calendar. They do not have a MySwimDay tenant. Cite as Commit facts; offer MySwimDay as a sync + mobile week view + Sync to iPhone.`,
     `Commit calendar review window: ${summary.window.label}`,
     `Timezone (team): ${summary.timeZone}`,
     `Published templates: ${summary.rawEventCount} events, ${summary.rawMeetCount} meets (full dump; window below is expanded).`,

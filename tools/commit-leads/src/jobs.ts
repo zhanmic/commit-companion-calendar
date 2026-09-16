@@ -10,6 +10,7 @@ import {
 import {
   getLead,
   findLeadByWebsite,
+  findLeadByHostname,
   findLeadBySuperTeamId,
   listLeads,
   statusCounts,
@@ -38,6 +39,10 @@ import {
   usaRegionNotes,
   type UsaSearchFilters,
 } from './usaSwimming.js'
+import {
+  commitswimRegionNotes,
+  searchCommitswimClubs,
+} from './commitswim.js'
 
 export type LogFn = (line: string) => void
 
@@ -217,6 +222,65 @@ export async function runUsaDiscover(
 
   log(
     `USA Swimming import complete: ${created} created, ${updated} updated, ${skipped} skipped (already had / no site)`,
+  )
+  return { created, updated, skipped, matched: clubs.length }
+}
+
+export async function runCommitswimDiscover(
+  options: {
+    query?: string
+    limit?: number
+    forceRefresh?: boolean
+    forceReimport?: boolean
+  } = {},
+  log: LogFn = console.log,
+): Promise<{
+  created: number
+  updated: number
+  skipped: number
+  matched: number
+}> {
+  const skipExisting = options.forceReimport !== true
+  const limit = options.limit ?? 5000
+
+  log(
+    `Commit-hosted import: crt.sh *.commitswim.com${options.query ? ` query=${options.query}` : ''} limit=${limit} skipExisting=${skipExisting}`,
+  )
+  log(
+    'Lists public Commit website hosts from certificate transparency (cached ~24h). Skips demo/test slugs. Already-imported hosts are skipped unless force re-import.',
+  )
+
+  const { clubs, totalHosts } = await searchCommitswimClubs({
+    query: options.query,
+    limit,
+    forceRefresh: options.forceRefresh,
+  })
+  log(
+    `Directory: ${totalHosts} certificate hosts → ${clubs.length} real-looking club sites`,
+  )
+
+  let created = 0
+  let updated = 0
+  let skipped = 0
+  for (const club of clubs) {
+    if (skipExisting && findLeadByHostname(club.websiteUrl)) {
+      skipped++
+      continue
+    }
+    const result = upsertSeed({
+      team_name: club.teamName,
+      website_url: club.websiteUrl,
+      region_notes: commitswimRegionNotes(club),
+    })
+    if (result.created) created++
+    else updated++
+    if ((created + updated) % 50 === 0) {
+      log(`  … ${created} created, ${updated} updated, ${skipped} skipped`)
+    }
+  }
+
+  log(
+    `Commit-hosted import complete: ${created} created, ${updated} updated, ${skipped} skipped (already in DB)`,
   )
   return { created, updated, skipped, matched: clubs.length }
 }
@@ -548,6 +612,7 @@ const FORCE_DRAFT_STATUSES: LeadStatus[] = [
 
 /**
  * Researched (or force-drafted) Commit leads ready for outreach copy.
+ * Email is optional — some Commit sites publish a calendar but no office inbox.
  * Without force: researched/drafted missing selected touches.
  * With force: only the statuses in `statuses` (default drafted).
  */
@@ -557,7 +622,7 @@ export function needsDraft(
   touches?: Array<1 | 2 | 3>,
   statuses?: LeadStatus[],
 ): boolean {
-  if (!lead.super_team_id || !lead.contact_email) return false
+  if (!lead.super_team_id) return false
   if (lead.status === 'disqualified' || lead.status === 'lost') return false
   if (force) {
     const pool = (statuses?.length ? statuses : (['drafted'] as LeadStatus[])).filter(
@@ -569,6 +634,16 @@ export function needsDraft(
   const wanted = normalizeDraftTouches(touches)
   const drafts = getOutreachDrafts(lead)
   return wanted.some((t) => !hasTouch(drafts, t))
+}
+
+function draftQueueRank(lead: Lead, wanted: Array<1 | 2 | 3>): number {
+  const missing = missingTouches(getOutreachDrafts(lead)).some((t) =>
+    wanted.includes(t),
+  )
+  if (lead.status === 'researched' && missing) return 0
+  if (missing) return 1
+  if (lead.status === 'researched') return 2
+  return 3
 }
 
 function normalizeDraftTouches(
@@ -590,9 +665,23 @@ async function applyFingerprint(
       ? fp.evidence.join('; ')
       : 'fingerprinted:no_commit'
 
+  const launchFailed =
+    /browserType\.launch|Executable doesn't exist|playwright_not_installed/i.test(
+      evidence,
+    )
+
   const patch: Parameters<typeof updateLead>[1] = {
     evidence,
     confidence: fp.confidence,
+  }
+
+  if (!fp.superTeamId && launchFailed) {
+    patch.confidence = null
+    log(
+      `  scanned=${fp.scannedUrl} browser launch failed — left as ${lead.status} for retry`,
+    )
+    updateLead(lead.id, patch)
+    return
   }
 
   if (fp.superTeamId) {
@@ -776,6 +865,10 @@ export async function runDraftPending(
   const statuses = options.statuses
   const batch = listLeads()
     .filter((l) => needsDraft(l, force, wanted, statuses))
+    .sort((a, b) => {
+      const r = draftQueueRank(a, wanted) - draftQueueRank(b, wanted)
+      return r !== 0 ? r : a.id - b.id
+    })
     .slice(0, limit)
 
   log(
@@ -788,8 +881,8 @@ export async function runDraftPending(
   if (batch.length === 0) {
     log(
       force
-        ? 'Nothing pending — pick Force statuses that have matching leads (default: drafted).'
-        : 'Nothing pending — filter status researched (or force drafted).',
+        ? 'Nothing pending — pick Force statuses that have matching Commit-ID leads (default: drafted). Researched with no office email are included when researched is checked.'
+        : 'Nothing pending — researched/drafted with a Commit ID and missing selected touches.',
     )
     return
   }
@@ -803,7 +896,9 @@ export async function runDraftPending(
       )
       const touches = force ? wanted : missing.length ? missing : wanted
       log(
-        `#${lead.id}: draft ${lead.team_name ?? lead.super_team_id} (${i + 1}/${batch.length}) touches=[${touches.join(',')}] missing=[${missing.join(',') || 'none'}]`,
+        `#${lead.id}: draft ${lead.team_name ?? lead.super_team_id} (${i + 1}/${batch.length}) touches=[${touches.join(',')}] missing=[${missing.join(',') || 'none'}]${
+          lead.contact_email ? '' : ' (no office email — draft anyway)'
+        }`,
       )
       try {
         const result = await draftOutreachSequence(lead, {
@@ -917,6 +1012,7 @@ export function searchLeads(query: string): Lead[] {
       l.status,
       l.buyer_guess,
       l.fit_notes,
+      l.evidence,
     ]
       .filter(Boolean)
       .join(' ')

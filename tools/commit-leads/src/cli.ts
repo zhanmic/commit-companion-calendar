@@ -8,6 +8,7 @@ import {
   runScore,
   runSeed,
   runUsaDiscover,
+  runCommitswimDiscover,
 } from './jobs.js'
 
 function usage(): never {
@@ -16,6 +17,7 @@ function usage(): never {
 Usage:
   npm run cli -- usas [--no-contacts] [--refresh] [--force]
   npm run cli -- usas --state NY --query Delmar   # optional filters
+  npm run cli -- commitswim [--refresh] [--force] [--query hilton] [--limit 50]
   npm run cli -- process [--limit 25] [--force] [--fingerprint-only|--enrich-only|--score-only]
   npm run cli -- seed [path/to/seeds.csv]
   npm run cli -- fingerprint [id|all]
@@ -25,7 +27,7 @@ Usage:
   npm run cli -- status
   npm run ui
 
-Discover: usas / manual / seed — add clubs to the DB.
+Discover: usas / commitswim / manual / seed — add clubs to the DB.
 Process:  fingerprint → enrich → score (process does all three on pending rows).
 `)
   process.exit(1)
@@ -53,6 +55,27 @@ function parseUsaArgs(argv: string[]) {
     else if (a === '--zip') out.zip = argv[++i]
     else if (a === '--limit') out.limit = Number(argv[++i])
     else if (a === '--no-contacts') out.includeContacts = false
+    else if (a === '--refresh') out.forceRefresh = true
+    else if (a === '--force') out.forceReimport = true
+    else if (a === '--help') usage()
+  }
+  return out
+}
+
+function parseCommitswimArgs(argv: string[]) {
+  const out: {
+    query?: string
+    limit?: number
+    forceRefresh: boolean
+    forceReimport: boolean
+  } = {
+    forceRefresh: false,
+    forceReimport: false,
+  }
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === '--query') out.query = argv[++i]
+    else if (a === '--limit') out.limit = Number(argv[++i])
     else if (a === '--refresh') out.forceRefresh = true
     else if (a === '--force') out.forceReimport = true
     else if (a === '--help') usage()
@@ -101,6 +124,10 @@ async function main(): Promise<void> {
     case 'usa':
     case 'discover':
       await runUsaDiscover(parseUsaArgs(rest))
+      break
+    case 'commitswim':
+    case 'hosted':
+      await runCommitswimDiscover(parseCommitswimArgs(rest))
       break
     case 'process':
       await runProcessPending(parseProcessArgs(rest))

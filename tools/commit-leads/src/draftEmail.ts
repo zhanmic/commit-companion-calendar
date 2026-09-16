@@ -59,13 +59,13 @@ const TOUCH_BRIEF: Record<OutreachTouch, string> = {
 Introduce My Swim Day in 1–2 sentences using the product facts below (do not paste a feature list).
 Early in the email, include ONE short peer line from sender context (Delmar Dolfins parent of four)
 to relate — not a biography. Use 1–2 real facts from THEIR COMMIT calendar (not MySwimDay) with correct tense vs TODAY.
-Never imply they already have a MySwimDay page. The only live calendar to link is the Delmar demo. Soft CTA: free pilot that would sync their Commit schedule into a mobile week view. Do not mention prior emails.`,
+Never imply they already have a MySwimDay page. The only live calendar to link is the Delmar demo. Soft CTA: free pilot that would sync their Commit schedule into a mobile week view families can also Sync to iPhone. Do not mention prior emails.`,
   2: `TOUCH 2 — follow-up (~5–7 days after touch 1 if no reply).
 Assume they may have seen touch 1. New angle — not "just bumping". Prefer one of:
+  - Sync to iPhone (live on the Delmar demo): parents pick groups on the week view, tap Sync to iPhone, and subscribe a live Calendar feed — practices stay in Apple Calendar and refresh when the phone re-fetches (not a one-time Add to Calendar snapshot)
   - email digests (daily morning / weekly) so parents catch last-night coach changes before practice
-  - Sync to iPhone so practices live in Calendar without opening the site
   - multi-group filter chaos / meet week / share-one-link for admins
-You may briefly allude to being a swim parent if natural; do not repeat the full Delmar/four-swimmers line.
+Lead with Sync to iPhone when it fits. You may briefly allude to being a swim parent if natural; do not repeat the full Delmar/four-swimmers line.
 Shorter than touch 1. Soft CTA.`,
   3: `TOUCH 3 — close-the-loop (~10–14 days after touch 2 if no reply).
 Final polite note. "Happy to shelve if timing is bad." Leave door open for fall. Very short.
@@ -79,16 +79,16 @@ Product facts (match current homepage — pick 1–2 per email, do not dump all)
 - Headline idea: view the week in seconds and sync it to iPhone Calendar.
 - Syncs with Commit Swimming (practices, meets, team events stay in sync). Not a new scheduling system.
 - Mobile week view coaches and families actually open. No login, no app — just open the link.
+- NEW (live on the Delmar demo): Sync to iPhone. Parents choose groups on the week view, tap Sync to iPhone, and subscribe a live ICS feed in Apple Calendar. Coach edits in Commit show up on the phone after Calendar re-downloads (often hours, not instant). This is not a one-time Add to Calendar snapshot, and this prospect does not have a feed yet.
 - Group filters + one-tap share links.
-- Sync to iPhone: subscribe a live practice calendar in the iPhone Calendar app (not a one-time add).
-- NEW: parents/coaches can subscribe to daily or weekly email digests (morning digest catches overnight Commit changes before practice).
-- Built for Commit teams: coaches update Commit once; after a pilot, admins share one live MySwimDay link; parents open the week or subscribe.
+- Optional daily or weekly email digests (morning digest catches overnight Commit changes before practice).
+- Built for Commit teams: coaches update Commit once; after a pilot, admins share one live MySwimDay link; parents open the week, Sync to iPhone, or subscribe to email.
 - Not affiliated with Commit Swimming — do not claim partnership/official status.
 - IMPORTANT product truth: this prospect does NOT have a MySwimDay calendar yet. Delmar Dolfins is the only live demo. Calendar facts below were read from their public COMMIT schedule so you can personalize — they live on Commit, not on MySwimDay.
 
 You will receive TODAY's date plus an expanded Commit calendar review (past ~30 days + next ~14 days).
 Dates before today are PAST. Dates after today are FUTURE. Never call a past meet, banquet, or championship "upcoming".
-When citing those facts, say they are on the team's Commit calendar. MySwimDay would sync from Commit and show a clearer mobile week view. Do NOT say those events "are already in the calendar," "already in MySwimDay," "we shared your week view," or that MySwimDay "keeps your calendar synced" as if a tenant exists.
+When citing those facts, say they are on the team's Commit calendar. MySwimDay would sync from Commit into a clearer mobile week view, and families could Sync to iPhone from that week. Do NOT say those events "are already in the calendar," "already in MySwimDay," "we shared your week view," or that MySwimDay "keeps your calendar synced" as if a tenant exists.
 
 Study that window, then write ONE email for the specified touch in a 3-email sequence.
 
@@ -164,7 +164,7 @@ Region / USA Swimming notes: ${parseRegionBits(lead.region_notes)}
 ${formatScheduleForPrompt(schedule)}
 
 How to use those schedule facts: they are from Commit, not MySwimDay. Example phrasing:
-"Your Commit calendar already has [meet] on [date]; MySwimDay would sync that into a mobile week view families actually open."
+"Your Commit calendar already has [meet] on [date]; MySwimDay would sync that into a mobile week view families actually open — and they can Sync to iPhone so it lives in Calendar."
 Bad phrasing: "those meets are already in the calendar" / "MySwimDay keeps everything synced" / treating the Delmar demo as this team's site.
 
 ${priorNote}
@@ -406,7 +406,7 @@ export async function draftOutreachSequence(
 
 function defaultSubject(lead: Lead, touch: OutreachTouch): string {
   const team = lead.team_name?.trim() || 'your team'
-  if (touch === 2) return `Re: email digests for ${team} families`
+  if (touch === 2) return `Re: iPhone calendar for ${team} families`
   if (touch === 3) return `Closing the loop — ${team}`
   return `View ${team}'s practice week in seconds`
 }

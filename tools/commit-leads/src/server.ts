@@ -12,6 +12,7 @@ import {
   runScore,
   runSeed,
   runUsaDiscover,
+  runCommitswimDiscover,
   searchLeads,
 } from './jobs.js'
 import { getLead, listLeads, nextContactedStatus, updateLead, type LeadStatus } from './db.js'
@@ -104,7 +105,8 @@ function startSse(res: ServerResponse): (line: string) => void {
 }
 
 function laneFor(action: string): 'discover' | 'process' | null {
-  if (action === 'usas' || action === 'seed') return 'discover'
+  if (action === 'usas' || action === 'commitswim' || action === 'seed')
+    return 'discover'
   if (action === 'export') return null
   return 'process'
 }
@@ -143,6 +145,7 @@ async function handleRun(
   if (
     action !== 'seed' &&
     action !== 'usas' &&
+    action !== 'commitswim' &&
     action !== 'process' &&
     action !== 'fingerprint' &&
     action !== 'enrich' &&
@@ -202,6 +205,17 @@ async function handleRun(
           zip: body.zip,
           limit: body.limit,
           includeContacts: body.includeContacts,
+          forceRefresh: body.forceRefresh,
+          forceReimport: body.forceReimport,
+        },
+        log,
+      )
+    } else if (action === 'commitswim') {
+      log('Starting Commit-hosted (commitswim.com) discover…')
+      await runCommitswimDiscover(
+        {
+          query: body.query,
+          limit: body.limit,
           forceRefresh: body.forceRefresh,
           forceReimport: body.forceReimport,
         },

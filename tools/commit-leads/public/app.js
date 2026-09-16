@@ -102,7 +102,7 @@ function colorizeStatusInText(text) {
 }
 
 function setBusyUi() {
-  document.querySelectorAll('#usas-form button').forEach((btn) => {
+  document.querySelectorAll('#usas-form button, #commitswim-form button').forEach((btn) => {
     btn.disabled = discoverBusy
   })
   document.querySelectorAll('[data-action="seed"]').forEach((btn) => {
@@ -202,6 +202,22 @@ function renderStatusCounts(counts, total) {
   el.innerHTML = parts.join('')
 }
 
+function evidenceSummary(raw) {
+  const e = String(raw || '')
+  if (!e) return '—'
+  if (/duplicate_of/i.test(e)) return 'duplicate'
+  if (/ERR_NAME_NOT_RESOLVED/i.test(e)) return 'dns'
+  if (/ERR_CERT|CERT_COMMON_NAME|ERR_SSL/i.test(e)) return 'cert'
+  if (/Timeout \d+ms|timeout/i.test(e)) return 'timeout'
+  if (/ERR_ADDRESS_UNREACHABLE|ERR_CONNECTION/i.test(e)) return 'unreachable'
+  if (/network:error/i.test(e)) return 'network error'
+  if (/fingerprinted:no_commit/i.test(e)) return 'no commit'
+  if (/superTeamId:/i.test(e)) return 'has Commit ID'
+  if (/powered-by-commit|commitswimming|website-data/i.test(e)) return 'commit markers'
+  const first = e.split(';')[0].trim()
+  return first.length > 28 ? `${first.slice(0, 26)}…` : first
+}
+
 function escapeHtml(s) {
   return String(s ?? '')
     .replaceAll('&', '&amp;')
@@ -271,6 +287,8 @@ function leadSortValue(lead, key) {
       return (lead.contact_email || '').toLowerCase()
     case 'commit':
       return (lead.super_team_id || '').toLowerCase()
+    case 'evidence':
+      return evidenceSummary(lead.evidence).toLowerCase()
     default:
       return ''
   }
@@ -378,6 +396,7 @@ function renderLeads(leads) {
         <td>${l.fit_score ?? '—'}</td>
         <td class="mono">${escapeHtml(l.contact_email || '—')}</td>
         <td class="mono">${escapeHtml(l.super_team_id || '—')}</td>
+        <td class="evidence-cell" title="${escapeHtml(l.evidence || '')}">${escapeHtml(evidenceSummary(l.evidence))}</td>
       </tr>`
     })
     .join('')
@@ -871,7 +890,8 @@ function wireOutreach(id, lead, draftsIn, initialTouch = 1) {
 }
 
 function actionLane(action) {
-  if (action === 'usas' || action === 'seed') return 'discover'
+  if (action === 'usas' || action === 'commitswim' || action === 'seed')
+    return 'discover'
   if (action === 'export') return 'export'
   return 'process'
 }
@@ -1184,6 +1204,23 @@ document.querySelectorAll('.clear-log').forEach((btn) => {
 document.getElementById('usas-form').addEventListener('submit', async (e) => {
   e.preventDefault()
   await runAction('usas', usasPayload(), logDiscover)
+})
+
+function commitswimPayload() {
+  const form = document.getElementById('commitswim-form')
+  const fd = new FormData(form)
+  const limitRaw = String(fd.get('limit') || '').trim()
+  return {
+    query: String(fd.get('query') || '').trim() || undefined,
+    limit: limitRaw ? Number(limitRaw) : undefined,
+    forceRefresh: fd.get('forceRefresh') === 'on',
+    forceReimport: fd.get('forceReimport') === 'on',
+  }
+}
+
+document.getElementById('commitswim-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  await runAction('commitswim', commitswimPayload(), logDiscover)
 })
 
 bodyEl.addEventListener('click', (e) => {

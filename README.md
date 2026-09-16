@@ -197,4 +197,4 @@ Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so
 
 ## Local sales tool (not deployed)
 
-`tools/commit-leads` is a **local-only** lead finder / HTML outreach drafter (SQLite + Ollama + Mac Mail, Discover → Process → Leads). It is not included in the Vercel build. See [`tools/commit-leads/README.md`](tools/commit-leads/README.md).
+`tools/commit-leads` is a **local-only** lead finder / HTML outreach drafter (SQLite + Ollama + Mac Mail). Discover USA Swimming and Commit-hosted `*.commitswim.com` sites, fingerprint for `superTeamId`, then draft HTML. It is not included in the Vercel build. See [`tools/commit-leads/README.md`](tools/commit-leads/README.md).

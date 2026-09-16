@@ -31,12 +31,12 @@ Fingerprint’s browser pass uses Playwright Chromium (installed via `postinstal
 
 | Section | Purpose |
 |---------|---------|
-| **1 · Discover** | USA Swimming full import and/or manual add / seed CSV (side by side). |
+| **1 · Discover** | USA Swimming, Commit-hosted `*.commitswim.com`, and/or manual add / seed CSV. |
 | **2 · Process** | Queue or one lead: fingerprint → enrich → score → **researched**. Separate **Generate drafts** (bulk) with its own batch size. Stop buttons cancel after the current step / Ollama call. |
 | **3 · Leads** | Filter/sort, open detail, edit HTML drafts with live preview, Mail.app, status, export CSV. |
 
 ```text
-Discover: usas | manual | seed CSV
+Discover: usas | commitswim | manual | seed CSV
                 ↓
 Process:  fingerprint → enrich → score  (or disqualified / identified)
                 ↓
@@ -44,7 +44,26 @@ Draft:    researched → HTML touches 1→2→3 → drafted
 Leads:    edit HTML + preview → Mail.app → contacted → export
 ```
 
-Fingerprint is what filters for **Commit** users among USA Swimming clubs.
+Fingerprint is what filters for **Commit** users among USA Swimming clubs. Hosted `*.commitswim.com` sites are already Commit tenants; fingerprint still extracts `superTeamId`.
+
+### Discover sources
+
+| Source | What it finds |
+|--------|----------------|
+| USA Swimming | ~2400 clubs with websites from the public directory. Most are **not** on Commit. |
+| Commit-hosted | Public `*.commitswim.com` hosts from [crt.sh](https://crt.sh) certificate transparency (YMCA, Masters, high school, non-USAS). Cache: `data/commitswim-hosts-cache.json` (24h). Does **not** find custom domains. |
+| Manual / seed | One-off URL or known `superTeamId`. |
+
+Duplicates (same host or same Commit ID as an existing lead) are tagged in **Evidence** (`duplicate_of:#id`) instead of creating a second row. Do not brute-force `superTeamId`.
+
+### Fingerprint
+
+1. Static HTML / linked scripts for Commit markers.
+2. Optional Playwright Chromium network pass (`FINGERPRINT_NETWORK=0` to skip) watching `website-data-2a` / `2b` for `superTeamId`.
+
+Chromium is launched from Playwright’s install, or `~/Library/Caches/ms-playwright` if the default path is missing. A Cursor sandbox `PLAYWRIGHT_BROWSERS_PATH` is ignored so local Chromium is used. **Launch failures are not a disqualify** — the lead stays pending so you can retry after Chromium is installed.
+
+**Evidence** (table column + hover for full text) is the fingerprint trail. Short labels include `has Commit ID`, `duplicate`, `dns`, `cert`, `timeout`, `network error`, `no commit`. Cert/DNS/timeout usually mean the club website is down or misconfigured, not “not Commit.”
 
 ### Status meaning
 
@@ -61,15 +80,15 @@ Fingerprint is what filters for **Commit** users among USA Swimming clubs.
 
 ### Outreach (HTML)
 
-1. Get leads to **researched** (Run queue / process one).
-2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes. **Force regenerate** only hits the **Force statuses** you check (default: **drafted**). Status becomes **drafted** when all three exist (does not overwrite contacted_1/2/3).
+1. Get leads to **researched** (Run queue / process one). Office email is **optional** — some Commit sites have a calendar but no public inbox.
+2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes. **Force regenerate** only hits the **Force statuses** you check (default: **drafted**; check **researched** to rewrite those too). Status becomes **drafted** when all three exist (does not overwrite contacted_1/2/3). Existing drafts stay until you force-regenerate.
 3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Copy draft** (HTML + plain) or **Open in Mail**.
 4. Mail.app opens an HTML draft. Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). **Open Mail + contacted** / **Mark contacted** advances `contacted_1` → `contacted_2` → `contacted_3` (from the active touch; never goes backward).
 5. Later: send touch 2 / 3 from the same lead; status moves to `contacted_2` / `contacted_3`.
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
 
-Pitch notes baked into prompts: Delmar is the only live demo (prospects have no MySwimDay calendar yet); cite meets as on their Commit calendar; MySwimDay would sync a mobile week view and Sync to iPhone; peer line from `SENDER_CONTEXT` in touch 1; no invented contacts or kids’ details.
+Pitch notes baked into prompts: Delmar is the only live demo (prospects have no MySwimDay calendar yet); cite meets as on their Commit calendar; MySwimDay would sync a mobile week view plus **Sync to iPhone** (live Calendar subscription on the demo — see [`docs/iphone-calendar.md`](../../docs/iphone-calendar.md); not the same as one-off Add to Calendar); touch 2 prefers that angle; peer line from `SENDER_CONTEXT` in touch 1; no invented contacts or kids’ details.
 
 ## Web UI (local)
 
@@ -114,6 +133,8 @@ Resend free tier is $0 (3,000 emails/month, 100/day). Sends and inbound share th
 npm run cli -- usas                 # full import (~2400 with websites)
 npm run cli -- usas --force         # re-import even if already in DB
 npm run cli -- usas --refresh       # re-download directory cache
+npm run cli -- commitswim           # Commit-hosted *.commitswim.com via crt.sh
+npm run cli -- commitswim --refresh # re-download certificate host cache
 npm run cli -- process --limit 25
 npm run cli -- fingerprint all
 npm run cli -- enrich all
@@ -143,4 +164,4 @@ Start from `seeds.example.csv` (includes Delmar Dolfins).
 
 ## Data
 
-All under `data/` (gitignored): `leads.sqlite`, `seeds.csv`, `leads-export.csv`, `usas-clubs-cache.json`.
+All under `data/` (gitignored): `leads.sqlite`, `seeds.csv`, `leads-export.csv`, `usas-clubs-cache.json`, `commitswim-hosts-cache.json`.

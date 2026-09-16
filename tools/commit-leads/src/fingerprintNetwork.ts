@@ -1,5 +1,39 @@
+import { existsSync, readdirSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import type { FingerprintResult } from './fingerprint.js'
 import { fingerprintHtml } from './fingerprint.js'
+
+/** Cursor agent shells sometimes point Playwright at an empty sandbox cache. */
+function stripBrokenPlaywrightBrowsersPath(): void {
+  const raw = process.env.PLAYWRIGHT_BROWSERS_PATH
+  if (raw && /cursor-sandbox-cache/i.test(raw)) {
+    delete process.env.PLAYWRIGHT_BROWSERS_PATH
+  }
+}
+
+function homeChromiumExecutable(): string | undefined {
+  const root = join(homedir(), 'Library/Caches/ms-playwright')
+  if (!existsSync(root)) return undefined
+  const arches = ['chrome-mac-arm64', 'chrome-mac-x64']
+  try {
+    for (const dir of readdirSync(root)) {
+      if (!dir.startsWith('chromium-')) continue
+      for (const arch of arches) {
+        const exe = join(
+          root,
+          dir,
+          arch,
+          'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
+        )
+        if (existsSync(exe)) return exe
+      }
+    }
+  } catch {
+    return undefined
+  }
+  return undefined
+}
 
 const COMMIT_HOST = /utility\.commitswimming\.com/i
 const SUPER_ID_IN_URL = /[?&]superTeamId=([A-Za-z0-9_-]{10,})/i
@@ -14,6 +48,8 @@ export async function fingerprintViaNetwork(
 ): Promise<FingerprintResult & { scannedUrl: string }> {
   const timeoutMs = options.timeoutMs ?? 25_000
   const waitMs = options.waitMs ?? 4_000
+
+  stripBrokenPlaywrightBrowsersPath()
 
   let playwright: typeof import('playwright')
   try {
@@ -31,7 +67,21 @@ export async function fingerprintViaNetwork(
   const ids = new Set<string>()
   let confidence = 0
 
-  const browser = await playwright.chromium.launch({ headless: true })
+  const launchOpts: { headless: true; executablePath?: string } = {
+    headless: true,
+  }
+  let exe: string | undefined
+  try {
+    exe = playwright.chromium.executablePath()
+  } catch {
+    exe = undefined
+  }
+  if (!exe || !existsSync(exe)) {
+    exe = homeChromiumExecutable()
+  }
+  if (exe && existsSync(exe)) launchOpts.executablePath = exe
+
+  const browser = await playwright.chromium.launch(launchOpts)
   try {
     const page = await browser.newPage()
 
