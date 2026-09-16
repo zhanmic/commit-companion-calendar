@@ -69,7 +69,7 @@ Fingerprint is what filters for **Commit** users among USA Swimming clubs.
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
 
-Pitch notes baked into prompts: Delmar is the only live demo (prospects have no MySwimDay calendar yet); cite meets as on their Commit calendar; MySwimDay would sync a mobile week view; peer line from `SENDER_CONTEXT` in touch 1; no invented contacts or kids’ details.
+Pitch notes baked into prompts: Delmar is the only live demo (prospects have no MySwimDay calendar yet); cite meets as on their Commit calendar; MySwimDay would sync a mobile week view and Sync to iPhone; peer line from `SENDER_CONTEXT` in touch 1; no invented contacts or kids’ details.
 
 ## Web UI (local)
 

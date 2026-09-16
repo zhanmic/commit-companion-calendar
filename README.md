@@ -21,6 +21,7 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 - All times shown in the team's timezone (from Commit), not the viewer's
 - Optional meets & team events toggle
 - Per-tenant practice title parsing (field split or keywords)
+- Sync to iPhone (live Calendar subscription) plus one-off Add to Calendar
 - Optional daily/weekly schedule email digests (Resend + Upstash Redis)
 - Public policy pages: [`/service`](/service), [`/support`](/support), [`/terms`](/terms), [`/privacy`](/privacy)
 

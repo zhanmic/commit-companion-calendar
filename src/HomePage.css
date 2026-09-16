@@ -127,7 +127,7 @@
 
 .landing-hero__headline {
   margin: 0;
-  max-width: 22ch;
+  max-width: 28ch;
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.8vw, 1.85rem);
   font-weight: 700;

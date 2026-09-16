@@ -63,6 +63,7 @@ Never imply they already have a MySwimDay page. The only live calendar to link i
   2: `TOUCH 2 — follow-up (~5–7 days after touch 1 if no reply).
 Assume they may have seen touch 1. New angle — not "just bumping". Prefer one of:
   - email digests (daily morning / weekly) so parents catch last-night coach changes before practice
+  - Sync to iPhone so practices live in Calendar without opening the site
   - multi-group filter chaos / meet week / share-one-link for admins
 You may briefly allude to being a swim parent if natural; do not repeat the full Delmar/four-swimmers line.
 Shorter than touch 1. Soft CTA.`,
@@ -75,10 +76,11 @@ function systemForTouch(touch: OutreachTouch): string {
   return `You write short, personalized cold outreach for My Swim Day (MySwimDay).
 
 Product facts (match current homepage — pick 1–2 per email, do not dump all):
-- Headline idea: view and share the practice schedule in seconds.
+- Headline idea: view the week in seconds and sync it to iPhone Calendar.
 - Syncs with Commit Swimming (practices, meets, team events stay in sync). Not a new scheduling system.
 - Mobile week view coaches and families actually open. No login, no app — just open the link.
 - Group filters + one-tap share links.
+- Sync to iPhone: subscribe a live practice calendar in the iPhone Calendar app (not a one-time add).
 - NEW: parents/coaches can subscribe to daily or weekly email digests (morning digest catches overnight Commit changes before practice).
 - Built for Commit teams: coaches update Commit once; after a pilot, admins share one live MySwimDay link; parents open the week or subscribe.
 - Not affiliated with Commit Swimming — do not claim partnership/official status.

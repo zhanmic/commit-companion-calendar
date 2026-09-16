@@ -8,7 +8,7 @@ Production is `myswimday.com`. Delmar’s short team id is `1`.
 
 1. Open [https://myswimday.com/1](https://myswimday.com/1) on the iPhone (Safari).
 2. Turn on the groups you want (Sr, Jr, Jr Prep, DEVO, …) and Meet / Event if you want those too.
-3. Tap **Sync to iPhone** (top right) → **Add to iPhone Calendar**.
+3. Tap **Sync to iPhone** in the top-right header (same control shown on the homepage) → **Add to iPhone Calendar**.
 4. Confirm the subscribe prompt in Calendar.
 
 The calendar is named **Delmar Dolfins** (team name only). In Calendar → Calendars you can show or hide that one calendar. Event titles still include the group (`Sr Practice`, `Jr Practice`).

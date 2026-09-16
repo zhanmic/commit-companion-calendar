@@ -16,4 +16,4 @@ export function isLegalSlug(value: string): value is LegalSlug {
 }
 
 /** Effective date shown on all policy pages. */
-export const LEGAL_EFFECTIVE_DATE = 'August 29, 2026'
+export const LEGAL_EFFECTIVE_DATE = 'September 16, 2026'

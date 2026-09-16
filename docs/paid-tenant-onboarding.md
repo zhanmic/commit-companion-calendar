@@ -25,6 +25,7 @@ Use this before a team moves from pilot to paid production.
 - [ ] Timezone + digest send hours correct
 - [ ] Optional: `publicApiHouseholds` if the club is much smaller/larger than `groups × 35` (public `/api/schedule` hourly cap)
 - [ ] Open `/{shortSlug}` — week/month, groups, meets/events look right vs Commit
+- [ ] Sync to iPhone: pick groups, confirm Calendar subscribe, calendar title is team name only
 - [ ] Optional: confirm a test digest subscriber
 
 ## 4. Payment
@@ -41,6 +42,7 @@ Roster = swimmer count, not digest subscribers. Plans (not in checkout yet): **C
 ## 5. Share production
 
 - [ ] Send production calendar URL: `https://myswimday.com/{shortSlug}`
+- [ ] Point families at **Sync to iPhone** on the team page ([iphone-calendar.md](./iphone-calendar.md))
 - [ ] Explain digest subscribe (double opt-in) and unsubscribe
 - [ ] Share support email `sales@mail.myswimday.com` and expected response targets
 

@@ -432,7 +432,7 @@ function pitchAngles(
   }
   if (!angles.length) {
     angles.push(
-      'Team publishes on Commit — My Swim Day can mirror that as a mobile week view plus optional daily/weekly email digests (no login/app).',
+      'Team publishes on Commit — My Swim Day can mirror that as a mobile week view, Sync to iPhone, plus optional daily/weekly email digests (no login/app).',
     )
   }
   return angles.slice(0, 5)
