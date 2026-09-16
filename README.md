@@ -78,7 +78,8 @@ npm run preview
 |----------|---------|
 | `GET /api/tenants` | Public tenant catalog |
 | `GET /api/schedule?team=&group=&date=` | Public practice / meet / event times + location for a day (voice assistants) |
-| `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
+| `GET /api/calendar?team=&group=` | Live ICS feed for iPhone Calendar subscribe (`webcal://` or paste https) |
+| `GET /api/calendar?d=…` | Inline `.ics` for one-off iOS Add to Calendar |
 | `POST /api/subscribe` | Start / update email subscription (double opt-in) |
 | `GET /api/confirm?token=…` | Confirm subscription |
 | `POST /api/send-now` | Email current digest now (active subscribers only) |
@@ -113,6 +114,12 @@ JSON includes `sessions[]` (`kind`, `startTime`, `endTime`, `location`) and a `s
 **Siri:** there is no downloadable `.shortcut` file. Build it once in the Shortcuts app — [docs/siri-shortcut.md](./docs/siri-shortcut.md). Delmar today, spoken:
 
 `https://myswimday.com/api/schedule?team=1&group=Sr&date=today&format=spoken`
+
+**iPhone Calendar:** subscribe to a live feed (not a one-time Add) — [docs/iphone-calendar.md](./docs/iphone-calendar.md). Delmar Sr + Jr + Jr Prep + DEVO, including meets and events:
+
+`https://myswimday.com/api/calendar?team=1&group=Sr,Jr,Jr%20Prep,DEVO&include=all`
+
+On the team page, pick groups and tap **Sync to iPhone**. The feed covers the last 7 days through the next 8 weeks and refreshes when Calendar next polls.
 
 `date` also accepts weekday phrases in the team timezone: **this Friday** is Friday of the current Sunday–Saturday week (same week as the calendar), **next Monday** is that weekday next week, and a bare **Friday** is the upcoming Friday including today.
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "My Swim Day public schedule API",
     "version": "1.0.0",
-    "description": "Read-only practice, meet, and team-event times and locations for a team on a given day. No API key. Hourly limits scale with team size; excess traffic returns HTTP 429 until the window resets. Intended for Siri Shortcuts, Alexa, and other assistants."
+    "description": "Read-only practice, meet, and team-event times. No API key. Hourly limits scale with team size; excess traffic returns HTTP 429 until the window resets. JSON/spoken for voice assistants; ICS for iPhone Calendar subscriptions."
   },
   "servers": [
     {
@@ -93,6 +93,89 @@
           },
           "429": {
             "description": "Team or client is over the hourly cap. Retry after the number of seconds in Retry-After."
+          },
+          "502": {
+            "description": "Upstream Commit schedule could not be loaded."
+          }
+        }
+      }
+    },
+    "/api/calendar": {
+      "get": {
+        "operationId": "getTeamCalendarFeed",
+        "summary": "ICS feed for iPhone Calendar (and one-off Add to Calendar)",
+        "description": "Without `d=`, returns a live text/calendar subscription for team + groups (past 7 days through 8 weeks). Subscribe with webcal:// or paste the https URL in Calendar → Add Subscription Calendar. With `d=`, serves a client-built one-off ICS for Safari Quick Look.",
+        "parameters": [
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "description": "Required for the live feed. Tenant slug or alias, e.g. DelmarDolfins or 1.",
+            "schema": {
+              "type": "string",
+              "examples": ["1", "DelmarDolfins"]
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "description": "Practice groups for the feed. Required unless include is meets/events only.",
+            "schema": {
+              "type": "string",
+              "examples": ["Sr", "Sr,Jr", "Sr,Jr,Jr Prep,DEVO"]
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "Default practices only. Use meets, events, all, or meets,events.",
+            "schema": {
+              "type": "string",
+              "examples": ["all", "meets", "meets,events"]
+            }
+          },
+          {
+            "name": "weeks",
+            "in": "query",
+            "required": false,
+            "description": "Weeks ahead to include (1–12, default 8). Past 7 days always included.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            }
+          },
+          {
+            "name": "d",
+            "in": "query",
+            "required": false,
+            "description": "Legacy one-off payload: base64url of a UTF-8 ICS document."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ICS calendar (text/calendar).",
+            "content": {
+              "text/calendar": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "description": "Usage index when called with no query."
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or unknown group, or invalid include / encoded payload."
+          },
+          "404": {
+            "description": "Unknown team slug."
+          },
+          "429": {
+            "description": "Team or client is over the hourly cap."
           },
           "502": {
             "description": "Upstream Commit schedule could not be loaded."
