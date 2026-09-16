@@ -4,6 +4,7 @@ import { GroupFilters } from './components/GroupFilters'
 import { MonthSchedule } from './components/MonthSchedule'
 import { SettingsButton } from './components/SettingsButton'
 import { SubscribeButton } from './components/SubscribeButton'
+import { SubscribeCalendarButton } from './components/SubscribeCalendarButton'
 import { ThemeToggle } from './components/ThemeToggle'
 import { WeekNav } from './components/WeekNav'
 import { WeekSchedule } from './components/WeekSchedule'
@@ -356,16 +357,23 @@ export function TenantSchedule() {
             ) : null}
           </div>
           <div className="hero__actions">
-            {tenant.links.carpool ? (
-              <a
-                className="hero__carpool"
-                href={tenant.links.carpool}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Carpool
-              </a>
-            ) : null}
+            <SubscribeCalendarButton
+              variant="hero"
+              query={{
+                team: tenant.shortSlug || tenant.slug,
+                groups: [...selected],
+                includeMeets: Boolean(settings.queryMeets && showMeets),
+                includeEvents: Boolean(
+                  settings.includeTeamEvents && showEvents,
+                ),
+              }}
+              calendarName={subscribeCalendarName(
+                tenant.displayName,
+                [...selected],
+                Boolean(settings.queryMeets && showMeets),
+                Boolean(settings.includeTeamEvents && showEvents),
+              )}
+            />
             <ThemeToggle />
           </div>
         </div>
@@ -431,20 +439,6 @@ export function TenantSchedule() {
                       timeZone,
                     }
               }
-              calendarSubscribe={{
-                team: tenant.shortSlug || tenant.slug,
-                groups: [...selected],
-                includeMeets: Boolean(settings.queryMeets && showMeets),
-                includeEvents: Boolean(
-                  settings.includeTeamEvents && showEvents,
-                ),
-                calendarName: subscribeCalendarName(
-                  tenant.displayName,
-                  [...selected],
-                  Boolean(settings.queryMeets && showMeets),
-                  Boolean(settings.includeTeamEvents && showEvents),
-                ),
-              }}
             />
 
             {isMonth ? (

@@ -313,7 +313,7 @@ export function SettingsButton({
                 Selected on page load. Change here, then reload to apply.
                 To keep practices on your iPhone Calendar app (a live
                 subscription, not a one-time add), use <strong>Sync to iPhone</strong>{' '}
-                above the week view after you pick groups.
+                in the top-right after you pick groups.
               </p>
               <div
                 className="settings__groups"
