@@ -5,7 +5,7 @@ import { TenantSchedule } from './TenantSchedule'
 import { LEGAL_DOCUMENTS } from './legal/content'
 import { LegalPage } from './legal/LegalPage'
 import { currentPath, parsePath, type AppRoute } from './lib/routing'
-import { getTenantBySlug } from './tenants'
+import { getTenantBySlug, tenantPublicPath } from './tenants'
 import { TenantProvider } from './tenants/TenantContext'
 
 function readRoute(): AppRoute {
@@ -27,9 +27,10 @@ export default function App() {
     if (route.kind !== 'tenant') return
     const tenant = getTenantBySlug(route.slug)
     if (!tenant) return
-    // Canonicalize typo / alias paths (e.g. /DelmarDolphins → /DelmarDolfins).
-    if (route.slug.toLowerCase() === tenant.slug.toLowerCase()) return
-    const canonical = `/${tenant.slug}${window.location.search}`
+    // Canonicalize long / typo paths to the short public URL (e.g. /DelmarDolfins → /1).
+    const publicSeg = (tenant.shortSlug || tenant.slug).toLowerCase()
+    if (route.slug.toLowerCase() === publicSeg) return
+    const canonical = `${tenantPublicPath(tenant)}${window.location.search}`
     if (currentPath() === canonical) return
     window.history.replaceState({}, '', canonical)
     setRoute(readRoute())

@@ -23,10 +23,11 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 
 /**
  * First My Swim Day tenant.
- * Path: /DelmarDolfins (aliases keep dolphin / missing-s typo links working).
+ * Public path: /1 (long names remain aliases).
  */
 export const delmarDolfinsTenant: TenantConfig = {
   slug: 'DelmarDolfins',
+  shortSlug: '1',
   slugAliases: [
     'DelmarDolphins',
     'DelmaDolphins',

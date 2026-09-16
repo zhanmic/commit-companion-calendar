@@ -9,6 +9,7 @@ import { PRODUCT_CONTACT_EMAIL } from '../product'
 import {
   isBillingSubscribed,
   normalizeBillingStatus,
+  tenantPublicPath,
   type TenantBillingStatus,
 } from '../tenants/types'
 import { useTenant } from '../tenants/TenantContext'
@@ -123,8 +124,8 @@ export function TeamBillingPanel({ className = '' }: TeamBillingPanelProps) {
       tenantSlug: tenant.slug,
       customerEmail: email.trim() || undefined,
       interval: 'month',
-      successUrl: `${window.location.origin}/${tenant.slug}?billing=success`,
-      cancelUrl: `${window.location.origin}/${tenant.slug}?billing=cancel`,
+      successUrl: `${window.location.origin}${tenantPublicPath(tenant)}?billing=success`,
+      cancelUrl: `${window.location.origin}${tenantPublicPath(tenant)}?billing=cancel`,
     })
 
     setBusy(false)
@@ -150,7 +151,7 @@ export function TeamBillingPanel({ className = '' }: TeamBillingPanelProps) {
 
     const result = await billingFetch('/api/billing/portal', {
       tenantSlug: tenant.slug,
-      returnUrl: `${window.location.origin}/${tenant.slug}`,
+      returnUrl: `${window.location.origin}${tenantPublicPath(tenant)}`,
     })
 
     setBusy(false)

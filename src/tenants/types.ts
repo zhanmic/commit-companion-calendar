@@ -62,11 +62,16 @@ export type TenantBillingStatus =
  * and register it in `registry.ts`.
  */
 export interface TenantConfig {
-  /** Canonical URL path segment, e.g. `DelmarDolfins` → `/DelmarDolfins`. */
+  /** Stable identity for storage, billing, and admin (e.g. `DelmarDolfins`). */
   slug: string
   /**
+   * Public URL path segment, e.g. `1` → `/1`.
+   * Falls back to `slug` when omitted. Keep unique across tenants.
+   */
+  shortSlug?: string
+  /**
    * Former path segments that should resolve to this tenant
-   * (e.g. typo URLs). Canonical `slug` is preferred in the address bar.
+   * (e.g. typo URLs). Canonical public path is `shortSlug` or `slug`.
    */
   slugAliases?: string[]
   displayName: string
@@ -106,6 +111,14 @@ export interface TenantPublicMeta {
   slug: string
   displayName: string
   path: string
+}
+
+/** Public calendar path (`/1`), not the storage slug. */
+export function tenantPublicPath(
+  tenant: Pick<TenantConfig, 'slug' | 'shortSlug'>,
+): string {
+  const seg = tenant.shortSlug?.trim() || tenant.slug
+  return `/${seg}`
 }
 
 export function normalizeBillingStatus(

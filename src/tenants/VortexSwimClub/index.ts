@@ -24,10 +24,11 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 
 /**
  * Vortex Swim Club (Colorado) — Commit site teamvortex.org.
- * Path: /VortexSwimClub
+ * Public path: /2
  */
 export const vortexSwimClubTenant: TenantConfig = {
   slug: 'VortexSwimClub',
+  shortSlug: '2',
   slugAliases: ['TeamVortex', 'Vortex'],
   displayName: 'Vortex Swim Club',
   superTeamId: 'WNP4xfPJL67a6k2Np',

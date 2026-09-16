@@ -2,10 +2,30 @@
 
 Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve signup yet. You create a Checkout Session (or Dashboard Payment Link), send the URL, and track status in Stripe until tenant `billingStatus` exists.
 
+**Dashboard + env setup:** [stripe-config.md](./stripe-config.md) (products, yearly $165/$319/$539, webhook, Vercel, local `.env`).
+
+## Plans (offer — not wired in checkout yet)
+
+Same product on every tier. Price is by **swimmer roster**, not email subscriber count. Checkout and `STRIPE_PRICE_ID` still assume **one** monthly Price. Do **not** add plan-picker UI or extra price env vars until a Club Plus / Program team is ready to pay.
+
+| Plan | Roster | Monthly | Yearly (11 months) |
+|------|--------|---------|---------------------|
+| **Club** | Fewer than 150 swimmers | $15 | $165 |
+| **Club Plus** | 150–999 swimmers | $29 | $319 |
+| **Program** | 1,000 or more swimmers | $49 | $539 |
+
+**How to charge today**
+
+1. Create a Stripe Product + recurring Price for **Club $15/mo**. Set that Price id as `STRIPE_PRICE_ID`. Team admin **Get payment link** and `POST /api/billing/checkout` use only this id.
+2. When a **Club Plus** or **Program** team finishes pilot, create a **new** Stripe Product (or Price) and a Dashboard **Payment Link**. Send that URL yourself. Do not point `STRIPE_PRICE_ID` at the higher price or every Club checkout will charge $29/$49.
+3. Record plan name + roster on the ops sheet next to `cus_` / `sub_`.
+
+Yearly Club (`STRIPE_PRICE_ID_ANNUAL`) is optional. Plus/Program yearly can wait until someone asks — also Dashboard Payment Links, not app code.
+
 ## One-time Stripe setup
 
-1. Create a **Product** in Stripe (e.g. “My Swim Day — Team”).
-2. Add a **recurring Price** (monthly per team). Optional: a yearly price.
+1. Create a **Product** in Stripe (start with “My Swim Day — Club”).
+2. Add a **recurring Price** $15/mo. Optional: yearly $165 (11× monthly, one month free vs $15×12). Put the monthly Price in `STRIPE_PRICE_ID`. Add Club Plus / Program Prices only when those teams convert (see Plans above).
 3. **Customer Portal** — Settings → Billing → Customer portal: allow cancel + update payment method.
 4. **Checkout Terms** — Settings → Checkout / Public details: set Terms of Service URL to `https://myswimday.com/terms`. Then set Vercel `STRIPE_CHECKOUT_REQUIRE_TOS=1` so Checkout requires the TOS checkbox.
 5. **Webhook** — endpoint `https://myswimday.com/api/billing/webhook`, events:
@@ -20,8 +40,8 @@ Sales-assisted subscriptions for My Swim Day. Customers do **not** self-serve si
 | Env | Purpose |
 |-----|---------|
 | `STRIPE_SECRET_KEY` | Secret key (`sk_…`) |
-| `STRIPE_PRICE_ID` | Monthly price id (`price_…`) |
-| `STRIPE_PRICE_ID_ANNUAL` | Optional yearly price id |
+| `STRIPE_PRICE_ID` | Monthly **Club** $15 price id (`price_…`) — the only price checkout uses |
+| `STRIPE_PRICE_ID_ANNUAL` | Optional yearly Club price id |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
 | `BILLING_ADMIN_SECRET` | Shared secret for creating Checkout / Portal sessions (curl) |
 | `BILLING_UI_SECRET` | Optional second ops secret (can match admin secret) |
@@ -59,7 +79,7 @@ Rotate by changing the env value and redeploying (old links/passwords stop worki
 
 **Team unlock (either):**
 - Settings → **Team** → enter team password
-- Or share a private link: `https://myswimday.com/DelmarDolfins?ta=<password>`
+- Or share a private link: `https://myswimday.com/1?ta=<password>`
 
 After team unlock, Settings → **Team** shows payment controls. Session stays in that browser until **Sign out** or `?ta=0`.
 
@@ -96,7 +116,7 @@ Optional body fields: `interval` (`month` \| `year`), `successUrl`, `cancelUrl`.
 
 ### Dashboard Payment Link (alternative)
 
-Create a Payment Link on the same Price in Stripe Dashboard. Put `tenantSlug` in the payment link metadata if you use links often, and still record the customer ↔ tenant mapping in your ops sheet.
+Create a Payment Link on the Price that matches the team’s plan. **Club** can use the same Price as `STRIPE_PRICE_ID`. **Club Plus / Program** should use their own Price — that is the supported way to charge $29 / $49 until multi-price checkout exists. Put `tenantSlug` in the payment link metadata if you use links often, and still record plan + customer ↔ tenant mapping in your ops sheet.
 
 ## Customer Portal (update card / cancel)
 
@@ -115,11 +135,12 @@ Send the returned `url` to the admin.
 
 **Until entitlement lands:** treat Stripe Dashboard + a simple spreadsheet as source of truth (tenant slug ↔ `cus_` / `sub_` / status). Past-due → contact the club; suspend digests manually if needed.
 
-## Deferred: entitlement gating
+## Deferred (do not implement yet)
 
-Do **not** implement yet (by design for first paid conversions):
+By design for first paid conversions:
 
 - Persist `billingStatus` / `stripeCustomerId` on tenant records
 - Soft-gate digests or show “subscription inactive” on the calendar
+- Multi-price checkout (plan picker, `STRIPE_PRICE_ID_PLUS` / `STRIPE_PRICE_ID_PROGRAM`, landing-page dollar amounts, legal dollar amounts)
 
 See [paid-tenant-onboarding.md](./paid-tenant-onboarding.md) for the go-live checklist.

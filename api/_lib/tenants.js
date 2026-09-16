@@ -8,7 +8,8 @@ export const TENANTS = [
   {
     slug: 'DelmarDolfins',
     displayName: 'Delmar Dolfins',
-    path: '/DelmarDolfins',
+    path: '/1',
+    shortSlug: '1',
     slugAliases: [
       'DelmarDolphins',
       'DelmaDolphins',
@@ -41,7 +42,8 @@ export const TENANTS = [
   {
     slug: 'VortexSwimClub',
     displayName: 'Vortex Swim Club',
-    path: '/VortexSwimClub',
+    path: '/2',
+    shortSlug: '2',
     slugAliases: ['TeamVortex', 'Vortex'],
     superTeamId: 'WNP4xfPJL67a6k2Np',
     defaultTimeZone: 'America/Denver',
@@ -96,6 +98,7 @@ export function getTenantBySlug(slug) {
     TENANTS.find(
       (t) =>
         t.slug.toLowerCase() === key ||
+        (t.shortSlug && String(t.shortSlug).toLowerCase() === key) ||
         (t.slugAliases ?? []).some((alias) => alias.toLowerCase() === key),
     ) ?? null
   )

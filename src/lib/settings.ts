@@ -237,6 +237,7 @@ export function getStoredSettings(tenant: TenantConfig): ScheduleSettings {
   if (!parsed) {
     const legacyKeys = [
       ...((tenant.slugAliases ?? []).map((alias) => settingsStorageKey(alias))),
+      ...((tenant.shortSlug ? [settingsStorageKey(tenant.shortSlug)] : [])),
       ...(tenant.slug === 'DelmarDolfins' ||
       (tenant.slugAliases ?? []).some((a) =>
         ['DelmarDolphins', 'DelmaDolphins'].includes(a),

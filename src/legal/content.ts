@@ -55,7 +55,7 @@ export const serviceDocument: LegalDocument = {
       id: 'included',
       title: 'Included',
       bullets: [
-        `Hosted team calendar at myswimday.com/{slug}`,
+        `Hosted team calendar at myswimday.com/{shortSlug}`,
         'Sync from Commit’s public schedule API (practices, meets, and team events as configured for your tenant)',
         'Mobile week and month views, group filters, shareable week links, and .ics add-to-calendar',
         'Optional daily or weekly email digests (double opt-in) for parents and coaches',
@@ -80,7 +80,12 @@ export const serviceDocument: LegalDocument = {
       id: 'plans',
       title: 'Plans and payment',
       paragraphs: [
-        'Subscriptions are sold per team (tenant), typically monthly via Stripe, after a free pilot when parsers and calendar QA are complete. Contact sales to subscribe. Payment terms and acceptance of the Terms of Service are required before paid go-live.',
+        'Subscriptions are sold per team (tenant), typically monthly, after a free pilot when parsers and calendar QA are complete. Team size is the club’s swimmer roster (not the number of email subscribers). Contact sales to subscribe. Payment terms and acceptance of the Terms of Service are required before paid go-live.',
+      ],
+      bullets: [
+        'Club — fewer than 150 swimmers: $15 per month, or $165 per year (11 months’ price, one month free)',
+        'Club Plus — 150 through 999 swimmers: $29 per month, or $319 per year (11 months’ price, one month free)',
+        'Program — 1,000 or more swimmers: $49 per month, or $539 per year (11 months’ price, one month free)',
       ],
     },
     {
@@ -194,7 +199,7 @@ export const termsDocument: LegalDocument = {
       id: 'payment',
       title: 'Payment',
       paragraphs: [
-        'Paid subscriptions are billed per team through Stripe (or invoice when we agree). Fees are non-refundable except where required by law or as we expressly offer (for example, a goodwill credit). Non-payment may result in suspension of digests and/or the hosted calendar after any grace period we communicate.',
+        'Paid subscriptions are billed per team through Stripe (or invoice when we agree), at the rate that matches roster size. Monthly: Club $15 (under 150 swimmers), Club Plus $29 (150 through 999), or Program $49 (1,000 or more). Yearly is 11 months’ price (one month free versus paying month to month): Club $165, Club Plus $319, or Program $539. If roster size changes enough to move a tier, the rate updates on the next billing cycle after we confirm it. Fees are non-refundable except where required by law or as we expressly offer (for example, a goodwill credit). Non-payment may result in suspension of digests and/or the hosted calendar after any grace period we communicate.',
       ],
     },
     {

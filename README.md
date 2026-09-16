@@ -6,8 +6,8 @@ Weekly practice and meet calendars for swim teams (`myswimday.com`), built on Co
 
 | Path | Team |
 |------|------|
-| [`/DelmarDolfins`](/DelmarDolfins) | Delmar Dolfins |
-| [`/VortexSwimClub`](/VortexSwimClub) | Vortex Swim Club |
+| [`/1`](/1) | Delmar Dolfins (also `/DelmarDolfins`) |
+| [`/2`](/2) | Vortex Swim Club (also `/VortexSwimClub`) |
 
 Product home (`/`) lists available teams. Each tenant owns its Commit `superTeamId` and its own practice/meet parsers under `src/tenants/<Slug>/`.
 
@@ -15,7 +15,7 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 
 - Live data from `utility.commitswimming.com`
 - Week view (Sunday–Saturday, tenant timezone)
-- Shareable week links (`/DelmarDolfins?week=2026-07-19`)
+- Shareable week links (`/1?week=2026-07-19`)
 - Filter by tenant-defined groups
 - Recurring practices expanded with cancel/override support
 - All times shown in the team's timezone (from Commit), not the viewer's
@@ -28,9 +28,12 @@ Product home (`/`) lists available teams. Each tenant owns its Commit `superTeam
 
 ## Billing & paid onboarding
 
-Sales-assisted Stripe Checkout (per team). Operator docs:
+Sales-assisted Stripe Checkout (per team). Planned roster tiers (same product; **not wired in checkout yet**): **Club** $15/mo (&lt;150 swimmers), **Club Plus** $29/mo (150–999), **Program** $49/mo (1,000+). App checkout still uses a single `STRIPE_PRICE_ID` (Club). Higher tiers: Stripe Dashboard Payment Link when that team converts.
 
-- [`docs/billing-runbook.md`](docs/billing-runbook.md) — Stripe setup, checkout/portal API, **admin Billing UI**, webhook stub
+Operator docs:
+
+- [`docs/stripe-config.md`](docs/stripe-config.md) — Stripe Dashboard products, yearly prices, webhook, Vercel env
+- [`docs/billing-runbook.md`](docs/billing-runbook.md) — plans, checkout/portal API, **admin Billing UI**, webhook stub
 - [`docs/paid-tenant-onboarding.md`](docs/paid-tenant-onboarding.md) — go-live checklist
 
 **Roles:** Operator schedule tools = `?admin=<OPERATOR_ADMIN_PASSWORD>` (env). Team billing = Settings → **Team** password or `?ta=` via `TEAM_ADMIN_TOKENS` (env). See billing runbook.
@@ -53,7 +56,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173/DelmarDolfins](http://localhost:5173/DelmarDolfins) for the current week, or [http://localhost:5173/DelmarDolfins?week=2026-07-19](http://localhost:5173/DelmarDolfins?week=2026-07-19) for a specific week. The landing **See a live schedule** button uses that demo week.
+Open [http://localhost:5173/1](http://localhost:5173/1) for the current week, or [http://localhost:5173/1?week=2026-07-19](http://localhost:5173/1?week=2026-07-19) for a specific week. The landing **See a live schedule** button uses that demo week.
 
 To compare a week against the team's own Commit calendar, print the expanded
 week in the team timezone:

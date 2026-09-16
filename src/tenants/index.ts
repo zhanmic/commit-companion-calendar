@@ -13,6 +13,7 @@ export type {
 export {
   isBillingSubscribed,
   normalizeBillingStatus,
+  tenantPublicPath,
 } from './types'
 export {
   DEFAULT_TENANT_SLUG,
