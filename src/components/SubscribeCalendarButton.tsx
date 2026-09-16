@@ -13,12 +13,15 @@ interface Props {
   /** Calendar name shown in the popover, e.g. Delmar Dolfins · Sr, Jr */
   calendarName: string
   className?: string
+  /** Hero slot (replaces Carpool): pill trigger that matches the header. */
+  variant?: 'filters' | 'hero'
 }
 
 export function SubscribeCalendarButton({
   query,
   calendarName,
   className = '',
+  variant = 'filters',
 }: Props) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -65,14 +68,18 @@ export function SubscribeCalendarButton({
     }
   }
 
+  const hero = variant === 'hero'
+
   return (
     <div
       ref={wrapRef}
-      className={`cal-btn-wrap cal-subscribe${className ? ` ${className}` : ''}`}
+      className={`cal-btn-wrap cal-subscribe${hero ? ' cal-subscribe--hero' : ''}${
+        className ? ` ${className}` : ''
+      }`}
     >
       <button
         type="button"
-        className="cal-btn"
+        className={hero ? 'hero__carpool' : 'cal-btn'}
         disabled={!enabled}
         aria-expanded={open}
         aria-controls={panelId}
@@ -84,27 +91,29 @@ export function SubscribeCalendarButton({
           setOpen((value) => !value)
         }}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="cal-btn__icon"
-          aria-hidden
-        >
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4" />
-          <path d="M8 2v4" />
-          <path d="M3 10h18" />
-          <path d="M8 14h.01" />
-          <path d="M12 14h.01" />
-          <path d="M16 14h.01" />
-          <path d="M8 18h8" />
-        </svg>
-        <span className="cal-btn__label">Sync to iPhone</span>
+        {hero ? null : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="cal-btn__icon"
+            aria-hidden
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+            <path d="M8 14h.01" />
+            <path d="M12 14h.01" />
+            <path d="M16 14h.01" />
+            <path d="M8 18h8" />
+          </svg>
+        )}
+        <span className={hero ? undefined : 'cal-btn__label'}>Sync to iPhone</span>
       </button>
 
       {open ? (

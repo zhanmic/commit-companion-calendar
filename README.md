@@ -119,7 +119,7 @@ JSON includes `sessions[]` (`kind`, `startTime`, `endTime`, `location`) and a `s
 
 `https://myswimday.com/api/calendar?team=1&group=Sr,Jr,Jr%20Prep,DEVO&include=all`
 
-On the team page, pick groups and tap **Sync to iPhone**. The feed covers the last 7 days through the next 8 weeks and refreshes when Calendar next polls.
+On the team page, pick groups and tap **Sync to iPhone** (top right). The feed covers the last 7 days through the next 8 weeks and refreshes when Calendar next polls.
 
 `date` also accepts weekday phrases in the team timezone: **this Friday** is Friday of the current Sunday–Saturday week (same week as the calendar), **next Monday** is that weekday next week, and a bare **Friday** is the upcoming Friday including today.
 

@@ -100,11 +100,14 @@
   border-radius: 999px;
   background: var(--toggle-bg);
   color: var(--toggle-fg);
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
   backdrop-filter: blur(8px);
   transition:
     background 0.15s ease,
@@ -122,6 +125,19 @@
 .hero__carpool:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
+}
+
+.hero__carpool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hero__actions .cal-subscribe {
+  position: relative;
+}
+
+.hero__actions .cal-subscribe__panel {
+  z-index: 12;
 }
 
 .hero__top .theme-toggle {
