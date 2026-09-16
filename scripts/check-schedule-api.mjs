@@ -4,7 +4,7 @@
  * Usage:
  *   node scripts/check-schedule-api.mjs DelmarDolfins Sr today
  *   node scripts/check-schedule-api.mjs DelmarDolfins senior tomorrow
- *   node scripts/check-schedule-api.mjs DelmarDolfins Sr 2026-09-16
+ *   node scripts/check-schedule-api.mjs DelmarDolfins Sr,Jr today
  */
 import { getTenantBySlug, listTenants } from '../api/_lib/tenants.js'
 import {
@@ -13,7 +13,7 @@ import {
   fetchCommitBundle,
   filterDaySessions,
   formatSession,
-  resolveGroup,
+  resolveGroups,
   resolveQueryDate,
 } from '../api/_lib/schedule/publicQuery.js'
 
@@ -28,7 +28,10 @@ if (!tenant) {
   process.exit(1)
 }
 
-const groupResult = resolveGroup(tenant, groupRaw || tenant.defaultGroups?.[0] || 'Sr')
+const groupResult = resolveGroups(
+  tenant,
+  groupRaw || tenant.defaultGroups?.[0] || 'Sr',
+)
 if (groupResult.error) {
   console.error(groupResult.error)
   process.exit(1)
@@ -47,11 +50,11 @@ const { parsers, occurrences } = expandPracticeDay(
   bundle.timeZone,
   range,
 )
-const matched = filterDaySessions(occurrences, groupResult.group, parsers)
+const matched = filterDaySessions(occurrences, groupResult.groups, parsers)
 const sessions = matched.map((occ) => formatSession(occ, bundle.timeZone))
 const payload = buildSchedulePayload({
   tenant,
-  group: groupResult.group,
+  groups: groupResult.groups,
   range,
   timeZone: bundle.timeZone,
   sessions,

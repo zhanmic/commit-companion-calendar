@@ -23,6 +23,31 @@ export function queryParam(req, name) {
   }
 }
 
+/** All values for a query key (`group=Sr&group=Jr` or a single comma-separated value). */
+export function queryParamAll(req, name) {
+  if (!req || !name) return []
+  const rawUrl = typeof req.url === 'string' ? req.url : ''
+  if (rawUrl) {
+    try {
+      const url = rawUrl.includes('://')
+        ? new URL(rawUrl)
+        : new URL(rawUrl, 'https://myswimday.com')
+      const fromUrl = url.searchParams.getAll(name).filter(
+        (value) => typeof value === 'string' && value.trim(),
+      )
+      if (fromUrl.length) return fromUrl
+    } catch {
+      // fall through to req.query
+    }
+  }
+  const fromQuery = req.query?.[name]
+  if (typeof fromQuery === 'string' && fromQuery.trim()) return [fromQuery]
+  if (Array.isArray(fromQuery)) {
+    return fromQuery.filter((value) => typeof value === 'string' && value.trim())
+  }
+  return []
+}
+
 export function sendJson(res, status, body, headers = {}) {
   res.statusCode = status
   res.setHeader('Content-Type', 'application/json; charset=utf-8')

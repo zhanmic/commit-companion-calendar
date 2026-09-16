@@ -92,6 +92,17 @@ describe('live GET /api/schedule', () => {
     assert.equal(monday.res.statusCode, 200, monday.res.body)
     assert.match(monday.json.spoken, /next Monday/)
   })
+
+  it('returns Sr and Jr in one request', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=1&group=Sr,Jr&date=today',
+    )
+    assert.equal(res.statusCode, 200, res.body)
+    assert.equal(json.group, 'Sr,Jr')
+    assert.equal(json.groupLabel, 'Sr and Jr')
+    assert.equal(json.groups.length, 2)
+    assert.match(json.spoken, /Sr and Jr/)
+  })
 })
 
 describe('attack circuit', () => {

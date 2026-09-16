@@ -14,6 +14,7 @@
 import {
   clientIp,
   queryParam,
+  queryParamAll,
   sendJson,
   sendText,
   setPublicCors,
@@ -25,7 +26,7 @@ import {
   fetchCommitBundle,
   filterDaySessions,
   formatSession,
-  resolveGroup,
+  resolveGroups,
   resolveQueryDate,
 } from './_lib/schedule/publicQuery.js'
 import { consumePublicApiQuota } from './_lib/schedule/rateLimit.js'
@@ -55,7 +56,10 @@ export default async function handler(req, res) {
     queryParam(req, 'team') ||
     queryParam(req, 'tenant') ||
     queryParam(req, 'slug')
-  const groupRaw = queryParam(req, 'group')
+  const groupRaw = [
+    ...queryParamAll(req, 'group'),
+    ...queryParamAll(req, 'groups'),
+  ].join(',')
   const dateRaw = queryParam(req, 'date') || queryParam(req, 'day')
 
   if (format === 'openapi') {
@@ -83,7 +87,7 @@ export default async function handler(req, res) {
     return
   }
 
-  const groupResult = resolveGroup(tenant, groupRaw)
+  const groupResult = resolveGroups(tenant, groupRaw)
   if (groupResult.error) {
     sendJson(res, 400, {
       error: groupResult.error,
@@ -133,11 +137,15 @@ export default async function handler(req, res) {
       bundle.timeZone,
       range,
     )
-    const matched = filterDaySessions(occurrences, groupResult.group, parsers)
+    const matched = filterDaySessions(
+      occurrences,
+      groupResult.groups,
+      parsers,
+    )
     const sessions = matched.map((occ) => formatSession(occ, bundle.timeZone))
     const payload = buildSchedulePayload({
       tenant,
-      group: groupResult.group,
+      groups: groupResult.groups,
       range,
       timeZone: bundle.timeZone,
       sessions,
@@ -216,7 +224,7 @@ function usagePayload(req) {
       path: '/api/schedule',
       query: {
         team: 'Tenant slug or alias (DelmarDolfins, DelmarDolphins, VortexSwimClub, …)',
-        group: 'Practice group (Sr, senior, Jr, Jr Prep, DEVO, Peak, …)',
+        group: 'One or more groups: Sr, Sr,Jr, senior and junior (also group=Sr&group=Jr)',
         date: 'today | tomorrow | this Friday | next Monday | YYYY-MM-DD',
         format: 'json (default) | spoken',
       },
@@ -226,7 +234,8 @@ function usagePayload(req) {
       '/api/schedule?team=DelmarDolfins&group=senior&date=tomorrow',
       '/api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday',
       '/api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday',
-      '/api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16&format=spoken',
+      '/api/schedule?team=DelmarDolfins&group=Sr,Jr&date=today',
+      '/api/schedule?team=1&group=Sr&group=Jr&date=today&format=spoken',
     ],
     tenants: listTenants().map((t) => ({
       slug: t.slug,

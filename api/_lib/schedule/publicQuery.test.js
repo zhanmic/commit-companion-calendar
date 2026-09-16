@@ -5,8 +5,10 @@ import {
   buildSpoken,
   foldGroupKey,
   resolveGroup,
+  resolveGroups,
   resolveQueryDate,
   shiftDateKey,
+  splitGroupTokens,
 } from './publicQuery.js'
 import {
   estimatedHouseholds,
@@ -51,6 +53,45 @@ describe('resolveGroup', () => {
     assert.equal(foldGroupKey('Jr Prep'), 'jrprep')
     const { group } = resolveGroup(delmar, 'jr-prep')
     assert.equal(group.id, 'Jr Prep')
+  })
+
+  it('resolves two groups from a comma list', () => {
+    const { groups, error } = resolveGroups(delmar, 'Sr,Jr')
+    assert.equal(error, undefined)
+    assert.deepEqual(
+      groups.map((g) => g.id),
+      ['Sr', 'Jr'],
+    )
+  })
+
+  it('resolves senior and junior as two groups', () => {
+    const { groups } = resolveGroups(delmar, 'senior and junior')
+    assert.deepEqual(
+      groups.map((g) => g.id),
+      ['Sr', 'Jr'],
+    )
+  })
+
+  it('keeps Jr Prep together when listed with Sr', () => {
+    const { groups } = resolveGroups(delmar, 'Jr Prep,Sr')
+    assert.deepEqual(
+      groups.map((g) => g.id),
+      ['Jr Prep', 'Sr'],
+    )
+  })
+
+  it('dedupes repeated groups', () => {
+    const { groups } = resolveGroups(delmar, 'Sr,senior')
+    assert.deepEqual(
+      groups.map((g) => g.id),
+      ['Sr'],
+    )
+  })
+})
+
+describe('splitGroupTokens', () => {
+  it('does not split Jr Prep on spaces', () => {
+    assert.deepEqual(splitGroupTokens('Jr Prep,Sr'), ['Jr Prep', 'Sr'])
   })
 })
 
@@ -204,6 +245,32 @@ describe('buildSpoken', () => {
       text,
       'Sr practice for Delmar Dolfins this Friday is 6:00 PM to 8:00 PM at Albany Academy.',
     )
+  })
+
+  it('names each session when two groups are asked', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: 'Sr and Jr',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      sessions: [
+        {
+          startTime: '6:00 PM',
+          endTime: '8:00 PM',
+          location: 'Albany Academy',
+          groups: ['Sr'],
+        },
+        {
+          startTime: '5:00 PM',
+          endTime: '6:00 PM',
+          location: 'BCHS',
+          groups: ['Jr'],
+        },
+      ],
+    })
+    assert.match(text, /Sr and Jr practice/)
+    assert.match(text, /Sr, 6:00 PM to 8:00 PM at Albany Academy/)
+    assert.match(text, /Jr, 5:00 PM to 6:00 PM at BCHS/)
   })
 })
 

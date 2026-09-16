@@ -102,7 +102,8 @@ GET /api/schedule?team=DelmarDolfins&group=senior&date=tomorrow
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=this%20Friday
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16
-GET /api/schedule?team=DelmarDolfins&group=Sr&date=today&format=spoken
+GET /api/schedule?team=DelmarDolfins&group=Sr,Jr&date=today
+GET /api/schedule?team=1&group=Sr&group=Jr&date=today&format=spoken
 ```
 
 JSON includes `sessions[]` (`startTime`, `endTime`, `location`) and a `spoken` sentence for Siri / Alexa. OpenAPI: [`/openapi.json`](https://myswimday.com/openapi.json). Usage index: `GET /api/schedule`.
