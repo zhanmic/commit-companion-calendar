@@ -54,6 +54,12 @@ describe('GET /api/schedule', () => {
     assert.match(json.error, /Unknown team/)
   })
 
+  it('accepts the short public team URL as team=1', async () => {
+    const { res, json } = await call('/api/schedule?team=1')
+    assert.equal(res.statusCode, 400)
+    assert.match(json.error, /Missing group/)
+  })
+
   it('rejects a missing group', async () => {
     const { res, json } = await call('/api/schedule?team=DelmarDolfins')
     assert.equal(res.statusCode, 400)

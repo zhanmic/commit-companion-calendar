@@ -90,6 +90,7 @@ export function listTenants() {
     slug: t.slug,
     displayName: t.displayName,
     path: t.path,
+    shortSlug: t.shortSlug || undefined,
     slugAliases: t.slugAliases ? [...t.slugAliases] : undefined,
     defaultTimeZone: t.defaultTimeZone,
     groups: (t.groups ?? []).map((g) => ({ id: g.id, label: g.label })),
