@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test api/schedule.test.js api/calendar.test.js api/_lib/schedule/publicQuery.test.js api/_lib/schedule/ics.test.js",
-    "test:live": "node --test api/schedule.live.test.js api/calendar.live.test.js",
+    "test": "node --test api/_tests/schedule.test.js api/_tests/calendar.test.js api/_lib/schedule/publicQuery.test.js api/_lib/schedule/ics.test.js",
+    "test:live": "node --test api/_tests/schedule.live.test.js api/_tests/calendar.live.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
