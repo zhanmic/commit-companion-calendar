@@ -31,10 +31,10 @@
             "name": "group",
             "in": "query",
             "required": true,
-            "description": "Practice group id, label, or nickname (Sr, senior, Jr Prep, DEVO, Peak, …).",
+            "description": "One or more practice groups: Sr, Sr,Jr, senior and junior. Repeat group= or use groups=.",
             "schema": {
               "type": "string",
-              "examples": ["Sr", "senior", "Jr Prep"]
+              "examples": ["Sr", "senior", "Sr,Jr", "Jr Prep"]
             }
           },
           {

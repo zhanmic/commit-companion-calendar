@@ -70,7 +70,13 @@ Test with the play button in Shortcuts first. You should hear something like: *S
 
 ## Other groups
 
-Change `group=Sr` to `Jr`, `Jr%20Prep`, `DEVO`, or nicknames the API already accepts (`senior`, `junior prep`).
+Change `group=Sr` to `Jr`, `Jr%20Prep`, `DEVO`, or nicknames (`senior`, `junior prep`).
+
+Two groups in one ask — comma-separate them (no extra Shortcut steps):
+
+`https://myswimday.com/api/schedule?team=1&group=Sr,Jr&date=today&format=spoken`
+
+Same thing as `group=Sr&group=Jr`. Siri will name each session (`Sr, 6:00 PM at … Jr, 5:00 PM at …`).
 
 Vortex: `team=2` (or `VortexSwimClub`) and a Vortex group such as `Peak`.
 

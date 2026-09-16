@@ -76,6 +76,46 @@ export function resolveGroup(tenant, raw) {
   }
 }
 
+/** Split `Sr,Jr` / `senior and junior` / `Sr|Jr Prep` into tokens (spaces inside Jr Prep stay). */
+export function splitGroupTokens(raw) {
+  const text = Array.isArray(raw) ? raw.join(',') : String(raw ?? '')
+  return text
+    .split(/[,;+|]/)
+    .flatMap((part) => part.split(/\s+and\s+/i))
+    .map((token) => token.trim())
+    .filter(Boolean)
+}
+
+export function joinSpokenList(items) {
+  const names = (items ?? []).map((item) => String(item).trim()).filter(Boolean)
+  if (names.length === 0) return ''
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
+
+export function resolveGroups(tenant, raw) {
+  const catalog = tenant?.groups ?? []
+  const tokens = splitGroupTokens(raw)
+  if (!tokens.length) {
+    return {
+      error: 'Missing group. Pass group= (for example Sr or Sr,Jr).',
+      groups: catalog,
+    }
+  }
+
+  const resolved = []
+  const seen = new Set()
+  for (const token of tokens) {
+    const result = resolveGroup(tenant, token)
+    if (result.error) return result
+    if (seen.has(result.group.id)) continue
+    seen.add(result.group.id)
+    resolved.push(result.group)
+  }
+  return { groups: resolved }
+}
+
 /** Shift a yyyy-MM-dd key by whole calendar days (timezone-independent). */
 export function shiftDateKey(dayKey, deltaDays) {
   const year = Number(dayKey.slice(0, 4))
@@ -265,12 +305,20 @@ export function buildSpoken({
     return `There is no ${groupLabel} practice for ${teamName} ${when}.`
   }
 
+  const multi = /\band\b/.test(groupLabel) || groupLabel.includes(',')
+
   const bits = sessions.map((session) => {
     const loc = session.location ? ` at ${session.location}` : ''
-    if (session.startTime === session.endTime) {
-      return `${session.startTime}${loc}`
-    }
-    return `${session.startTime} to ${session.endTime}${loc}`
+    const time =
+      session.startTime === session.endTime
+        ? `${session.startTime}${loc}`
+        : `${session.startTime} to ${session.endTime}${loc}`
+    if (!multi) return time
+    const names =
+      Array.isArray(session.groups) && session.groups.length
+        ? session.groups.join('/')
+        : groupLabel
+    return `${names}, ${time}`
   })
 
   if (bits.length === 1) {
@@ -278,7 +326,10 @@ export function buildSpoken({
   }
 
   const last = bits[bits.length - 1]
-  const head = bits.slice(0, -1).join(', ')
+  const head = bits.slice(0, -1).join(multi ? '. ' : ', ')
+  if (multi) {
+    return `${groupLabel} practice for ${teamName} ${when}: ${head}. ${last}.`
+  }
   return `${groupLabel} practice for ${teamName} ${when}: ${head}, and ${last}.`
 }
 
@@ -306,8 +357,9 @@ export function expandPracticeDay(tenant, schedule, timeZone, range) {
   return { parsers, occurrences }
 }
 
-export function filterDaySessions(occurrences, group, parsers) {
-  const selected = new Set([group.id])
+export function filterDaySessions(occurrences, groupOrGroups, parsers) {
+  const list = Array.isArray(groupOrGroups) ? groupOrGroups : [groupOrGroups]
+  const selected = new Set(list.map((group) => group.id))
   return occurrences.filter((occ) => {
     if (occ.label && occ.label !== 'practice') return false
     return parsers.occurrenceMatchesTeams(occ.subTeams ?? [], selected)
@@ -317,14 +369,17 @@ export function filterDaySessions(occurrences, group, parsers) {
 export function buildSchedulePayload({
   tenant,
   group,
+  groups,
   range,
   timeZone,
   sessions,
 }) {
+  const selected = groups?.length ? groups : group ? [group] : []
+  const groupLabel = joinSpokenList(selected.map((item) => item.label))
   const empty = sessions.length === 0
   const spoken = buildSpoken({
     teamName: tenant.displayName,
-    groupLabel: group.label,
+    groupLabel,
     relative: range.relative,
     dateLabel: range.label,
     sessions,
@@ -333,8 +388,9 @@ export function buildSchedulePayload({
     ok: true,
     team: tenant.displayName,
     teamSlug: tenant.slug,
-    group: group.id,
-    groupLabel: group.label,
+    group: selected.map((item) => item.id).join(','),
+    groupLabel,
+    groups: selected.map((item) => ({ id: item.id, label: item.label })),
     date: range.dayKey,
     dateLabel: range.label,
     timeZone,

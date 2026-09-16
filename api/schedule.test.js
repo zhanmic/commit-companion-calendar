@@ -90,4 +90,12 @@ describe('GET /api/schedule', () => {
     assert.equal(res.statusCode, 400)
     assert.match(json.error, /this Friday/)
   })
+
+  it('accepts two groups without hitting Commit on a bad extra group', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=DelmarDolfins&group=Sr,Masters',
+    )
+    assert.equal(res.statusCode, 400)
+    assert.match(json.error, /Unknown group/)
+  })
 })
