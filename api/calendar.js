@@ -212,7 +212,7 @@ async function loadFeedIcs({ tenant, selectedGroups, include, futureWeeks, req }
     parsers,
     include,
   )
-  const calendarName = feedCalendarName(tenant, selectedGroups, include)
+  const calendarName = feedCalendarName(tenant)
   const sourceLabel = `${tenant.displayName} · My Swim Day`
   const calendarUrl = absoluteUrl(req, tenant.path || `/${tenant.shortSlug || tenant.slug}`)
   const ics = buildIcsCalendar(matched, {

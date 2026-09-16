@@ -57,7 +57,7 @@ describe('buildIcsCalendar', () => {
         },
       ],
       {
-        calendarName: 'Delmar Dolfins · Sr',
+        calendarName: 'Delmar Dolfins',
         timeZone: 'America/New_York',
         sourceLabel: 'Delmar Dolfins · My Swim Day',
         calendarUrl: 'https://myswimday.com/1',
@@ -67,25 +67,20 @@ describe('buildIcsCalendar', () => {
     assert.match(ics, /BEGIN:VCALENDAR/)
     assert.match(ics, /END:VCALENDAR/)
     assert.match(ics, /REFRESH-INTERVAL;VALUE=DURATION:PT6H/)
-    assert.match(ics, /X-WR-CALNAME:Delmar Dolfins · Sr/)
+    assert.match(ics, /X-WR-CALNAME:Delmar Dolfins/)
+    assert.doesNotMatch(ics, /X-WR-CALNAME:Delmar Dolfins ·/)
     assert.match(ics, /UID:evt-1-123@myswimday.com/)
     assert.match(ics, /SUMMARY:Sr Practice/)
+    assert.match(ics, /CATEGORIES:Sr/)
     assert.match(ics, /LOCATION:Albany Academy/)
     assert.match(ics, /DTSTART;TZID=America\/New_York:/)
   })
 })
 
 describe('feedCalendarName', () => {
-  it('joins groups and extras', () => {
+  it('uses only the team name', () => {
     const tenant = { displayName: 'Delmar Dolfins' }
-    assert.equal(
-      feedCalendarName(tenant, [{ label: 'Sr' }, { label: 'Jr' }], {
-        practices: true,
-        meets: true,
-        events: false,
-      }),
-      'Delmar Dolfins · Sr, Jr + meets',
-    )
+    assert.equal(feedCalendarName(tenant), 'Delmar Dolfins')
   })
 })
 

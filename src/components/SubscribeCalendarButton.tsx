@@ -10,8 +10,10 @@ import {
 
 interface Props {
   query: CalendarFeedQuery
-  /** Calendar name shown in the popover, e.g. Delmar Dolfins · Sr, Jr */
+  /** Calendar name in iPhone Calendar (team name only). */
   calendarName: string
+  /** Groups/meets included from the current website filters. */
+  includesLabel?: string
   className?: string
   /** Hero slot (replaces Carpool): pill trigger that matches the header. */
   variant?: 'filters' | 'hero'
@@ -20,6 +22,7 @@ interface Props {
 export function SubscribeCalendarButton({
   query,
   calendarName,
+  includesLabel = '',
   className = '',
   variant = 'filters',
 }: Props) {
@@ -124,9 +127,17 @@ export function SubscribeCalendarButton({
           aria-label="Subscribe in iPhone Calendar"
         >
           <p className="cal-subscribe__title">{calendarName}</p>
+          {includesLabel ? (
+            <p className="cal-subscribe__includes">Includes {includesLabel}.</p>
+          ) : null}
           <p className="cal-subscribe__lead">
-            Adds a live calendar that updates when Commit times change. This is
-            not the one-time “Add to Calendar” export.
+            iPhone Calendar shows this as one calendar with one color. It cannot
+            copy the website group chips. Each event title still names the group
+            (Sr Practice, Jr Practice).
+          </p>
+          <p className="cal-subscribe__lead">
+            The phone re-downloads this link on its own (often every few hours).
+            My Swim Day does not push to the phone.
           </p>
           {apple ? (
             <a className="cal-subscribe__primary" href={webcalUrl}>
