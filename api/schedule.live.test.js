@@ -103,6 +103,32 @@ describe('live GET /api/schedule', () => {
     assert.equal(json.groups.length, 2)
     assert.match(json.spoken, /Sr and Jr/)
   })
+
+  it('returns meets and events without a group', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=1&include=meets,events&date=today',
+    )
+    assert.equal(res.statusCode, 200, res.body)
+    assert.equal(json.include.meets, true)
+    assert.equal(json.include.events, true)
+    assert.equal(json.include.practices, false)
+    assert.ok(typeof json.spoken === 'string')
+    assert.doesNotMatch(json.spoken, /Missing group/)
+    for (const session of json.sessions) {
+      assert.ok(session.kind === 'meet' || session.kind === 'event')
+    }
+  })
+
+  it('include=all keeps practices for the asked groups', async () => {
+    const { res, json } = await call(
+      '/api/schedule?team=1&group=Sr,Jr&date=today&include=all',
+    )
+    assert.equal(res.statusCode, 200, res.body)
+    assert.equal(json.include.practices, true)
+    assert.equal(json.include.meets, true)
+    assert.equal(json.group, 'Sr,Jr')
+    assert.ok(typeof json.spoken === 'string')
+  })
 })
 
 describe('attack circuit', () => {

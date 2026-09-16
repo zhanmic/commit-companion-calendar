@@ -3,7 +3,7 @@
  * for voice assistants (Siri Shortcuts, Alexa, ChatGPT).
  */
 import { fetchScheduleData, fetchTeamConfig } from './commit.js'
-import { expandEvents } from './expand.js'
+import { expandEvents, expandMeets } from './expand.js'
 import { getTenantParsers } from './parse.js'
 import {
   formatClock,
@@ -86,12 +86,12 @@ export function splitGroupTokens(raw) {
     .filter(Boolean)
 }
 
-export function joinSpokenList(items) {
+export function joinSpokenList(items, conjunction = 'and') {
   const names = (items ?? []).map((item) => String(item).trim()).filter(Boolean)
   if (names.length === 0) return ''
   if (names.length === 1) return names[0]
-  if (names.length === 2) return `${names[0]} and ${names[1]}`
-  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+  if (names.length === 2) return `${names[0]} ${conjunction} ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, ${conjunction} ${names[names.length - 1]}`
 }
 
 export function resolveGroups(tenant, raw) {
@@ -287,12 +287,102 @@ export function formatSession(occ, timeZone) {
   }
 }
 
+/**
+ * Default is practices only (existing Siri shortcuts).
+ * include=meets | events | all | practice,meet,event
+ */
+export function parseInclude(raw) {
+  const value = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+  if (!value) {
+    return { practices: true, events: false, meets: false }
+  }
+
+  const tokens = value
+    .split(/[,;+|]/)
+    .flatMap((part) => part.split(/\s+and\s+/i))
+    .map((token) => token.replace(/[^a-z0-9]+/g, ''))
+    .filter(Boolean)
+
+  const kinds = { practices: false, events: false, meets: false }
+  for (const token of tokens) {
+    if (token === 'all' || token === 'everything' || token === 'any') {
+      kinds.practices = true
+      kinds.events = true
+      kinds.meets = true
+      continue
+    }
+    if (
+      token === 'practice' ||
+      token === 'practices' ||
+      token === 'swim' ||
+      token === 'swimming'
+    ) {
+      kinds.practices = true
+      continue
+    }
+    if (
+      token === 'event' ||
+      token === 'events' ||
+      token === 'teamevent' ||
+      token === 'teamevents'
+    ) {
+      kinds.events = true
+      continue
+    }
+    if (token === 'meet' || token === 'meets') {
+      kinds.meets = true
+      continue
+    }
+    return {
+      error:
+        'Invalid include. Use practice, meets, events, all, or a list like meets,events.',
+    }
+  }
+
+  if (!kinds.practices && !kinds.events && !kinds.meets) {
+    return { practices: true, events: false, meets: false }
+  }
+  return kinds
+}
+
+function sessionTimeBit(session) {
+  const loc = session.location ? ` at ${session.location}` : ''
+  if (session.startTime === session.endTime) {
+    return `${session.startTime}${loc}`
+  }
+  return `${session.startTime} to ${session.endTime}${loc}`
+}
+
+function describeSession(session, { tagPracticeGroups, mixedKinds }) {
+  const time = sessionTimeBit(session)
+  if (session.kind === 'meet') {
+    const name = typeof session.name === 'string' ? session.name.trim() : ''
+    return name ? `Meet ${name}, ${time}` : `Meet, ${time}`
+  }
+  if (session.kind === 'event') {
+    const name = typeof session.name === 'string' ? session.name.trim() : ''
+    return name ? `Team event ${name}, ${time}` : `Team event, ${time}`
+  }
+  if (tagPracticeGroups) {
+    const names =
+      Array.isArray(session.groups) && session.groups.length
+        ? session.groups.join('/')
+        : 'Practice'
+    if (mixedKinds) return `${names} practice, ${time}`
+    return `${names}, ${time}`
+  }
+  return time
+}
+
 export function buildSpoken({
   teamName,
   groupLabel,
   relative,
   dateLabel,
   sessions,
+  kinds,
 }) {
   const when =
     relative === 'today' || relative === 'tomorrow'
@@ -301,33 +391,40 @@ export function buildSpoken({
         ? relative
         : `on ${dateLabel}`
 
+  const k = kinds || { practices: true, events: false, meets: false }
+  const multiGroups = /\band\b/.test(groupLabel || '') || (groupLabel || '').includes(',')
+
   if (!sessions.length) {
-    return `There is no ${groupLabel} practice for ${teamName} ${when}.`
+    const parts = []
+    if (k.practices) parts.push(`${groupLabel} practice`)
+    if (k.meets) parts.push('meet')
+    if (k.events) parts.push('team event')
+    const what = joinSpokenList(parts, 'or') || 'practice'
+    return `There is no ${what} for ${teamName} ${when}.`
   }
 
-  const multi = /\band\b/.test(groupLabel) || groupLabel.includes(',')
+  const mixedKinds = sessions.some(
+    (session) => session.kind === 'meet' || session.kind === 'event',
+  )
+  const tagPracticeGroups = mixedKinds || multiGroups
+  const bits = sessions.map((session) =>
+    describeSession(session, { tagPracticeGroups, mixedKinds }),
+  )
 
-  const bits = sessions.map((session) => {
-    const loc = session.location ? ` at ${session.location}` : ''
-    const time =
-      session.startTime === session.endTime
-        ? `${session.startTime}${loc}`
-        : `${session.startTime} to ${session.endTime}${loc}`
-    if (!multi) return time
-    const names =
-      Array.isArray(session.groups) && session.groups.length
-        ? session.groups.join('/')
-        : groupLabel
-    return `${names}, ${time}`
-  })
+  if (mixedKinds) {
+    if (bits.length === 1) {
+      return `For ${teamName} ${when}: ${bits[0]}.`
+    }
+    return `For ${teamName} ${when}: ${bits.join('. ')}.`
+  }
 
   if (bits.length === 1) {
     return `${groupLabel} practice for ${teamName} ${when} is ${bits[0]}.`
   }
 
   const last = bits[bits.length - 1]
-  const head = bits.slice(0, -1).join(multi ? '. ' : ', ')
-  if (multi) {
+  const head = bits.slice(0, -1).join(multiGroups ? '. ' : ', ')
+  if (multiGroups) {
     return `${groupLabel} practice for ${teamName} ${when}: ${head}. ${last}.`
   }
   return `${groupLabel} practice for ${teamName} ${when}: ${head}, and ${last}.`
@@ -357,12 +454,52 @@ export function expandPracticeDay(tenant, schedule, timeZone, range) {
   return { parsers, occurrences }
 }
 
-export function filterDaySessions(occurrences, groupOrGroups, parsers) {
-  const list = Array.isArray(groupOrGroups) ? groupOrGroups : [groupOrGroups]
+export function expandScheduleDay(tenant, schedule, timeZone, range) {
+  const parsers = getTenantParsers(tenant)
+  const expandOpts = {
+    timeZone,
+    practiceNameFormat: tenant.practiceNameFormat,
+    parsePractice: parsers.parsePractice,
+  }
+  const fromEvents = expandEvents(
+    schedule.events ?? [],
+    range.rangeStart,
+    range.rangeEnd,
+    expandOpts,
+  )
+  const meets = expandMeets(
+    schedule.meets ?? [],
+    range.rangeStart,
+    range.rangeEnd,
+    parsers.parseMeet,
+  )
+  const occurrences = [...fromEvents, ...meets].sort(
+    (a, b) => a.start.getTime() - b.start.getTime(),
+  )
+  return { parsers, occurrences }
+}
+
+export function filterDaySessions(
+  occurrences,
+  groupOrGroups,
+  parsers,
+  kinds = { practices: true, events: false, meets: false },
+) {
+  const list = (Array.isArray(groupOrGroups) ? groupOrGroups : [groupOrGroups]).filter(
+    Boolean,
+  )
   const selected = new Set(list.map((group) => group.id))
   return occurrences.filter((occ) => {
-    if (occ.label && occ.label !== 'practice') return false
-    return parsers.occurrenceMatchesTeams(occ.subTeams ?? [], selected)
+    const kind =
+      occ.label === 'meet' ? 'meet' : occ.label === 'event' ? 'event' : 'practice'
+    if (kind === 'practice') {
+      if (!kinds.practices) return false
+      if (selected.size === 0) return false
+      return parsers.occurrenceMatchesTeams(occ.subTeams ?? [], selected)
+    }
+    if (kind === 'event') return Boolean(kinds.events)
+    if (kind === 'meet') return Boolean(kinds.meets)
+    return false
   })
 }
 
@@ -373,6 +510,7 @@ export function buildSchedulePayload({
   range,
   timeZone,
   sessions,
+  kinds,
 }) {
   const selected = groups?.length ? groups : group ? [group] : []
   const groupLabel = joinSpokenList(selected.map((item) => item.label))
@@ -383,6 +521,7 @@ export function buildSchedulePayload({
     relative: range.relative,
     dateLabel: range.label,
     sessions,
+    kinds,
   })
   return {
     ok: true,
@@ -391,6 +530,11 @@ export function buildSchedulePayload({
     group: selected.map((item) => item.id).join(','),
     groupLabel,
     groups: selected.map((item) => ({ id: item.id, label: item.label })),
+    include: {
+      practices: Boolean(kinds?.practices ?? true),
+      events: Boolean(kinds?.events),
+      meets: Boolean(kinds?.meets),
+    },
     date: range.dayKey,
     dateLabel: range.label,
     timeZone,

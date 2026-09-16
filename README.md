@@ -77,7 +77,7 @@ npm run preview
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /api/tenants` | Public tenant catalog |
-| `GET /api/schedule?team=&group=&date=` | Public practice times + location for a group on a day (voice assistants) |
+| `GET /api/schedule?team=&group=&date=` | Public practice / meet / event times + location for a day (voice assistants) |
 | `GET /api/calendar?d=…` | Inline `.ics` for iOS Add to Calendar |
 | `POST /api/subscribe` | Start / update email subscription (double opt-in) |
 | `GET /api/confirm?token=…` | Confirm subscription |
@@ -94,7 +94,7 @@ npm run preview
 
 ## Public schedule API (voice)
 
-No API key. Same public practice times as the team calendar.
+No API key. Same public practice, meet, and team-event times as the team calendar.
 
 ```
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=today
@@ -104,9 +104,11 @@ GET /api/schedule?team=DelmarDolfins&group=Sr&date=next%20Monday
 GET /api/schedule?team=DelmarDolfins&group=Sr&date=2026-09-16
 GET /api/schedule?team=DelmarDolfins&group=Sr,Jr&date=today
 GET /api/schedule?team=1&group=Sr&group=Jr&date=today&format=spoken
+GET /api/schedule?team=1&include=meets,events&date=today&format=spoken
+GET /api/schedule?team=1&group=Sr,Jr,Jr%20Prep,DEVO&date=today&include=all&format=spoken
 ```
 
-JSON includes `sessions[]` (`startTime`, `endTime`, `location`) and a `spoken` sentence for Siri / Alexa. OpenAPI: [`/openapi.json`](https://myswimday.com/openapi.json). Usage index: `GET /api/schedule`.
+JSON includes `sessions[]` (`kind`, `startTime`, `endTime`, `location`) and a `spoken` sentence for Siri / Alexa. Default `include` is **practices only** (existing shortcuts keep working). `include=meets`, `include=events`, `include=meets,events`, or `include=all`. Group is required for practices; optional when you only ask for meets/events. OpenAPI: [`/openapi.json`](https://myswimday.com/openapi.json). Usage index: `GET /api/schedule`.
 
 **Siri:** there is no downloadable `.shortcut` file. Build it once in the Shortcuts app — [docs/siri-shortcut.md](./docs/siri-shortcut.md). Delmar today, spoken:
 

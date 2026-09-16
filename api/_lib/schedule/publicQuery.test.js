@@ -3,13 +3,16 @@ import { describe, it } from 'node:test'
 import { getTenantBySlug } from '../tenants.js'
 import {
   buildSpoken,
+  filterDaySessions,
   foldGroupKey,
+  parseInclude,
   resolveGroup,
   resolveGroups,
   resolveQueryDate,
   shiftDateKey,
   splitGroupTokens,
 } from './publicQuery.js'
+import { getTenantParsers } from './parse.js'
 import {
   estimatedHouseholds,
   evaluateCounters,
@@ -271,6 +274,194 @@ describe('buildSpoken', () => {
     assert.match(text, /Sr and Jr practice/)
     assert.match(text, /Sr, 6:00 PM to 8:00 PM at Albany Academy/)
     assert.match(text, /Jr, 5:00 PM to 6:00 PM at BCHS/)
+  })
+
+  it('describes a meet without calling it practice', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: '',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      kinds: { practices: false, events: false, meets: true },
+      sessions: [
+        {
+          kind: 'meet',
+          name: 'Starfish Invitational',
+          startTime: '8:00 AM',
+          endTime: '2:00 PM',
+          location: 'RPI',
+        },
+      ],
+    })
+    assert.match(text, /For Delmar Dolfins today/)
+    assert.match(text, /Meet Starfish Invitational/)
+    assert.doesNotMatch(text, /practice/)
+  })
+
+  it('describes a team event', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: '',
+      relative: 'tomorrow',
+      dateLabel: 'Wednesday, Sep 17',
+      kinds: { practices: false, events: true, meets: false },
+      sessions: [
+        {
+          kind: 'event',
+          name: 'Team banquet',
+          startTime: '6:00 PM',
+          endTime: '8:00 PM',
+          location: 'Academy',
+        },
+      ],
+    })
+    assert.match(text, /Team event Team banquet/)
+    assert.match(text, /6:00 PM to 8:00 PM at Academy/)
+  })
+
+  it('says there is no meet when the day is empty', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: '',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      kinds: { practices: false, events: false, meets: true },
+      sessions: [],
+    })
+    assert.equal(text, 'There is no meet for Delmar Dolfins today.')
+  })
+
+  it('says there is no meet or team event', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: '',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      kinds: { practices: false, events: true, meets: true },
+      sessions: [],
+    })
+    assert.equal(
+      text,
+      'There is no meet or team event for Delmar Dolfins today.',
+    )
+  })
+
+  it('keeps practice phrasing when include=all has only practices', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: 'Sr',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      kinds: { practices: true, events: true, meets: true },
+      sessions: [
+        {
+          kind: 'practice',
+          startTime: '6:00 PM',
+          endTime: '8:00 PM',
+          location: 'Albany Academy',
+          groups: ['Sr'],
+        },
+      ],
+    })
+    assert.equal(
+      text,
+      'Sr practice for Delmar Dolfins today is 6:00 PM to 8:00 PM at Albany Academy.',
+    )
+  })
+
+  it('names practices next to a meet on the same day', () => {
+    const text = buildSpoken({
+      teamName: 'Delmar Dolfins',
+      groupLabel: 'Sr',
+      relative: 'today',
+      dateLabel: 'Tuesday, Sep 16',
+      kinds: { practices: true, events: false, meets: true },
+      sessions: [
+        {
+          kind: 'practice',
+          startTime: '6:00 PM',
+          endTime: '8:00 PM',
+          location: 'Albany Academy',
+          groups: ['Sr'],
+        },
+        {
+          kind: 'meet',
+          name: 'Starfish Invitational',
+          startTime: '8:00 AM',
+          endTime: '2:00 PM',
+          location: 'RPI',
+        },
+      ],
+    })
+    assert.match(text, /Sr practice, 6:00 PM to 8:00 PM at Albany Academy/)
+    assert.match(text, /Meet Starfish Invitational/)
+  })
+})
+
+describe('parseInclude', () => {
+  it('defaults to practices only', () => {
+    assert.deepEqual(parseInclude(''), {
+      practices: true,
+      events: false,
+      meets: false,
+    })
+  })
+
+  it('parses all and meets,events', () => {
+    assert.deepEqual(parseInclude('all'), {
+      practices: true,
+      events: true,
+      meets: true,
+    })
+    assert.deepEqual(parseInclude('meets,events'), {
+      practices: false,
+      events: true,
+      meets: true,
+    })
+  })
+
+  it('rejects unknown include tokens', () => {
+    assert.match(parseInclude('banana').error, /Invalid include/)
+  })
+})
+
+describe('filterDaySessions', () => {
+  const parsers = getTenantParsers(delmar)
+  const sr = delmar.groups.find((g) => g.id === 'Sr')
+  const practice = { label: 'practice', subTeams: ['Sr'], name: 'Sr - Academy' }
+  const meet = { label: 'meet', subTeams: [], name: 'Invite' }
+  const event = { label: 'event', subTeams: [], name: 'Banquet' }
+
+  it('keeps practices for the selected group only', () => {
+    const out = filterDaySessions([practice, meet, event], [sr], parsers)
+    assert.deepEqual(
+      out.map((occ) => occ.label),
+      ['practice'],
+    )
+  })
+
+  it('returns team-wide meets when include=meets', () => {
+    const out = filterDaySessions([practice, meet, event], [], parsers, {
+      practices: false,
+      events: false,
+      meets: true,
+    })
+    assert.deepEqual(
+      out.map((occ) => occ.label),
+      ['meet'],
+    )
+  })
+
+  it('include=all keeps group practices plus meets and events', () => {
+    const out = filterDaySessions([practice, meet, event], [sr], parsers, {
+      practices: true,
+      events: true,
+      meets: true,
+    })
+    assert.deepEqual(
+      out.map((occ) => occ.label),
+      ['practice', 'meet', 'event'],
+    )
   })
 })
 

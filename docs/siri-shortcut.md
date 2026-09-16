@@ -78,7 +78,29 @@ Two groups in one ask — comma-separate them (no extra Shortcut steps):
 
 Same thing as `group=Sr&group=Jr`. Siri will name each session (`Sr, 6:00 PM at … Jr, 5:00 PM at …`).
 
+All four Delmar groups in one ask:
+
+`https://myswimday.com/api/schedule?team=1&group=Sr,Jr,Jr%20Prep,DEVO&date=today&format=spoken`
+
 Vortex: `team=2` (or `VortexSwimClub`) and a Vortex group such as `Peak`.
+
+## Meets and team events
+
+You do **not** need a separate shortcut. Existing practice shortcuts stay practices-only until you add `include=`.
+
+Same shortcut, also speak meets and team events that day (`group=` is still required because practices are on):
+
+`https://myswimday.com/api/schedule?team=1&group=Sr,Jr,Jr%20Prep,DEVO&date=today&include=all&format=spoken`
+
+Meets only — no group needed (meets are team-wide):
+
+`https://myswimday.com/api/schedule?team=1&date=today&include=meets&format=spoken`
+
+Team events only: `include=events`. Both: `include=meets,events`.
+
+Optional second shortcut only if you want a different Siri phrase, e.g. name it **Swim meet** so “Hey Siri, swim meet” uses the meets URL, and “Hey Siri, senior practice” stays the practice URL.
+
+If Siri still says there is no meet, there is none on that date in Commit — try `date=this%20Saturday` or `next%20Saturday`.
 
 ## If Siri does nothing
 
