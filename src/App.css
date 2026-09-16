@@ -1520,6 +1520,7 @@
 
 .cal-subscribe__copy-row {
   display: flex;
+  flex-direction: column;
   gap: 0.4rem;
   min-width: 0;
 }
@@ -1527,18 +1528,22 @@
 .cal-subscribe__url {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 2.15rem;
-  padding: 0.3rem 0.55rem;
+  min-height: 4.2rem;
+  padding: 0.4rem 0.55rem;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
   font-size: 0.72rem;
+  line-height: 1.35;
+  resize: none;
+  word-break: break-all;
 }
 
 .cal-subscribe__copy {
   flex: 0 0 auto;
+  align-self: flex-end;
   min-height: 2.15rem;
   padding: 0.3rem 0.7rem;
   border: 1px solid var(--line);

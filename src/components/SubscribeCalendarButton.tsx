@@ -133,9 +133,10 @@ export function SubscribeCalendarButton({
             Subscription Calendar, then paste:
           </p>
           <div className="cal-subscribe__copy-row">
-            <input
+            <textarea
               className="cal-subscribe__url"
               readOnly
+              rows={3}
               value={httpsUrl}
               aria-label="Subscription URL"
               onFocus={(event) => event.currentTarget.select()}
