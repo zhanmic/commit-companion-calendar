@@ -29,6 +29,11 @@ export const TENANTS = [
       { id: 'Other', label: 'Other' },
     ],
     defaultGroups: ['Sr'],
+    /**
+     * Optional override for public API hourly caps.
+     * Default is groups.length × 35 households.
+     */
+    // publicApiHouseholds: 200,
     practiceNameFormat: {
       mode: 'fields',
       separator: '-',
@@ -85,7 +90,10 @@ export function listTenants() {
     slug: t.slug,
     displayName: t.displayName,
     path: t.path,
+    shortSlug: t.shortSlug || undefined,
     slugAliases: t.slugAliases ? [...t.slugAliases] : undefined,
+    defaultTimeZone: t.defaultTimeZone,
+    groups: (t.groups ?? []).map((g) => ({ id: g.id, label: g.label })),
     billingStatus: t.billingStatus || 'none',
     hasCustomer: Boolean(t.stripeCustomerId),
   }))

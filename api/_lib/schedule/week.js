@@ -88,10 +88,36 @@ export function localClock(now, timeZone) {
   }
 }
 
+export function formatClock(date, timeZone) {
+  return format(toZonedTime(date, timeZone), 'h:mm a')
+}
+
 export function formatTimeRange(start, end, timeZone) {
-  const s = toZonedTime(start, timeZone)
-  const e = toZonedTime(end, timeZone)
-  return `${format(s, 'h:mm a')} – ${format(e, 'h:mm a')}`
+  return `${formatClock(start, timeZone)} – ${formatClock(end, timeZone)}`
+}
+
+/**
+ * Local calendar day [start, end) for a `yyyy-MM-dd` key in `timeZone`.
+ * Returns null when the key is missing, malformed, or not a real calendar day.
+ */
+export function getDayRangeForDateKey(dateKey, timeZone) {
+  if (typeof dateKey !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return null
+  }
+  const year = Number(dateKey.slice(0, 4))
+  const month = Number(dateKey.slice(5, 7)) - 1
+  const date = Number(dateKey.slice(8, 10))
+  const rangeStart = atLocalMidnight(year, month, date, timeZone)
+  const local = toZonedTime(rangeStart, timeZone)
+  const dayKey = format(local, 'yyyy-MM-dd')
+  if (dayKey !== dateKey) return null
+  const rangeEnd = atLocalMidnight(year, month, date + 1, timeZone)
+  return {
+    rangeStart,
+    rangeEnd,
+    label: format(local, 'EEEE, MMM d'),
+    dayKey,
+  }
 }
 
 export function formatOccDay(start, timeZone) {

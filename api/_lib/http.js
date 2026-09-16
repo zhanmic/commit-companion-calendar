@@ -23,18 +23,53 @@ export function queryParam(req, name) {
   }
 }
 
-export function sendJson(res, status, body) {
+export function sendJson(res, status, body, headers = {}) {
   res.statusCode = status
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
   res.setHeader('Cache-Control', 'no-store')
+  applyHeaders(res, headers)
   res.end(JSON.stringify(body))
 }
 
-export function sendText(res, status, text, contentType = 'text/plain') {
+export function sendText(
+  res,
+  status,
+  text,
+  contentType = 'text/plain',
+  headers = {},
+) {
   res.statusCode = status
   res.setHeader('Content-Type', `${contentType}; charset=utf-8`)
   res.setHeader('Cache-Control', 'no-store')
+  applyHeaders(res, headers)
   res.end(text)
+}
+
+function applyHeaders(res, headers) {
+  if (!headers || typeof headers !== 'object') return
+  for (const [name, value] of Object.entries(headers)) {
+    if (value === undefined || value === null) continue
+    res.setHeader(name, String(value))
+  }
+}
+
+/** Browser / Shortcuts / GPT clients may call the public schedule API cross-origin. */
+export function setPublicCors(res, methods = 'GET, OPTIONS') {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', methods)
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Max-Age', '86400')
+}
+
+export function clientIp(req) {
+  const forwarded = req?.headers?.['x-forwarded-for']
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0].trim()
+  }
+  if (Array.isArray(forwarded) && typeof forwarded[0] === 'string') {
+    return forwarded[0].split(',')[0].trim()
+  }
+  return req?.socket?.remoteAddress || req?.connection?.remoteAddress || 'unknown'
 }
 
 export function sendHtml(res, status, html) {
