@@ -2442,9 +2442,8 @@ button.month-day__num:focus-visible {
 
 .day-col__head--interactive {
   cursor: pointer;
-  border-radius: 10px;
-  margin: -4px -4px 0;
-  padding: 4px;
+  /* Keep the parent .day-col__head padding. Negative margin + 4px padding
+   * pulled "Mon"/"Wed" into the rounded overflow clip on desktop. */
   transition: background 0.15s ease;
 }
 
