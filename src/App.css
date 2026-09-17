@@ -2840,10 +2840,6 @@ button.month-day__num:focus-visible {
     font-size: 0.62rem;
   }
 
-  .app--fit .hero__sub {
-    display: none;
-  }
-
   .app--fit .settings__button,
   .app--fit .subscribe__button,
   .app--fit .share__button,
