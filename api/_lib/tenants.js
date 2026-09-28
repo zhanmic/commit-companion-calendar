@@ -44,6 +44,11 @@ export const TENANTS = [
     dailySendHour: 7,
     /** Local hour on Sunday to send weekly digests. */
     weeklySendHour: 18,
+    /**
+     * Recovery inbox for Settings → Team → Forgot password.
+     * Override later via TEAM_ADMIN_EMAIL_DELMARDOLFINS or TEAM_ADMIN_EMAILS.
+     */
+    teamAdminEmail: 'zhanmic@gmail.com',
   },
   {
     slug: 'VortexSwimClub',

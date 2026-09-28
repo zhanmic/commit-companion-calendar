@@ -77,12 +77,12 @@ Example Vercel env:
 OPERATOR_ADMIN_PASSWORD=$(openssl rand -hex 16)
 TEAM_ADMIN_TOKENS={"DelmarDolfins":"choose-a-long-secret","VortexSwimClub":"another-long-secret"}
 # Optional — override code default when the coach takes over recovery:
-# TEAM_ADMIN_EMAIL_VORTEXSWIMCLUB=coach@example.com
+# TEAM_ADMIN_EMAILS={"DelmarDolfins":"zhanmic@gmail.com","VortexSwimClub":"coach@example.com"}
 ```
 
 **Change / rotate a team password:** edit `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`) in the Vercel project → Settings → Environment Variables → Production, then redeploy. Old passwords and `?ta=` links stop working after redeploy.
 
-**Forgot password:** Settings → Team → **Forgot password?** emails an unlock link + password to the recovery inbox (Vortex defaults to `zhanmic@gmail.com` until you set `TEAM_ADMIN_EMAIL_VORTEXSWIMCLUB` to the coach). Rate-limited to a few sends per hour.
+**Forgot password:** Settings → Team → **Forgot password?** emails an unlock link + password to the recovery inbox (Delmar + Vortex default to `zhanmic@gmail.com`; override with `TEAM_ADMIN_EMAIL_<SLUG>` when a coach takes over). Rate-limited to a few sends per hour.
 
 **Team unlock (either):**
 - Settings → **Team** → enter team password

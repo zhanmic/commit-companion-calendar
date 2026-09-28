@@ -26,7 +26,9 @@ describe('maskEmail', () => {
 })
 
 describe('getTeamAdminEmail', () => {
-  it('uses Vortex code default', () => {
+  it('uses Delmar and Vortex code defaults', () => {
+    assert.equal(getTeamAdminEmail('DelmarDolfins'), 'zhanmic@gmail.com')
+    assert.equal(getTeamAdminEmail('1'), 'zhanmic@gmail.com')
     assert.equal(getTeamAdminEmail('VortexSwimClub'), 'zhanmic@gmail.com')
     assert.equal(getTeamAdminEmail('2'), 'zhanmic@gmail.com')
   })
@@ -41,10 +43,6 @@ describe('getTeamAdminEmail', () => {
       VortexSwimClub: 'map@example.com',
     })
     assert.equal(getTeamAdminEmail('vortex'), 'map@example.com')
-  })
-
-  it('returns empty for Delmar until configured', () => {
-    assert.equal(getTeamAdminEmail('DelmarDolfins'), '')
   })
 })
 
