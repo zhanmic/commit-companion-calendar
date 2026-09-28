@@ -5,17 +5,20 @@
  *   GET/POST /api/billing/checkout           → op=checkout
  *   POST     /api/billing/portal             → op=portal
  *   POST     /api/billing/team-session       → op=team-session
+ *   POST     /api/billing/forgot-password    → op=forgot-password
  *   POST     /api/billing/operator-session   → op=operator-session
  *   GET/POST /api/billing/webhook            → op=webhook
  *
  * Auth: ops secret, team admin password, or operator admin password.
  */
+import { teamAdminForgotPasswordContent } from './_lib/email.js'
 import { appBaseUrl, queryParam, readJsonBody, sendJson } from './_lib/http.js'
 import { getTenantBySlug } from './_lib/tenants.js'
 import {
   hasOperatorAdminPassword,
   verifyOperatorAdminPassword,
 } from './_lib/operatorAdmin.js'
+import { isResendConfigured, sendEmail } from './_lib/resend.js'
 import {
   billingAdminAuthorized,
   billingAuthorizedForTenant,
@@ -27,6 +30,13 @@ import {
   stripePriceIdForInterval,
   verifyTeamAdminToken,
 } from './_lib/stripe.js'
+import {
+  buildTeamAdminUnlockUrl,
+  consumeForgotPasswordQuota,
+  getTeamAdminEmail,
+  maskEmail,
+} from './_lib/teamAdminRecovery.js'
+import { getTeamAdminPassword } from './_lib/teamAdminSecrets.js'
 
 const WEBHOOK_EVENTS = new Set([
   'checkout.session.completed',
@@ -80,6 +90,7 @@ export default async function handler(req, res) {
           'checkout',
           'portal',
           'team-session',
+          'forgot-password',
           'operator-session',
           'webhook',
         ],
@@ -89,7 +100,7 @@ export default async function handler(req, res) {
     }
     sendJson(res, 400, {
       error:
-        'Missing billing op. Use /api/billing/checkout|portal|team-session|operator-session|webhook',
+        'Missing billing op. Use /api/billing/checkout|portal|team-session|forgot-password|operator-session|webhook',
     })
     return
   }
@@ -97,6 +108,7 @@ export default async function handler(req, res) {
   if (op === 'checkout') return handleCheckout(req, res)
   if (op === 'portal') return handlePortal(req, res)
   if (op === 'team-session') return handleTeamSession(req, res)
+  if (op === 'forgot-password') return handleForgotPassword(req, res)
   if (op === 'operator-session') return handleOperatorSession(req, res)
   if (op === 'webhook') return handleWebhook(req, res)
 
@@ -360,6 +372,93 @@ async function handleTeamSession(req, res) {
     ok: true,
     tenantSlug: tenant.slug,
     displayName: tenant.displayName,
+  })
+}
+
+/**
+ * Email the team password / unlock link to the configured recovery inbox.
+ * Always returns a generic success shape when the tenant exists (no email enumeration).
+ */
+async function handleForgotPassword(req, res) {
+  if (req.method !== 'POST') {
+    res.statusCode = 405
+    res.setHeader('Allow', 'POST, OPTIONS')
+    res.end('Method Not Allowed')
+    return
+  }
+
+  const body = readJsonBody(req)
+  const tenantSlug =
+    typeof body?.tenantSlug === 'string' ? body.tenantSlug.trim() : ''
+
+  if (!tenantSlug) {
+    sendJson(res, 400, { error: 'tenantSlug is required' })
+    return
+  }
+
+  const tenant = getTenantBySlug(tenantSlug)
+  if (!tenant) {
+    sendJson(res, 400, { error: 'Unknown team' })
+    return
+  }
+
+  const recoveryEmail = getTeamAdminEmail(tenant.slug)
+  const password = getTeamAdminPassword(tenant.slug)
+
+  if (!recoveryEmail || !password || !isResendConfigured()) {
+    sendJson(res, 200, {
+      ok: true,
+      sent: false,
+      message:
+        'If a recovery email is configured for this team, a reset link will arrive shortly.',
+    })
+    return
+  }
+
+  const quota = await consumeForgotPasswordQuota(tenant.slug)
+  if (!quota.allowed) {
+    sendJson(res, 429, {
+      error: quota.error || 'Too many reset requests. Try again later.',
+    })
+    return
+  }
+
+  const unlockUrl = buildTeamAdminUnlockUrl(tenant, appBaseUrl(req))
+  if (!unlockUrl) {
+    sendJson(res, 200, {
+      ok: true,
+      sent: false,
+      message:
+        'If a recovery email is configured for this team, a reset link will arrive shortly.',
+    })
+    return
+  }
+
+  const content = teamAdminForgotPasswordContent({
+    tenantName: tenant.displayName,
+    unlockUrl,
+    password,
+  })
+
+  try {
+    await sendEmail({
+      to: recoveryEmail,
+      subject: content.subject,
+      html: content.html,
+      text: content.text,
+    })
+  } catch (err) {
+    console.error('billing/forgot-password failed', err)
+    sendJson(res, 502, {
+      error: 'Could not send reset email. Try again later.',
+    })
+    return
+  }
+
+  sendJson(res, 200, {
+    ok: true,
+    sent: true,
+    message: `Reset link sent to ${maskEmail(recoveryEmail)}.`,
   })
 }
 

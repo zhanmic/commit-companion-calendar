@@ -1,5 +1,54 @@
 import { escapeHtml } from './http.js'
 
+/** Team-admin forgot password — unlock link for Settings → Team. */
+export function teamAdminForgotPasswordContent({
+  tenantName,
+  unlockUrl,
+  password,
+}) {
+  const subject = `${tenantName} team password — My Swim Day`
+  const text = [
+    `Team admin unlock for ${tenantName} on My Swim Day.`,
+    ``,
+    `Open this link to unlock Settings → Team:`,
+    unlockUrl,
+    ``,
+    `Or enter this team password in Settings → Team:`,
+    password,
+    ``,
+    `If you did not request this, you can ignore this email.`,
+    `Change the password in Vercel env TEAM_ADMIN_TOKENS (or TEAM_ADMIN_TOKEN_<SLUG>).`,
+  ].join('\n')
+
+  const html = baseLayout({
+    heading: `Team password for ${tenantName}`,
+    bodyHtml: `
+      <p style="margin:0 0 1rem;line-height:1.5;color:#3d5a62">
+        Use this to unlock <strong>Settings → Team</strong> for
+        <strong>${escapeHtml(tenantName)}</strong>.
+      </p>
+      <p style="margin:0 0 1.25rem">
+        <a href="${escapeHtml(unlockUrl)}"
+           style="display:inline-block;background:#0b6e7a;color:#fff;text-decoration:none;
+                  font-weight:700;padding:0.7rem 1.1rem;border-radius:999px">
+          Unlock team settings
+        </a>
+      </p>
+      <p style="margin:0 0 0.35rem;font-size:0.85rem;line-height:1.45;color:#6a8086">
+        Or enter this password in Settings → Team:
+      </p>
+      <p style="margin:0 0 1rem;font-family:ui-monospace,Menlo,Consolas,monospace;
+         font-size:0.95rem;font-weight:700;color:#163239;word-break:break-all">
+        ${escapeHtml(password)}
+      </p>
+      <p style="margin:0;font-size:0.85rem;line-height:1.45;color:#6a8086">
+        If you did not request this, ignore this email.
+      </p>`,
+  })
+
+  return { subject, html, text }
+}
+
 /** Confirmation email after subscribe. */
 export function confirmEmailContent({
   tenantName,

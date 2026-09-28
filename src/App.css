@@ -877,6 +877,13 @@
   color: var(--error);
 }
 
+.settings__team-ok {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--cyan-soft);
+}
+
 .settings__switch {
   display: grid;
   grid-template-columns: auto 1fr;

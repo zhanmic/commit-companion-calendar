@@ -16,6 +16,7 @@ import {
 } from '../lib/settings'
 import {
   TEAM_ADMIN_EVENT,
+  requestTeamAdminPasswordReset,
   syncTeamAdminFromUrl,
   unlockTeamAdminWithPassword,
 } from '../lib/teamAdmin'
@@ -43,7 +44,9 @@ export function SettingsButton({
   const [teamAdmin, setTeamAdmin] = useState(false)
   const [password, setPassword] = useState('')
   const [manageBusy, setManageBusy] = useState(false)
+  const [forgotBusy, setForgotBusy] = useState(false)
   const [manageError, setManageError] = useState<string | null>(null)
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const format = settings.practiceNameFormat
@@ -115,6 +118,7 @@ export function SettingsButton({
       setTab('calendar')
       setPassword('')
       setManageError(null)
+      setForgotMessage(null)
     }
   }, [open])
 
@@ -173,6 +177,7 @@ export function SettingsButton({
     event.preventDefault()
     setManageBusy(true)
     setManageError(null)
+    setForgotMessage(null)
     const result = await unlockTeamAdminWithPassword(tenant.slug, password)
     setManageBusy(false)
     if (!result.ok) {
@@ -182,6 +187,19 @@ export function SettingsButton({
     setTeamAdmin(true)
     setPassword('')
     setTab('team')
+  }
+
+  async function onForgotPassword() {
+    setForgotBusy(true)
+    setManageError(null)
+    setForgotMessage(null)
+    const result = await requestTeamAdminPasswordReset(tenant.slug)
+    setForgotBusy(false)
+    if (!result.ok) {
+      setManageError(result.error)
+      return
+    }
+    setForgotMessage(result.message)
   }
 
   return (
@@ -247,6 +265,7 @@ export function SettingsButton({
               onClick={() => {
                 setTab('team')
                 setManageError(null)
+                setForgotMessage(null)
               }}
             >
               Team
@@ -533,7 +552,7 @@ export function SettingsButton({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Password"
-                      disabled={manageBusy}
+                      disabled={manageBusy || forgotBusy}
                     />
                   </label>
                   {manageError ? (
@@ -541,13 +560,28 @@ export function SettingsButton({
                       {manageError}
                     </p>
                   ) : null}
-                  <button
-                    type="submit"
-                    className="settings__manage-btn"
-                    disabled={manageBusy}
-                  >
-                    {manageBusy ? 'Checking…' : 'Continue'}
-                  </button>
+                  {forgotMessage ? (
+                    <p className="settings__team-ok" role="status">
+                      {forgotMessage}
+                    </p>
+                  ) : null}
+                  <div className="settings__team-actions">
+                    <button
+                      type="submit"
+                      className="settings__manage-btn"
+                      disabled={manageBusy || forgotBusy}
+                    >
+                      {manageBusy ? 'Checking…' : 'Continue'}
+                    </button>
+                    <button
+                      type="button"
+                      className="settings__text-btn"
+                      disabled={manageBusy || forgotBusy}
+                      onClick={() => void onForgotPassword()}
+                    >
+                      {forgotBusy ? 'Sending…' : 'Forgot password?'}
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
