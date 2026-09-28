@@ -12,6 +12,7 @@ Use this before a team moves from pilot to paid production.
 ## 2. Terms acceptance
 
 - [ ] Set team password in Vercel `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`)
+- [ ] Set recovery email (`teamAdminEmail` on tenant and/or `TEAM_ADMIN_EMAIL_<SLUG>`) so Settings → Team → Forgot password works
 - [ ] Share team-admin access: Settings → Team password, or `https://myswimday.com/{shortSlug}?ta=<password>`
 - [ ] Admin has reviewed [Service description](https://myswimday.com/service) (included / not included, Commit prerequisite)
 - [ ] Admin accepts [Terms](https://myswimday.com/terms) (Checkout TOS checkbox and/or email confirmation)

@@ -84,6 +84,12 @@ export const TENANTS = [
     },
     dailySendHour: 7,
     weeklySendHour: 18,
+    /**
+     * Recovery inbox for Settings → Team → Forgot password.
+     * Override later with coach email via TEAM_ADMIN_EMAIL_VORTEXSWIMCLUB
+     * or TEAM_ADMIN_EMAILS without a code change.
+     */
+    teamAdminEmail: 'zhanmic@gmail.com',
   },
 ]
 

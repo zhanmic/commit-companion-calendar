@@ -95,6 +95,46 @@ export async function unlockTeamAdminWithPassword(
   }
 }
 
+/**
+ * Email the team password / unlock link to the configured recovery inbox.
+ */
+export async function requestTeamAdminPasswordReset(
+  tenantSlug: string,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const res = await fetch('/api/billing/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantSlug }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string
+      ok?: boolean
+      message?: string
+    }
+    if (res.status === 429) {
+      return {
+        ok: false,
+        error: data.error || 'Too many reset requests. Try again later.',
+      }
+    }
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data.error || 'Could not send reset email.',
+      }
+    }
+    return {
+      ok: true,
+      message:
+        data.message ||
+        'If a recovery email is configured for this team, a reset link will arrive shortly.',
+    }
+  } catch {
+    return { ok: false, error: 'Network error — try again.' }
+  }
+}
+
 function stripTaParam(): void {
   try {
     const url = new URL(window.location.href)

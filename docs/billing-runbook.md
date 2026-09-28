@@ -47,6 +47,8 @@ Yearly Club (`STRIPE_PRICE_ID_ANNUAL`) is optional. Plus/Program yearly can wait
 | `BILLING_UI_SECRET` | Optional second ops secret (can match admin secret) |
 | `TEAM_ADMIN_TOKENS` | JSON map of team passwords, e.g. `{"DelmarDolfins":"…"}` |
 | `TEAM_ADMIN_TOKEN_<SLUG>` | Optional per-team password override |
+| `TEAM_ADMIN_EMAILS` | Optional JSON map of recovery emails for Forgot password |
+| `TEAM_ADMIN_EMAIL_<SLUG>` | Optional per-team recovery email (overrides code default) |
 | `OPERATOR_ADMIN_PASSWORD` | Password for operator schedule admin (`?admin=<password>`) |
 | `STRIPE_CHECKOUT_REQUIRE_TOS` | Set to `1` after Dashboard TOS URL is configured |
 
@@ -64,6 +66,7 @@ Yearly Club (`STRIPE_PRICE_ID_ANNUAL`) is optional. Plus/Program yearly can wait
 |--------|--------|
 | Operator admin | Vercel env `OPERATOR_ADMIN_PASSWORD`. Unlock URL: `?admin=<password>`. |
 | Team admin | Vercel env `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`). |
+| Team recovery email | Tenant `teamAdminEmail` in `api/_lib/tenants.js`, or Vercel `TEAM_ADMIN_EMAILS` / `TEAM_ADMIN_EMAIL_<SLUG>`. |
 | After unlock | Browser `localStorage` until Sign out / `?admin=0` / `?ta=0` |
 
 Legacy `?admin=1` (no password) **no longer works**.
@@ -73,13 +76,18 @@ Example Vercel env:
 ```bash
 OPERATOR_ADMIN_PASSWORD=$(openssl rand -hex 16)
 TEAM_ADMIN_TOKENS={"DelmarDolfins":"choose-a-long-secret","VortexSwimClub":"another-long-secret"}
+# Optional — override code default when the coach takes over recovery:
+# TEAM_ADMIN_EMAIL_VORTEXSWIMCLUB=coach@example.com
 ```
 
-Rotate by changing the env value and redeploying (old links/passwords stop working).
+**Change / rotate a team password:** edit `TEAM_ADMIN_TOKENS` (or `TEAM_ADMIN_TOKEN_<SLUG>`) in the Vercel project → Settings → Environment Variables → Production, then redeploy. Old passwords and `?ta=` links stop working after redeploy.
+
+**Forgot password:** Settings → Team → **Forgot password?** emails an unlock link + password to the recovery inbox (Vortex defaults to `zhanmic@gmail.com` until you set `TEAM_ADMIN_EMAIL_VORTEXSWIMCLUB` to the coach). Rate-limited to a few sends per hour.
 
 **Team unlock (either):**
 - Settings → **Team** → enter team password
 - Or share a private link: `https://myswimday.com/1?ta=<password>`
+- Or Settings → Team → **Forgot password?** (recovery email)
 
 After team unlock, Settings → **Team** shows payment controls. Session stays in that browser until **Sign out** or `?ta=0`.
 
