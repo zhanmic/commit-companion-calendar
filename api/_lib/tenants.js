@@ -95,6 +95,9 @@ export const TENANTS = [
      * or TEAM_ADMIN_EMAILS without a code change.
      */
     teamAdminEmail: 'zhanmic@gmail.com',
+    /** Annual plan paid 2026-10-01. Stripe customer: coachnick@teamvortex.org */
+    billingStatus: 'active',
+    stripeCustomerId: 'cus_VMES3pbATmbV3M',
   },
 ]
 

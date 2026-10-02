@@ -61,6 +61,15 @@ export interface Lead {
   outreach_drafts: string | null
   buyer_guess: string | null
   status: LeadStatus
+  /** 1 when their site shows a live calendar with weekly practices. */
+  active_calendar: number
+  /** high | medium | small | none from the Sep–Oct 2026 calendar scan. */
+  calendar_usage: string | null
+  calendar_event_count: number | null
+  calendar_meet_count: number | null
+  calendar_practice_count: number | null
+  calendar_group_count: number | null
+  calendar_days_per_week: number | null
   region_notes: string | null
   updated_at: string
 }
@@ -71,6 +80,8 @@ export function getDb(): DatabaseSync {
   if (db) return db
   ensureDataDir()
   db = new DatabaseSync(DB_PATH)
+  db.exec('PRAGMA journal_mode = WAL')
+  db.exec('PRAGMA busy_timeout = 8000')
   db.exec(`
     CREATE TABLE IF NOT EXISTS leads (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,6 +111,13 @@ export function getDb(): DatabaseSync {
   ensureColumn(db, 'draft_subject', 'TEXT')
   ensureColumn(db, 'draft_hooks', 'TEXT')
   ensureColumn(db, 'outreach_drafts', 'TEXT')
+  ensureColumn(db, 'active_calendar', 'INTEGER NOT NULL DEFAULT 0')
+  ensureColumn(db, 'calendar_usage', 'TEXT')
+  ensureColumn(db, 'calendar_event_count', 'INTEGER')
+  ensureColumn(db, 'calendar_meet_count', 'INTEGER')
+  ensureColumn(db, 'calendar_practice_count', 'INTEGER')
+  ensureColumn(db, 'calendar_group_count', 'INTEGER')
+  ensureColumn(db, 'calendar_days_per_week', 'REAL')
   // One-time style repair each open is cheap
   db.prepare(
     `UPDATE leads

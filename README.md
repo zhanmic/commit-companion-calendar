@@ -39,7 +39,7 @@ Operator docs:
 
 **Roles:** Operator schedule tools = `?admin=<OPERATOR_ADMIN_PASSWORD>` (env). Team billing = Settings → **Team** password or `?ta=` via `TEAM_ADMIN_TOKENS` (env). See billing runbook.
 
-**Team admin UI:** unlock via Settings → Team → password → Billing shows **Get payment link** / **Manage billing**. After pay, set `billingStatus: 'active'` + `stripeCustomerId` on the tenant.
+**Team admin UI:** unlock via Settings → Team → password → Billing shows **Get payment link** / **Manage billing**. After pay, set `billingStatus: 'active'` + `stripeCustomerId` on the tenant. Vortex Swim Club is active on the annual plan as of 2026-10-01 (`cus_VMES3pbATmbV3M`).
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -199,4 +199,4 @@ Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so
 
 ## Local sales tool (not deployed)
 
-`tools/commit-leads` is a **local-only** lead finder / HTML outreach drafter (SQLite + Ollama + Mac Mail). Discover USA Swimming and Commit-hosted `*.commitswim.com` sites, fingerprint for `superTeamId`, then draft HTML. It is not included in the Vercel build. See [`tools/commit-leads/README.md`](tools/commit-leads/README.md).
+`tools/commit-leads` is a **local-only** lead finder / HTML outreach drafter (SQLite + Ollama + Mac Mail). Discover USA Swimming and Commit-hosted `*.commitswim.com` sites, fingerprint for `superTeamId`, score Sep–Oct calendar usage, then draft HTML. It is not included in the Vercel build. See [`tools/commit-leads/README.md`](tools/commit-leads/README.md).

@@ -45,5 +45,7 @@ export const vortexSwimClubTenant: TenantConfig = {
   parsePractice: parseVortexPractice,
   parseMeet: parseVortexMeet,
   occurrenceMatchesTeams: vortexOccurrenceMatchesTeams,
-  // After Stripe Checkout: billingStatus: 'active', stripeCustomerId: 'cus_…'
+  /** Annual plan paid 2026-10-01. Stripe customer: coachnick@teamvortex.org */
+  billingStatus: 'active',
+  stripeCustomerId: 'cus_VMES3pbATmbV3M',
 }

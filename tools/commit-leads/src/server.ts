@@ -11,6 +11,7 @@ import {
   runProcessPending,
   runScore,
   runSeed,
+  runCalendarUsageScan,
   runUsaDiscover,
   runCommitswimDiscover,
   searchLeads,
@@ -151,6 +152,7 @@ async function handleRun(
     action !== 'enrich' &&
     action !== 'score' &&
     action !== 'draft' &&
+    action !== 'calendar-usage' &&
     action !== 'export'
   ) {
     sendJson(res, 400, { error: 'Unknown action' })
@@ -224,7 +226,7 @@ async function handleRun(
     } else if (action === 'process') {
       const oneId = Number(target)
       if (target !== 'all' && Number.isFinite(oneId) && oneId > 0) {
-        log(`Starting process one (#${oneId}: fingerprint → enrich → score)…`)
+        log(`Starting process one (#${oneId}: fingerprint → enrich + calendar → score)…`)
         await runProcessOne(
           oneId,
           {
@@ -234,7 +236,7 @@ async function handleRun(
           log,
         )
       } else {
-        log('Starting process pending (fingerprint → enrich → score)…')
+        log('Starting process pending (fingerprint → enrich + calendar → score)…')
         await runProcessPending(
           {
             limit: body.limit,
@@ -275,6 +277,9 @@ async function handleRun(
           log,
         )
       }
+    } else if (action === 'calendar-usage') {
+      log('Starting calendar usage scan (contacted + replied, Sep–Oct 2026)…')
+      await runCalendarUsageScan({ signal }, log)
     } else {
       log(
         `Starting ${action}${action === 'seed' || action === 'export' ? '' : ` (${target})`}…`,
@@ -579,11 +584,13 @@ async function handleApi(
       touch?: number
       draft_email?: string
       draft_subject?: string
+      active_calendar?: boolean | number | string
     }
     const patch: Partial<{
       status: LeadStatus
       draft_email: string | null
       draft_subject: string | null
+      active_calendar: number
     }> = {}
     if (body.bumpContacted) {
       const touch = ([1, 2, 3] as const).includes(body.touch as 1 | 2 | 3)
@@ -600,6 +607,13 @@ async function handleApi(
     }
     if (typeof body.draft_subject === 'string') {
       patch.draft_subject = body.draft_subject
+    }
+    if (body.active_calendar !== undefined) {
+      const on =
+        body.active_calendar === true ||
+        body.active_calendar === 1 ||
+        body.active_calendar === '1'
+      patch.active_calendar = on ? 1 : 0
     }
     if (Object.keys(patch).length) updateLead(id, patch)
     sendJson(res, 200, { lead: getLead(id) })

@@ -32,13 +32,13 @@ Fingerprint’s browser pass uses Playwright Chromium (installed via `postinstal
 | Section | Purpose |
 |---------|---------|
 | **1 · Discover** | USA Swimming, Commit-hosted `*.commitswim.com`, and/or manual add / seed CSV. |
-| **2 · Process** | Queue or one lead: fingerprint → enrich → score → **researched**. Separate **Generate drafts** (bulk) with its own batch size. Stop buttons cancel after the current step / Ollama call. |
-| **3 · Leads** | Filter/sort, open detail, edit HTML drafts with live preview, Mail.app, status, export CSV. |
+| **2 · Process** | Queue or one lead: fingerprint → enrich (contact + calendar usage counts) → score → **researched**. Separate **Generate drafts** (bulk) with its own batch size. Stop buttons cancel after the current step / Ollama call. |
+| **3 · Leads** | Filter/sort, open detail, edit HTML drafts with live preview, Mail.app, status, mark an active weekly calendar, export CSV. |
 
 ```text
 Discover: usas | commitswim | manual | seed CSV
                 ↓
-Process:  fingerprint → enrich → score  (or disqualified / identified)
+Process:  fingerprint → enrich (contact + calendar usage) → score  (or disqualified / identified)
                 ↓
 Draft:    researched → HTML touches 1→2→3 → drafted
 Leads:    edit HTML + preview → Mail.app → contacted → export
@@ -46,12 +46,14 @@ Leads:    edit HTML + preview → Mail.app → contacted → export
 
 Fingerprint is what filters for **Commit** users among USA Swimming clubs. Hosted `*.commitswim.com` sites are already Commit tenants; fingerprint still extracts `superTeamId`.
 
+Enrich pulls office contact from Commit `website-data-2a` (and site HTML if needed), then scores Sep–Oct 2026 calendar usage (`high` / `medium` / `small` / `none`) with event and meet counts before status becomes **researched**.
+
 ### Discover sources
 
 | Source | What it finds |
 |--------|----------------|
 | USA Swimming | ~2400 clubs with websites from the public directory. Most are **not** on Commit. |
-| Commit-hosted | Public `*.commitswim.com` hosts from [crt.sh](https://crt.sh) certificate transparency (YMCA, Masters, high school, non-USAS). Cache: `data/commitswim-hosts-cache.json` (24h). Does **not** find custom domains. |
+| Commit-hosted | Public `*.commitswim.com` hosts from certificate transparency (YMCA, Masters, high school, non-USAS). Tries [crt.sh](https://crt.sh), then [Cert Spotter](https://sslmate.com/ct_search_api/) if crt.sh is down. If both fail, the last cache is used. Cache: `data/commitswim-hosts-cache.json` (24h). Does **not** find custom domains. |
 | Manual / seed | One-off URL or known `superTeamId`. |
 
 Duplicates (same host or same Commit ID as an existing lead) are tagged in **Evidence** (`duplicate_of:#id`) instead of creating a second row. Do not brute-force `superTeamId`.
@@ -72,11 +74,28 @@ Chromium is launched from Playwright’s install, or `~/Library/Caches/ms-playwr
 | `new` | Imported / added; not fingerprinted yet. |
 | `identified` | Commit ID found; not enriched yet. |
 | `disqualified` | No Commit footprint (or similar reject). |
-| `researched` | Enrich done (contact + Commit ID). Ready for drafts — **not** “email written”. |
+| `researched` | Enrich done (contact + calendar usage). Ready for drafts — **not** “email written”. |
 | `drafted` | Touches **1, 2, and 3** ready. Ready to send. |
 | `contacted_1` | Sent touch 1 (first email). |
 | `contacted_2` | Sent touch 2 (follow-up). |
 | `contacted_3` | Sent touch 3 (close loop). |
+
+### Active weekly calendar
+
+A manual flag, separate from status. Mark a team when their website shows a live calendar with weekly practices on the schedule — a strong chance they will use MySwimDay. Check it in the leads table or the lead detail. The **Calendar** filter combines with Status, State, and Commit (all selected filters apply together). Export includes `active_calendar` (`1` marked, `0` not).
+
+### Calendar usage (Sep–Oct 2026)
+
+Enrich (Process step 2) scores calendar usage when a Commit team first becomes **researched**. **Scan calendars** re-reads Commit for every `contacted_1` / `contacted_2` / `contacted_3` / `replied` lead (same Sep–Oct 2026 window).
+
+| Level | Meaning |
+|-------|---------|
+| `high` | More than 2 practice groups, and practices on about 3.5 or more days a week (Delmar, Vortex). |
+| `medium` | A practice in most weeks. Includes steady weekly schedules with 2 groups or fewer. |
+| `small` | At least one practice in the window, but not a steady weekly plan. |
+| `none` | No practices in Sep–Oct 2026. |
+
+**Events** and **Meets** columns are counts in that same window. The Usage filter combines with Status. CLI: `npm run cli -- calendar` (contacted/replied refresh). Process / enrich fills counts for identified → researched.
 
 ### Outreach (HTML)
 
@@ -133,12 +152,13 @@ Resend free tier is $0 (3,000 emails/month, 100/day). Sends and inbound share th
 npm run cli -- usas                 # full import (~2400 with websites)
 npm run cli -- usas --force         # re-import even if already in DB
 npm run cli -- usas --refresh       # re-download directory cache
-npm run cli -- commitswim           # Commit-hosted *.commitswim.com via crt.sh
+npm run cli -- commitswim           # Commit-hosted *.commitswim.com via certificate transparency
 npm run cli -- commitswim --refresh # re-download certificate host cache
 npm run cli -- process --limit 25
 npm run cli -- fingerprint all
 npm run cli -- enrich all
 npm run cli -- score all
+npm run cli -- calendar             # refresh Sep–Oct usage for contacted/replied
 npm run cli -- export
 npm run cli -- status
 ```

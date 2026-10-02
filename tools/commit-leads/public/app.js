@@ -268,6 +268,35 @@ function renderTargetOptions(leads) {
   }
 }
 
+function hasActiveCalendar(lead) {
+  const v = lead?.active_calendar
+  return v === 1 || v === true || v === '1'
+}
+
+const USAGE_RANK = { high: 3, medium: 2, small: 1, none: 0 }
+
+function usageTitle(lead) {
+  if (!lead?.calendar_usage) return 'Not scanned'
+  const practices = lead.calendar_practice_count ?? 0
+  const groups = lead.calendar_group_count ?? 0
+  const days = lead.calendar_days_per_week ?? 0
+  return `Sep–Oct 2026 · ${practices} practices · ${groups} groups · ${days} days/week`
+}
+
+function usageCell(lead) {
+  const level = lead?.calendar_usage
+  if (!level) return '—'
+  const groups = lead.calendar_group_count
+  const meta =
+    groups == null ? '' : `<div class="usage-meta">${Number(groups)} grp</div>`
+  return `<span class="usage-pill usage-${escapeHtml(level)}" title="${escapeHtml(usageTitle(lead))}">${escapeHtml(level)}</span>${meta}`
+}
+
+function countCell(value) {
+  if (value == null || value === '') return '—'
+  return Number(value).toLocaleString()
+}
+
 function leadSortValue(lead, key) {
   const region = parseRegionNotes(lead.region_notes)
   switch (key) {
@@ -281,6 +310,14 @@ function leadSortValue(lead, key) {
       return region.size ? Number(region.size) : -1
     case 'status':
       return (lead.status || '').toLowerCase()
+    case 'calendar':
+      return hasActiveCalendar(lead) ? 1 : 0
+    case 'usage':
+      return USAGE_RANK[lead.calendar_usage] ?? -1
+    case 'events':
+      return lead.calendar_event_count ?? -1
+    case 'meets':
+      return lead.calendar_meet_count ?? -1
     case 'fit':
       return lead.fit_score ?? -1
     case 'email':
@@ -338,6 +375,8 @@ function filteredSortedLeads() {
   const statusF = document.getElementById('filter-status')?.value || ''
   const stateF = document.getElementById('filter-state')?.value || ''
   const commitF = document.getElementById('filter-commit')?.value || ''
+  const calendarF = document.getElementById('filter-calendar')?.value || ''
+  const usageF = document.getElementById('filter-usage')?.value || ''
 
   let rows = leadsCache.filter((l) => {
     if (statusF && l.status !== statusF) return false
@@ -345,6 +384,10 @@ function filteredSortedLeads() {
     if (stateF && region.state !== stateF) return false
     if (commitF === 'yes' && !l.super_team_id) return false
     if (commitF === 'no' && l.super_team_id) return false
+    if (calendarF === 'yes' && !hasActiveCalendar(l)) return false
+    if (calendarF === 'no' && hasActiveCalendar(l)) return false
+    if (usageF === 'unscanned' && l.calendar_usage) return false
+    if (usageF && usageF !== 'unscanned' && l.calendar_usage !== usageF) return false
     return true
   })
 
@@ -387,12 +430,22 @@ function renderLeads(leads) {
       const active = l.id === selectedId ? 'active' : ''
       const region = parseRegionNotes(l.region_notes)
       const status = l.status || 'new'
-      return `<tr class="${active}" data-id="${l.id}" data-status="${escapeHtml(status)}">
+      const marked = hasActiveCalendar(l)
+      return `<tr class="${active}" data-id="${l.id}" data-status="${escapeHtml(status)}" data-calendar="${marked ? '1' : '0'}">
         <td>${l.id}</td>
         <td>${escapeHtml(l.team_name || '—')}<div class="mono">${escapeHtml(l.website_url || '')}</div></td>
         <td>${escapeHtml(region.state || '—')}${region.city ? `<div class="mono">${escapeHtml(region.city)}</div>` : ''}</td>
         <td>${region.size ? Number(region.size).toLocaleString() : '—'}</td>
         <td>${statusPill(status)}</td>
+        <td>
+          <label class="calendar-mark" title="Active weekly practice calendar">
+            <input type="checkbox" data-calendar-toggle="${l.id}" ${marked ? 'checked' : ''} />
+            ${marked ? '<span class="calendar-pill">weekly</span>' : '<span class="hint">—</span>'}
+          </label>
+        </td>
+        <td>${usageCell(l)}</td>
+        <td title="${escapeHtml(usageTitle(l))}">${countCell(l.calendar_event_count)}</td>
+        <td title="${escapeHtml(usageTitle(l))}">${countCell(l.calendar_meet_count)}</td>
         <td>${l.fit_score ?? '—'}</td>
         <td class="mono">${escapeHtml(l.contact_email || '—')}</td>
         <td class="mono">${escapeHtml(l.super_team_id || '—')}</td>
@@ -504,6 +557,22 @@ async function showDetail(id, opts = {}) {
           </select>
         </dd>
       </div>
+      <div>
+        <dt>Usage · Sep–Oct 2026</dt>
+        <dd>
+          ${lead.calendar_usage ? `<span class="usage-pill usage-${escapeHtml(lead.calendar_usage)}">${escapeHtml(lead.calendar_usage)}</span>` : '—'}
+          <div class="hint">${escapeHtml(usageTitle(lead))}${lead.calendar_usage ? ` · ${countCell(lead.calendar_event_count)} events · ${countCell(lead.calendar_meet_count)} meets` : ''}</div>
+        </dd>
+      </div>
+      <div>
+        <dt>Active calendar</dt>
+        <dd>
+          <label class="calendar-flag">
+            <input type="checkbox" id="active-calendar" ${hasActiveCalendar(lead) ? 'checked' : ''} />
+            <span id="active-calendar-label">Weekly practices on their site calendar${hasActiveCalendar(lead) ? ' <span class="calendar-pill">weekly</span>' : ''}</span>
+          </label>
+        </dd>
+      </div>
     </div>
     <p class="hint">Evidence: ${escapeHtml(lead.evidence || 'none')} · confidence ${lead.confidence ?? '—'} · contact source ${escapeHtml(lead.contact_source || '—')}${region.source ? ` · ${escapeHtml(region.source)}` : ''}</p>
     ${lead.region_notes ? `<p class="hint">Region notes: ${escapeHtml(lead.region_notes)}</p>` : ''}
@@ -564,6 +633,9 @@ async function showDetail(id, opts = {}) {
       body: JSON.stringify({ status: e.target.value }),
     })
     await refresh()
+  })
+  document.getElementById('active-calendar')?.addEventListener('change', async (e) => {
+    await setActiveCalendar(id, e.target.checked)
   })
   ;[...bodyEl.querySelectorAll('tr')].forEach((tr) => {
     tr.classList.toggle('active', Number(tr.dataset.id) === id)
@@ -1223,7 +1295,37 @@ document.getElementById('commitswim-form')?.addEventListener('submit', async (e)
   await runAction('commitswim', commitswimPayload(), logDiscover)
 })
 
+function syncDetailCalendar(id, on) {
+  if (!modalOpen || selectedId !== id) return
+  const box = document.getElementById('active-calendar')
+  if (box) box.checked = on
+  const label = document.getElementById('active-calendar-label')
+  if (label) {
+    label.innerHTML = `Weekly practices on their site calendar${
+      on ? ' <span class="calendar-pill">weekly</span>' : ''
+    }`
+  }
+}
+
+async function setActiveCalendar(id, on) {
+  const lead = leadsCache.find((l) => l.id === id)
+  if (lead) lead.active_calendar = on ? 1 : 0
+  applyLeadView()
+  syncDetailCalendar(id, on)
+  try {
+    await fetchJson(`/api/leads/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active_calendar: on ? 1 : 0 }),
+    })
+  } catch (err) {
+    console.error(err)
+    await refresh()
+  }
+}
+
 bodyEl.addEventListener('click', (e) => {
+  if (e.target.closest('.calendar-mark')) return
   const tr = e.target.closest('tr[data-id]')
   if (!tr) return
   const id = Number(tr.dataset.id)
@@ -1268,6 +1370,17 @@ document.getElementById('filter-state')?.addEventListener('change', () => {
 document.getElementById('filter-commit')?.addEventListener('change', () => {
   applyLeadView()
 })
+document.getElementById('filter-calendar')?.addEventListener('change', () => {
+  applyLeadView()
+})
+document.getElementById('filter-usage')?.addEventListener('change', () => {
+  applyLeadView()
+})
+bodyEl.addEventListener('change', (e) => {
+  const input = e.target.closest('[data-calendar-toggle]')
+  if (!input) return
+  setActiveCalendar(Number(input.dataset.calendarToggle), input.checked)
+})
 
 document.querySelectorAll('#leads-table th.sortable').forEach((th) => {
   th.addEventListener('click', () => {
@@ -1276,7 +1389,10 @@ document.querySelectorAll('#leads-table th.sortable').forEach((th) => {
     if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc'
     else {
       sortKey = key
-      sortDir = key === 'fit' || key === 'size' ? 'desc' : 'asc'
+      sortDir =
+        key === 'fit' || key === 'size' || key === 'calendar' || key === 'usage' || key === 'events' || key === 'meets'
+          ? 'desc'
+          : 'asc'
     }
     applyLeadView()
   })

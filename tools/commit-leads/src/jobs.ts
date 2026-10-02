@@ -35,6 +35,12 @@ import {
 } from './outreachDrafts.js'
 import { scoreLead } from './score.js'
 import {
+  analyzeCalendarUsage,
+  USAGE_WINDOW_LABEL,
+  type CalendarUsage,
+} from './calendarUsage.js'
+import { fetchScheduleData } from './commitApi.js'
+import {
   searchUsaClubs,
   usaRegionNotes,
   type UsaSearchFilters,
@@ -50,6 +56,65 @@ export { JobStoppedError }
 
 function throwIfStopped(signal?: AbortSignal): void {
   if (signal?.aborted) throw new JobStoppedError()
+}
+
+/** Fetch Sep–Oct 2026 calendar and persist usage / event / meet counts. */
+async function applyCalendarUsage(
+  lead: Lead,
+  log: LogFn = console.log,
+): Promise<CalendarUsage> {
+  if (!lead.super_team_id) {
+    throw new Error(`Lead ${lead.id} has no super_team_id`)
+  }
+  const data = await fetchScheduleData(lead.super_team_id, true)
+  const usage = analyzeCalendarUsage(data)
+  updateLead(lead.id, {
+    calendar_usage: usage.level,
+    calendar_event_count: usage.eventCount,
+    calendar_meet_count: usage.meetCount,
+    calendar_practice_count: usage.practiceCount,
+    calendar_group_count: usage.groupCount,
+    calendar_days_per_week: usage.daysPerWeek,
+  })
+  log(
+    `  calendar: ${usage.level} · ${usage.practiceCount} practices · ${usage.groupCount} groups · ${usage.daysPerWeek} days/week · ${usage.eventCount} events · ${usage.meetCount} meets`,
+  )
+  return usage
+}
+
+/**
+ * After contact enrich: score calendar usage, then mark researched.
+ * Calendar failures are logged; status still advances so process can continue.
+ */
+async function finishEnrichWithCalendar(
+  leadId: number,
+  log: LogFn,
+  signal?: AbortSignal,
+): Promise<void> {
+  throwIfStopped(signal)
+  const after = getLead(leadId)!
+  if (!after.super_team_id) return
+
+  try {
+    await sleep(RATE_LIMIT_MS, signal)
+    throwIfStopped(signal)
+    await applyCalendarUsage(after, log)
+  } catch (err) {
+    if (err instanceof JobStoppedError) throw err
+    log(
+      `  calendar: failed · ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+
+  const cur = getLead(leadId)!
+  if (
+    cur.super_team_id &&
+    (cur.status === 'new' ||
+      cur.status === 'identified' ||
+      cur.status === 'researched')
+  ) {
+    updateLead(cur.id, { status: 'researched' })
+  }
 }
 
 export function parseCsv(text: string): Record<string, string>[] {
@@ -244,19 +309,29 @@ export async function runCommitswimDiscover(
   const limit = options.limit ?? 5000
 
   log(
-    `Commit-hosted import: crt.sh *.commitswim.com${options.query ? ` query=${options.query}` : ''} limit=${limit} skipExisting=${skipExisting}`,
+    `Commit-hosted import: *.commitswim.com${options.query ? ` query=${options.query}` : ''} limit=${limit} skipExisting=${skipExisting}`,
   )
   log(
     'Lists public Commit website hosts from certificate transparency (cached ~24h). Skips demo/test slugs. Already-imported hosts are skipped unless force re-import.',
   )
 
-  const { clubs, totalHosts } = await searchCommitswimClubs({
-    query: options.query,
-    limit,
-    forceRefresh: options.forceRefresh,
-  })
+  const { clubs, totalHosts, source, fetchedAt, notice } =
+    await searchCommitswimClubs({
+      query: options.query,
+      limit,
+      forceRefresh: options.forceRefresh,
+    })
+  if (notice) log(notice)
+  const via =
+    source === 'cache'
+      ? 'cached host list'
+      : source === 'crt.sh'
+        ? 'crt.sh'
+        : source === 'certspotter'
+          ? 'Cert Spotter'
+          : `cached host list from ${fetchedAt ?? 'earlier'}`
   log(
-    `Directory: ${totalHosts} certificate hosts → ${clubs.length} real-looking club sites`,
+    `Directory: ${totalHosts} certificate hosts via ${via} → ${clubs.length} real-looking club sites`,
   )
 
   let created = 0
@@ -380,16 +455,8 @@ export async function runProcessPending(
                 `  site: email=${lead.contact_email ?? '(none)'} source=${lead.contact_source ?? '(none)'}`,
               )
             }
-            // Enrich done → researched
-            const after = getLead(lead.id)!
-            if (
-              after.super_team_id &&
-              (after.status === 'new' ||
-                after.status === 'identified' ||
-                after.status === 'researched')
-            ) {
-              updateLead(after.id, { status: 'researched' })
-            }
+            // Calendar counts → then researched
+            await finishEnrichWithCalendar(lead.id, log, signal)
             log(`  status → ${getLead(lead.id)!.status}`)
           } catch (err) {
             if (err instanceof JobStoppedError) throw err
@@ -518,15 +585,7 @@ export async function runProcessOne(
             `  site: email=${current.contact_email ?? '(none)'} source=${current.contact_source ?? '(none)'}`,
           )
         }
-        current = getLead(id)!
-        if (
-          current.super_team_id &&
-          (current.status === 'new' ||
-            current.status === 'identified' ||
-            current.status === 'researched')
-        ) {
-          updateLead(id, { status: 'researched' })
-        }
+        await finishEnrichWithCalendar(id, log, signal)
         log(`  status → ${getLead(id)!.status}`)
       } catch (err) {
         if (err instanceof JobStoppedError) throw err
@@ -584,12 +643,14 @@ export function needsFingerprint(
 /** Has Commit id and not yet enrich-completed. */
 export function needsEnrich(lead: Lead, force = false): boolean {
   if (!lead.super_team_id) return false
+  if (lead.status === 'disqualified' || lead.status === 'lost') return false
   if (force) return true
-  // Identified / still new, or only have USA Swimming registrar contact
+  // Identified / still new, USA Swimming registrar contact, or missing calendar usage
   return (
     lead.status === 'new' ||
     lead.status === 'identified' ||
-    lead.contact_source === 'usa_swimming'
+    lead.contact_source === 'usa_swimming' ||
+    lead.calendar_usage == null
   )
 }
 
@@ -787,15 +848,7 @@ export async function runEnrich(
             `  site: email=${lead.contact_email ?? '(none)'} source=${lead.contact_source ?? '(none)'}`,
           )
         }
-        const after = getLead(lead.id)!
-        if (
-          after.super_team_id &&
-          (after.status === 'new' ||
-            after.status === 'identified' ||
-            after.status === 'researched')
-        ) {
-          updateLead(after.id, { status: 'researched' })
-        }
+        await finishEnrichWithCalendar(lead.id, log, signal)
         log(`  status → ${getLead(lead.id)!.status}`)
       } catch (err) {
         if (err instanceof JobStoppedError) throw err
@@ -970,6 +1023,57 @@ export async function runDraftOne(
       `  failed: ${result.failed.map((f) => `${f.touch} (${f.error})`).join('; ')}`,
     )
   }
+}
+
+const CALENDAR_SCAN_STATUSES = new Set([
+  'contacted_1',
+  'contacted_2',
+  'contacted_3',
+  'replied',
+])
+
+/** Read Sep–Oct 2026 calendars for contacted and replied teams. */
+export async function runCalendarUsageScan(
+  opts: { signal?: AbortSignal } = {},
+  log: LogFn = console.log,
+): Promise<void> {
+  const leads = listLeads().filter(
+    (lead) =>
+      CALENDAR_SCAN_STATUSES.has(lead.status) && !!lead.super_team_id,
+  )
+  log(
+    `Calendar usage · ${USAGE_WINDOW_LABEL} · ${leads.length} contacted/replied teams with a Commit ID`,
+  )
+  let done = 0
+  const tallies = { high: 0, medium: 0, small: 0, none: 0 }
+  try {
+    for (const lead of leads) {
+      throwIfStopped(opts.signal)
+      const label = lead.team_name || lead.website_url || 'lead'
+      try {
+        const usage = await applyCalendarUsage(lead, () => {})
+        done += 1
+        tallies[usage.level] += 1
+        log(
+          `#${lead.id}: ${usage.level} · ${usage.practiceCount} practices · ${usage.groupCount} groups · ${usage.daysPerWeek} days/week · ${usage.eventCount} events · ${usage.meetCount} meets · ${label}`,
+        )
+      } catch (err) {
+        if (err instanceof JobStoppedError) throw err
+        const message = err instanceof Error ? err.message : String(err)
+        log(`#${lead.id}: calendar scan failed · ${label} · ${message}`)
+      }
+      await sleep(RATE_LIMIT_MS, opts.signal)
+    }
+  } catch (err) {
+    if (err instanceof JobStoppedError) {
+      log(`Calendar usage stopped · ${done}/${leads.length} updated`)
+      return
+    }
+    throw err
+  }
+  log(
+    `Calendar usage complete · ${done}/${leads.length} updated · high ${tallies.high} · medium ${tallies.medium} · small ${tallies.small} · none ${tallies.none}`,
+  )
 }
 
 export function runExport(

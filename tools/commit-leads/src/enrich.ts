@@ -113,13 +113,7 @@ export async function enrichFromCommitApi(lead: Lead): Promise<void> {
     if (contact.email) patch.contact_source = 'websiteConfig'
   }
 
-  if (patch.contact_email || lead.super_team_id) {
-    patch.status =
-      lead.status === 'new' || lead.status === 'identified'
-        ? 'researched'
-        : lead.status
-  }
-
+  // Status stays identified until jobs finish calendar usage, then researched.
   updateLead(lead.id, patch)
 }
 
@@ -154,9 +148,5 @@ export async function enrichFromSiteContactPages(
   updateLead(lead.id, {
     contact_email: best,
     contact_source: 'site_html' as ContactSource,
-    status:
-      lead.status === 'new' || lead.status === 'identified'
-        ? 'researched'
-        : lead.status,
   })
 }

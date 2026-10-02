@@ -95,7 +95,7 @@
             <form id="commitswim-form">
               <label
                 class="check has-tip"
-                data-tip="Re-download the crt.sh host list instead of using the 24h cache."
+                data-tip="Re-download the certificate host list instead of using the 24h cache."
               >
                 <input name="forceRefresh" type="checkbox" />
                 Refresh host cache
@@ -178,8 +178,9 @@
       <section class="panel process">
         <h2>2 · Process</h2>
         <p class="hint">
-          Pipeline: fingerprint → enrich → <strong>researched</strong> → generate
-          3-touch drafts → <strong>drafted</strong> → send →
+          Pipeline: fingerprint → enrich (contact + calendar usage) →
+          <strong>researched</strong> → generate 3-touch drafts →
+          <strong>drafted</strong> → send →
           <strong>contacted_1</strong> / <strong>contacted_2</strong> /
           <strong>contacted_3</strong>.
         </p>
@@ -415,6 +416,14 @@
           <button
             type="button"
             class="has-tip"
+            data-action="calendar-usage"
+            data-tip="Re-read Sep–Oct 2026 Commit calendars for contacted and replied teams. Enrich already fills usage when a team becomes researched. High = 3+ groups and about 3.5+ practice days a week. Medium = a practice most weeks. Small = a practice some weeks."
+          >
+            Scan calendars
+          </button>
+          <button
+            type="button"
+            class="has-tip"
             data-action="export"
             data-tip="Write all leads to data/leads-export.csv."
           >
@@ -448,6 +457,31 @@
               <option value="no">No Commit ID</option>
             </select>
           </label>
+          <label
+            class="filter-label has-tip"
+            data-tip="Teams whose site shows a live calendar with weekly practices. Combines with Status, State, and Commit."
+          >
+            Calendar
+            <select id="filter-calendar">
+              <option value="">All</option>
+              <option value="yes">Active weekly</option>
+              <option value="no">Not marked</option>
+            </select>
+          </label>
+          <label
+            class="filter-label has-tip"
+            data-tip="Sep–Oct 2026 practice usage. Combines with Status and the other filters."
+          >
+            Usage
+            <select id="filter-usage">
+              <option value="">All</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="small">Small</option>
+              <option value="none">None</option>
+              <option value="unscanned">Not scanned</option>
+            </select>
+          </label>
           <span id="leads-count" class="hint leads-count"></span>
         </div>
         <div class="table-wrap">
@@ -459,6 +493,38 @@
                 <th data-sort="state" class="sortable" scope="col">State</th>
                 <th data-sort="size" class="sortable" scope="col">Size</th>
                 <th data-sort="status" class="sortable" scope="col">Status</th>
+                <th
+                  data-sort="calendar"
+                  class="sortable has-tip"
+                  scope="col"
+                  data-tip="Mark when their site shows a live calendar with weekly practices."
+                >
+                  Calendar
+                </th>
+                <th
+                  data-sort="usage"
+                  class="sortable has-tip"
+                  scope="col"
+                  data-tip="Sep–Oct 2026. High: 3+ groups and ~3.5+ practice days/week. Medium: a practice most weeks. Small: a practice some weeks."
+                >
+                  Usage
+                </th>
+                <th
+                  data-sort="events"
+                  class="sortable has-tip"
+                  scope="col"
+                  data-tip="Team events in Sep–Oct 2026."
+                >
+                  Events
+                </th>
+                <th
+                  data-sort="meets"
+                  class="sortable has-tip"
+                  scope="col"
+                  data-tip="Meets in Sep–Oct 2026."
+                >
+                  Meets
+                </th>
                 <th data-sort="fit" class="sortable" scope="col">Fit</th>
                 <th data-sort="email" class="sortable" scope="col">Email</th>
                 <th data-sort="commit" class="sortable" scope="col">Commit ID</th>

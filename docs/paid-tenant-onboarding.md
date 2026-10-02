@@ -2,6 +2,14 @@
 
 Use this before a team moves from pilot to paid production.
 
+## Paid tenants
+
+| Tenant | Plan | Paid | Stripe customer |
+|--------|------|------|-----------------|
+| Vortex Swim Club (`VortexSwimClub`, `/2`) | Annual | 2026-10-01 | `cus_VMES3pbATmbV3M` (`coachnick@teamvortex.org`) |
+
+`billingStatus: 'active'` and `stripeCustomerId` are set on the frontend tenant and `api/_lib/tenants.js`. Redeploy so Settings → Team shows **Active** and **Manage billing**.
+
 ## 1. Confirm Commit prerequisite
 
 - [ ] Team uses Commit Swimming

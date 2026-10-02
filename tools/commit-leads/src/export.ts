@@ -22,6 +22,13 @@ const COLUMNS: (keyof Lead)[] = [
   'outreach_drafts',
   'buyer_guess',
   'status',
+  'active_calendar',
+  'calendar_usage',
+  'calendar_event_count',
+  'calendar_meet_count',
+  'calendar_practice_count',
+  'calendar_group_count',
+  'calendar_days_per_week',
   'region_notes',
   'updated_at',
 ]

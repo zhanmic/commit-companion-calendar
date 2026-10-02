@@ -665,6 +665,90 @@ tbody tr[data-status='won'].active {
   background: #e5f3eb;
 }
 
+tbody tr[data-calendar='1'] {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.calendar-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.calendar-mark input {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.calendar-pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--status-researched-bg);
+  border: 1px solid #b7dcc8;
+}
+
+.calendar-flag {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.calendar-flag input {
+  width: auto;
+  margin-top: 0.2rem;
+}
+
+.usage-pill {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.usage-high {
+  color: #0b5f4b;
+  background: #cdeadf;
+  border-color: #8fceb0;
+}
+
+.usage-medium {
+  color: #8a6a12;
+  background: #f3e9c8;
+  border-color: #e2d09a;
+}
+
+.usage-small {
+  color: #4a5560;
+  background: #e8ecef;
+  border-color: #c9d0d6;
+}
+
+.usage-none {
+  color: #5c5c5c;
+  background: #e5e5e5;
+  border-color: #cfcfcf;
+}
+
+.usage-meta {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .status-pill {
   display: inline-block;
   padding: 0.15rem 0.5rem;

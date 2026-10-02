@@ -9,6 +9,7 @@ import {
   runSeed,
   runUsaDiscover,
   runCommitswimDiscover,
+  runCalendarUsageScan,
 } from './jobs.js'
 
 function usage(): never {
@@ -24,11 +25,12 @@ Usage:
   npm run cli -- enrich [id|all]
   npm run cli -- score [id|all]
   npm run cli -- export [path]
+  npm run cli -- calendar
   npm run cli -- status
   npm run ui
 
 Discover: usas / commitswim / manual / seed — add clubs to the DB.
-Process:  fingerprint → enrich → score (process does all three on pending rows).
+Process:  fingerprint → enrich (contact + calendar usage) → score (process does all three on pending rows).
 `)
   process.exit(1)
 }
@@ -143,6 +145,9 @@ async function main(): Promise<void> {
       break
     case 'export':
       runExport(rest[0])
+      break
+    case 'calendar':
+      await runCalendarUsageScan()
       break
     case 'status': {
       const s = getSummary()
