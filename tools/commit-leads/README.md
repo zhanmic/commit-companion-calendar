@@ -46,7 +46,7 @@ Leads:    edit HTML + preview → Mail.app → contacted → export
 
 Fingerprint is what filters for **Commit** users among USA Swimming clubs. Hosted `*.commitswim.com` sites are already Commit tenants; fingerprint still extracts `superTeamId`.
 
-Enrich pulls office contact from Commit `website-data-2a` (and site HTML if needed), then scores Sep–Oct 2026 calendar usage (`high` / `medium` / `small` / `none`) with event and meet counts before status becomes **researched**.
+Enrich pulls the office inbox from Commit `website-data-2a`. When that inbox is empty, it picks a person published on the coaches page (director, head coach, or admin on an organization domain before an assistant or a personal address) and stores that as `staff_page`. Site HTML is only used if both are missing. It then scores Sep–Oct 2026 calendar usage (`high` / `medium` / `small` / `none`) with event and meet counts before status becomes **researched**.
 
 ### Discover sources
 
@@ -177,7 +177,7 @@ Start from `seeds.example.csv` (includes Delmar Dolfins).
 
 ## Compliance
 
-- Prefer `websiteConfig.contact` (team/office) over coach personal inboxes.
+- Prefer `websiteConfig.contact` (team/office). If that inbox is empty, use a published coaches-page contact (`staff_page`): director, head coach, or admin on an organization domain before assistants and personal inboxes.
 - Respect rate limits (`RATE_LIMIT_MS`), robots.txt, and applicable email laws (CAN-SPAM / CASL).
 - Human-in-the-loop for sends — this tool does not send email.
 - Do not brute-force `superTeamId` values.

@@ -35,6 +35,7 @@ export function nextContactedStatus(
 
 export type ContactSource =
   | 'websiteConfig'
+  | 'staff_page'
   | 'site_html'
   | 'manual'
   | 'usa_swimming'
