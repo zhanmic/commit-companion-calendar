@@ -22,6 +22,7 @@ import {
 
 const delmar = getTenantBySlug('DelmarDolfins')
 const vortex = getTenantBySlug('VortexSwimClub')
+const donner = getTenantBySlug('DonnerSwimClub')
 
 describe('resolveGroup', () => {
   it('maps senior to Delmar Sr', () => {
@@ -50,6 +51,16 @@ describe('resolveGroup', () => {
   it('maps Peak for Vortex without stealing Delmar aliases', () => {
     const { group } = resolveGroup(vortex, 'peak')
     assert.equal(group.id, 'Peak')
+  })
+
+  it('maps Donner groups, including D Group as Developmental', () => {
+    assert.equal(getTenantBySlug('3')?.slug, 'DonnerSwimClub')
+    assert.equal(getTenantBySlug('Donner')?.displayName, 'Donner Swim Club')
+    assert.equal(resolveGroup(donner, 'senior').group.id, 'Senior')
+    assert.equal(resolveGroup(donner, 'developmental').group.id, 'Developmental')
+    assert.equal(resolveGroup(donner, 'pre-team').group.id, 'Pre Team')
+    assert.equal(resolveGroup(donner, 'd group').group.id, 'Developmental')
+    assert.equal(resolveGroup(delmar, 'developmental').group.id, 'DEVO')
   })
 
   it('folds punctuation in group names', () => {
@@ -422,6 +433,45 @@ describe('parseInclude', () => {
 
   it('rejects unknown include tokens', () => {
     assert.match(parseInclude('banana').error, /Invalid include/)
+  })
+})
+
+describe('Donner practice parser', () => {
+  const { parsePractice } = getTenantParsers(donner)
+
+  it('tags combined titles and reads the pool from the description', () => {
+    assert.deepEqual(
+      parsePractice('Age Group/Senior', donner.practiceNameFormat, {
+        description: 'EAST',
+      }).subTeams,
+      ['Age Group', 'Senior'],
+    )
+    assert.equal(
+      parsePractice('Novice', donner.practiceNameFormat, {
+        description: 'East High School',
+      }).location,
+      'Columbus East',
+    )
+    const combined = parsePractice('D Group/Senior', donner.practiceNameFormat, {
+      description: 'Dryland 5:30 NORTH',
+    })
+    assert.deepEqual(combined.subTeams, ['Developmental', 'Senior'])
+    assert.equal(combined.location, 'Columbus North')
+    assert.deepEqual(
+      parsePractice('PreTeam', donner.practiceNameFormat).subTeams,
+      ['Pre Team'],
+    )
+  })
+
+  it('shows all-group cancellations on every training group', () => {
+    assert.deepEqual(
+      parsePractice('NO PRACTICE', donner.practiceNameFormat).subTeams,
+      ['Pre Team', 'Novice', 'Developmental', 'Age Group', 'Senior'],
+    )
+    assert.deepEqual(
+      parsePractice('Team Tryouts', donner.practiceNameFormat).subTeams,
+      ['Other'],
+    )
   })
 })
 

@@ -201,6 +201,60 @@ export function vortexOccurrenceMatchesTeams(teams, selected) {
   return teams.some((t) => selected.has(t))
 }
 
+const DONNER_NAMED_GROUP_IDS = [
+  'Pre Team',
+  'Novice',
+  'Developmental',
+  'Age Group',
+  'Senior',
+]
+
+const DONNER_ALL_GROUPS =
+  /\b(?:no|canceled|cancelled)\s+practices?\b|\bpractices?\s+cancell?ed\b|\ball\s+groups\b/i
+
+/** Keyword scan of a Donner practice title. "D Group" is Developmental. */
+export function parseDonnerSubTeams(name) {
+  const raw = name.trim()
+  if (DONNER_ALL_GROUPS.test(raw)) return [...DONNER_NAMED_GROUP_IDS]
+
+  let scan = raw.toLowerCase()
+  const found = new Set()
+
+  if (/\bd\s*-?\s*groups?\b/.test(scan)) {
+    found.add('Developmental')
+    scan = scan.replace(/\bd\s*-?\s*groups?\b/g, ' ')
+  }
+
+  if (/\bpre\s*-?\s*teams?\b/.test(scan)) found.add('Pre Team')
+  if (/\bnovice\b/.test(scan)) found.add('Novice')
+  if (/\bdevelopment(?:al)?\b/.test(scan) || /\bdevo\b/.test(scan)) {
+    found.add('Developmental')
+  }
+  if (/\bage\s*-?\s*groups?\b/.test(scan)) found.add('Age Group')
+  if (/\bseniors?\b/.test(scan)) found.add('Senior')
+
+  if (found.size === 0) return ['Other']
+  return DONNER_NAMED_GROUP_IDS.filter((id) => found.has(id))
+}
+
+const DONNER_LOCATION_PATTERNS = [
+  { match: /\beast\b/i, label: 'Columbus East' },
+  { match: /\bnorth\b/i, label: 'Columbus North' },
+  { match: /\bdonner\s*park\b/i, label: 'Donner Park' },
+]
+
+export function parseDonnerLocation(text) {
+  for (const { match, label } of DONNER_LOCATION_PATTERNS) {
+    if (match.test(text)) return label
+  }
+  return null
+}
+
+export function donnerOccurrenceMatchesTeams(teams, selected) {
+  if (selected.size === 0) return false
+  return teams.some((t) => selected.has(t))
+}
+
 export function parseMeet(meet) {
   const start = new Date(meet.startDateTime)
   const end = new Date(meet.endDateTime)
@@ -248,6 +302,22 @@ export function getTenantParsers(tenant) {
       },
       parseMeet,
       occurrenceMatchesTeams: vortexOccurrenceMatchesTeams,
+    }
+  }
+
+  if (tenant.slug === 'DonnerSwimClub') {
+    return {
+      parsePractice: (name, _format, context) => {
+        const locationSource = [name, context?.description]
+          .filter(Boolean)
+          .join(' ')
+        return {
+          subTeams: parseDonnerSubTeams(name),
+          location: parseDonnerLocation(locationSource),
+        }
+      },
+      parseMeet,
+      occurrenceMatchesTeams: donnerOccurrenceMatchesTeams,
     }
   }
 

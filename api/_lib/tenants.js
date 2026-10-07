@@ -99,6 +99,44 @@ export const TENANTS = [
     billingStatus: 'active',
     stripeCustomerId: 'cus_VMES3pbATmbV3M',
   },
+  {
+    slug: 'DonnerSwimClub',
+    displayName: 'Donner Swim Club',
+    path: '/3',
+    shortSlug: '3',
+    slugAliases: ['Donner', 'DSC'],
+    superTeamId: 'ejPNpYDhMg53othu4',
+    defaultTimeZone: 'America/New_York',
+    groups: [
+      { id: 'Pre Team', label: 'Pre Team' },
+      { id: 'Novice', label: 'Novice' },
+      { id: 'Developmental', label: 'Developmental' },
+      { id: 'Age Group', label: 'Age Group' },
+      { id: 'Senior', label: 'Senior' },
+      { id: 'Other', label: 'Other' },
+    ],
+    defaultGroups: [
+      'Pre Team',
+      'Novice',
+      'Developmental',
+      'Age Group',
+      'Senior',
+    ],
+    icsFilenamePrefix: 'donner-swim-club',
+    practiceNameFormat: {
+      mode: 'keywords',
+      separator: '-',
+      fields: ['group', 'location', 'time'],
+    },
+    dailySendHour: 7,
+    weeklySendHour: 18,
+    /**
+     * Recovery inbox for Settings → Team → Forgot password.
+     * Published head-coach address from donnerswimclub.com.
+     * Override via TEAM_ADMIN_EMAIL_DONNERSWIMCLUB or TEAM_ADMIN_EMAILS.
+     */
+    teamAdminEmail: 'headcoach@donnerswimclub.com',
+  },
 ]
 
 export function listTenants() {

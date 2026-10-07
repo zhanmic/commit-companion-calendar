@@ -32,6 +32,8 @@ const GROUP_ALIASES = {
   seniorsjunior: 'Sr/Jr',
   agegroup: 'Age Group',
   agegroups: 'Age Group',
+  /** Donner titles abbreviate Developmental as "D Group". */
+  dgroup: 'Developmental',
 }
 
 export function foldGroupKey(value) {
