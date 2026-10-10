@@ -3,6 +3,7 @@ import { fetchScheduleData, fetchTeamConfig } from './commit.js'
 import { expandEvents, expandMeets } from './expand.js'
 import { getTenantParsers } from './parse.js'
 import {
+  formatDateSpan,
   formatOccDay,
   formatTimeRange,
   getDayRange,
@@ -104,7 +105,9 @@ export function filterDigest(
       : []
     return {
       day: formatOccDay(occ.start, tz),
-      time: formatTimeRange(occ.start, occ.end, tz),
+      time:
+        formatDateSpan(occ.start, occ.end, tz) ??
+        formatTimeRange(occ.start, occ.end, tz),
       name: occ.name,
       location: kind === 'event' ? null : occ.location,
       groups,

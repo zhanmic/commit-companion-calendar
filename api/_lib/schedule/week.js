@@ -96,6 +96,42 @@ export function formatTimeRange(start, end, timeZone) {
   return `${formatClock(start, timeZone)} – ${formatClock(end, timeZone)}`
 }
 
+/** Last local calendar day occupied by [start, end). */
+function occupiedLocalEnd(start, end, timeZone) {
+  if (end.getTime() <= start.getTime()) return toZonedTime(start, timeZone)
+  const zonedEnd = toZonedTime(end, timeZone)
+  const atMidnight =
+    zonedEnd.getHours() === 0 &&
+    zonedEnd.getMinutes() === 0 &&
+    zonedEnd.getSeconds() === 0 &&
+    zonedEnd.getMilliseconds() === 0
+  return atMidnight ? addDays(zonedEnd, -1) : zonedEnd
+}
+
+export function isMultiDayInterval(start, end, timeZone) {
+  const s = toZonedTime(start, timeZone)
+  const e = occupiedLocalEnd(start, end, timeZone)
+  return (
+    s.getFullYear() !== e.getFullYear() ||
+    s.getMonth() !== e.getMonth() ||
+    s.getDate() !== e.getDate()
+  )
+}
+
+/** "Oct 23–25" when the interval covers more than one local day, else null. */
+export function formatDateSpan(start, end, timeZone) {
+  if (!isMultiDayInterval(start, end, timeZone)) return null
+  const s = toZonedTime(start, timeZone)
+  const e = occupiedLocalEnd(start, end, timeZone)
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+    return `${format(s, 'MMM d')}–${format(e, 'd')}`
+  }
+  if (s.getFullYear() === e.getFullYear()) {
+    return `${format(s, 'MMM d')}–${format(e, 'MMM d')}`
+  }
+  return `${format(s, 'MMM d, yyyy')}–${format(e, 'MMM d, yyyy')}`
+}
+
 /**
  * Local calendar day [start, end) for a `yyyy-MM-dd` key in `timeZone`.
  * Returns null when the key is missing, malformed, or not a real calendar day.

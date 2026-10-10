@@ -17,6 +17,8 @@ export interface OpenMailInput {
   to: string | null
   subject: string
   body: string
+  /** Send immediately. Otherwise leave a visible Mail.app draft. */
+  send?: boolean
 }
 
 export interface OpenMailResult {
@@ -33,7 +35,7 @@ function escapeAppleScript(text: string): string {
     .replace(/\r/g, '\n')
 }
 
-/** Create a visible draft in macOS Mail.app (server must run on the Mac). */
+/** Create a Mail.app message (server must run on macOS). Sends when `send` is set. */
 export async function openMailDraft(
   input: OpenMailInput,
 ): Promise<OpenMailResult> {
@@ -55,6 +57,13 @@ export async function openMailDraft(
     wrapEmailHtmlDocument(isHtml ? rawBody : rawBody.replace(/\n/g, '<br>\n')),
   )
   const to = (input.to || '').trim()
+  if (input.send && !to) {
+    return {
+      ok: false,
+      method: 'none',
+      message: 'No recipient — add an office email before sending',
+    }
+  }
   const fromAddr = MAIL_FROM.trim()
   const fromName = SENDER_NAME.trim()
   const senderValue = fromName
@@ -69,9 +78,15 @@ export async function openMailDraft(
     end tell`
     : ''
 
+  const visible = input.send ? 'false' : 'true'
+  const finish = input.send
+    ? `delay 1
+  send newMessage`
+    : 'activate'
+
   const script = `
 tell application "Mail"
-  set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${plainBody}", visible:true}
+  set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${plainBody}", visible:${visible}}
   ${recipientBlock}
   try
     set sender of newMessage to "${senderEsc}"
@@ -83,7 +98,7 @@ tell application "Mail"
   try
     set html content of newMessage to "${htmlDoc}"
   end try
-  activate
+  ${finish}
 end tell
 `
 
@@ -92,15 +107,17 @@ end tell
   try {
     await writeFile(scriptPath, script, 'utf8')
     await execFileAsync('osascript', [scriptPath], {
-      timeout: 15_000,
+      timeout: input.send ? 60_000 : 15_000,
       maxBuffer: 2 * 1024 * 1024,
     })
     return {
       ok: true,
       method: 'mail_app',
-      message: to
-        ? `Opened Mail draft to ${to} from ${fromAddr} (HTML)`
-        : `Opened Mail draft from ${fromAddr} (HTML; add recipient manually)`,
+      message: input.send
+        ? `Sent to ${to} from ${fromAddr} (HTML)`
+        : to
+          ? `Opened Mail draft to ${to} from ${fromAddr} (HTML)`
+          : `Opened Mail draft from ${fromAddr} (HTML; add recipient manually)`,
     }
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)

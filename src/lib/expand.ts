@@ -225,7 +225,9 @@ export function expandMeets(
     const parsed = parseMeet(meet)
     if (!parsed) continue
     const { start, end, name, location } = parsed
-    if (start < rangeStart || start >= rangeEnd) continue
+    // A meet that started before this week still belongs on the days it
+    // continues into (Commit draws one bar across every overlapped day).
+    if (!intervalOverlapsRange(start, end, rangeStart, rangeEnd)) continue
 
     results.push({
       id: `meet-${meet._id}-${start.getTime()}`,
@@ -242,4 +244,17 @@ export function expandMeets(
   }
 
   return results.sort((a, b) => a.start.getTime() - b.start.getTime())
+}
+
+/** [start, end) overlaps [rangeStart, rangeEnd). A zero-length interval is a point. */
+function intervalOverlapsRange(
+  start: Date,
+  end: Date,
+  rangeStart: Date,
+  rangeEnd: Date,
+): boolean {
+  if (end.getTime() <= start.getTime()) {
+    return start >= rangeStart && start < rangeEnd
+  }
+  return start < rangeEnd && end > rangeStart
 }

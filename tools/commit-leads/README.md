@@ -103,7 +103,8 @@ Enrich (Process step 2) scores calendar usage when a Commit team first becomes *
 2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes. **Force regenerate** only hits the **Force statuses** you check (default: **drafted**; check **researched** to rewrite those too). Status becomes **drafted** when all three exist (does not overwrite contacted_1/2/3). Existing drafts stay until you force-regenerate.
 3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Copy draft** (HTML + plain) or **Open in Mail**.
 4. Mail.app opens an HTML draft. Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). **Open Mail + contacted** / **Mark contacted** advances `contacted_1` → `contacted_2` → `contacted_3` (from the active touch; never goes backward).
-5. Later: send touch 2 / 3 from the same lead; status moves to `contacted_2` / `contacted_3`.
+5. **Send first emails** (bulk) sends the saved touch 1 for `drafted` leads that have an office email, then sets `contacted_1`. It asks for confirmation, pauses between sends, skips leads with no address or no touch 1, and stops if Mail fails. Already-sent leads stay `contacted_1` if you hit **Stop send**. The UI server must be running on this Mac. CLI: `npm run cli -- send-first --yes --limit 10`.
+6. Later: send touch 2 / 3 from the same lead; status moves to `contacted_2` / `contacted_3`.
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
 
@@ -117,7 +118,7 @@ npm run ui
 
 Open [http://127.0.0.1:3847](http://127.0.0.1:3847). Bind defaults to `0.0.0.0`; on start the server prints real LAN IPv4 URLs for a phone on the same Wi‑Fi. Discover and Process can run together; the leads table refreshes during batches.
 
-**Open in Mail** uses macOS Mail.app via `osascript` on the machine running the server (sets HTML content when possible). The tool does **not** send mail — you send the draft yourself.
+**Open in Mail** uses macOS Mail.app via `osascript` on the machine running the server (sets HTML content when possible) and leaves a draft for you to send. **Send first emails** uses the same path and calls Mail’s send for touch 1.
 
 ## Send as myswimday.com
 
@@ -159,6 +160,7 @@ npm run cli -- fingerprint all
 npm run cli -- enrich all
 npm run cli -- score all
 npm run cli -- calendar             # refresh Sep–Oct usage for contacted/replied
+npm run cli -- send-first --yes      # send touch 1 for up to 10 drafted leads
 npm run cli -- export
 npm run cli -- status
 ```
@@ -179,7 +181,7 @@ Start from `seeds.example.csv` (includes Delmar Dolfins).
 
 - Prefer `websiteConfig.contact` (team/office). If that inbox is empty, use a published coaches-page contact (`staff_page`): director, head coach, or admin on an organization domain before assistants and personal inboxes.
 - Respect rate limits (`RATE_LIMIT_MS`), robots.txt, and applicable email laws (CAN-SPAM / CASL).
-- Human-in-the-loop for sends — this tool does not send email.
+- Bulk send is explicit (`Send first emails` confirm, or CLI `--yes`). It only sends touch 1 to status `drafted`.
 - Do not brute-force `superTeamId` values.
 
 ## Data

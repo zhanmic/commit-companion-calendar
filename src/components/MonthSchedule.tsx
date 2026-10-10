@@ -11,8 +11,9 @@ import type { MonthModel, MonthWeek } from '../lib/month'
 import { useTenant } from '../tenants/TenantContext'
 import {
   dayHeading,
+  formatDateSpan,
   formatTimeRangeCompact,
-  isOccurrenceOnDay,
+  occurrenceFallsOnDay,
   type CalendarDay,
 } from '../lib/week'
 import type { Occurrence } from '../types'
@@ -94,7 +95,7 @@ export function MonthSchedule({
   }
 
   function occsOnDay(day: CalendarDay): Occurrence[] {
-    return occurrences.filter((o) => isOccurrenceOnDay(o.start, day, timeZone))
+    return occurrences.filter((o) => occurrenceFallsOnDay(o, day, timeZone))
   }
 
   function openDayDetail(day: CalendarDay, dayOccs: Occurrence[]) {
@@ -341,5 +342,9 @@ function uniqueAccents(
 }
 
 function formatStart(occ: Occurrence, timeZone: string): string {
+  if (occ.label !== 'practice') {
+    const span = formatDateSpan(occ.start, occ.end, timeZone)
+    if (span) return span
+  }
   return formatTimeRangeCompact(occ.start, occ.end, timeZone).split('–')[0] ?? ''
 }

@@ -10,6 +10,7 @@ import {
   runUsaDiscover,
   runCommitswimDiscover,
   runCalendarUsageScan,
+  runSendFirstTouch,
 } from './jobs.js'
 
 function usage(): never {
@@ -26,6 +27,7 @@ Usage:
   npm run cli -- score [id|all]
   npm run cli -- export [path]
   npm run cli -- calendar
+  npm run cli -- send-first --yes [--limit 10] [--pause 4]
   npm run cli -- status
   npm run ui
 
@@ -149,6 +151,26 @@ async function main(): Promise<void> {
     case 'calendar':
       await runCalendarUsageScan()
       break
+    case 'send-first': {
+      let limit = 10
+      let delayMs = 4000
+      let yes = false
+      for (let i = 0; i < rest.length; i++) {
+        const a = rest[i]
+        if (a === '--limit') limit = Number(rest[++i])
+        else if (a === '--pause') delayMs = Number(rest[++i]) * 1000
+        else if (a === '--yes') yes = true
+        else if (a === '--help') usage()
+      }
+      if (!yes) {
+        console.error(
+          'Refusing to send. Re-run with --yes to send touch 1 for drafted leads via Mail.app.',
+        )
+        process.exit(1)
+      }
+      await runSendFirstTouch({ limit, delayMs })
+      break
+    }
     case 'status': {
       const s = getSummary()
       console.log(`Total leads: ${s.total}`)

@@ -7,7 +7,7 @@ import {
 } from '../lib/groups'
 import { PRODUCT_NAME } from '../product'
 import { useTenant } from '../tenants/TenantContext'
-import { formatTimeRange } from '../lib/week'
+import { formatOccurrenceWhen } from '../lib/week'
 import type { Occurrence } from '../types'
 import type { CSSProperties } from 'react'
 import { AddToCalendarButton } from './AddToCalendarButton'
@@ -120,7 +120,7 @@ export function DayDetailSheet({
                   <div className="day-sheet__card-meta">
                     <SessionKindIcon kind={kind} className="day-sheet__badge" />
                     <span className="day-sheet__card-time">
-                      {formatTimeRange(occ.start, occ.end, timeZone)}
+                      {formatOccurrenceWhen(occ.start, occ.end, timeZone)}
                     </span>
                   </div>
                   <AddToCalendarButton

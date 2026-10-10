@@ -7,6 +7,7 @@ import { expandEvents, expandMeets } from './expand.js'
 import { getTenantParsers } from './parse.js'
 import {
   formatClock,
+  formatDateSpan,
   formatTimeRange,
   getDayRange,
   getDayRangeForDateKey,
@@ -275,13 +276,15 @@ export function resolveQueryDate(raw, timeZone, now = new Date()) {
 }
 
 export function formatSession(occ, timeZone) {
+  const dates = formatDateSpan(occ.start, occ.end, timeZone)
   return {
     kind:
       occ.label === 'meet' ? 'meet' : occ.label === 'event' ? 'event' : 'practice',
     name: occ.name,
-    time: formatTimeRange(occ.start, occ.end, timeZone),
+    time: dates ?? formatTimeRange(occ.start, occ.end, timeZone),
     startTime: formatClock(occ.start, timeZone),
     endTime: formatClock(occ.end, timeZone),
+    ...(dates ? { dates } : {}),
     location: occ.location || null,
     groups: Array.isArray(occ.subTeams)
       ? occ.subTeams.filter((g) => typeof g === 'string' && g.trim())
@@ -351,6 +354,7 @@ export function parseInclude(raw) {
 
 function sessionTimeBit(session) {
   const loc = session.location ? ` at ${session.location}` : ''
+  if (session.dates) return `${session.dates}${loc}`
   if (session.startTime === session.endTime) {
     return `${session.startTime}${loc}`
   }

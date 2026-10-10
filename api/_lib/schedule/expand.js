@@ -168,7 +168,8 @@ export function expandMeets(meets, rangeStart, rangeEnd, parseMeet) {
     const parsed = parseMeet(meet)
     if (!parsed) continue
     const { start, end, name, location } = parsed
-    if (start < rangeStart || start >= rangeEnd) continue
+    // Include meets that started earlier but still overlap this window.
+    if (!intervalOverlapsRange(start, end, rangeStart, rangeEnd)) continue
     results.push({
       id: `meet-${meet._id}-${start.getTime()}`,
       name,
@@ -180,4 +181,12 @@ export function expandMeets(meets, rangeStart, rangeEnd, parseMeet) {
     })
   }
   return results.sort((a, b) => a.start.getTime() - b.start.getTime())
+}
+
+/** [start, end) overlaps [rangeStart, rangeEnd). A zero-length interval is a point. */
+function intervalOverlapsRange(start, end, rangeStart, rangeEnd) {
+  if (end.getTime() <= start.getTime()) {
+    return start >= rangeStart && start < rangeEnd
+  }
+  return start < rangeEnd && end > rangeStart
 }

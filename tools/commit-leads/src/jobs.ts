@@ -13,6 +13,7 @@ import {
   findLeadByHostname,
   findLeadBySuperTeamId,
   listLeads,
+  nextContactedStatus,
   statusCounts,
   updateLead,
   upsertSeed,
@@ -33,6 +34,7 @@ import {
   hasTouch,
   missingTouches,
 } from './outreachDrafts.js'
+import { openMailDraft } from './openMail.js'
 import { scoreLead } from './score.js'
 import {
   analyzeCalendarUsage,
@@ -979,6 +981,91 @@ export async function runDraftPending(
   } catch (err) {
     if (err instanceof JobStoppedError) {
       log('Stopped — finished leads keep their drafts')
+      return
+    }
+    throw err
+  }
+}
+
+/**
+ * Send touch 1 through Mail.app for drafted leads that have an office email
+ * and a saved first touch. Marks each success contacted_1. Stops on Mail failure.
+ */
+export async function runSendFirstTouch(
+  options: {
+    limit?: number
+    delayMs?: number
+    signal?: AbortSignal
+  } = {},
+  log: LogFn = console.log,
+): Promise<void> {
+  const limit = Math.max(1, Math.min(options.limit ?? 10, 100))
+  const delayMs = Math.max(2_000, Math.min(options.delayMs ?? 4_000, 120_000))
+  const signal = options.signal
+
+  const drafted = listLeads()
+    .filter((lead) => lead.status === 'drafted')
+    .sort((a, b) => a.id - b.id)
+
+  let noEmail = 0
+  let noTouch = 0
+  const ready: Lead[] = []
+  for (const lead of drafted) {
+    if (!lead.contact_email?.trim()) {
+      noEmail++
+      continue
+    }
+    if (!hasTouch(getOutreachDrafts(lead), 1)) {
+      noTouch++
+      continue
+    }
+    ready.push(lead)
+  }
+
+  const batch = ready.slice(0, limit)
+  log(
+    `Send first email: ${batch.length} lead(s) (limit=${limit}, pause=${Math.round(delayMs / 1000)}s). ${ready.length} drafted with office email + touch 1. Skipped ${noEmail} with no office email, ${noTouch} with no touch 1.`,
+  )
+  if (batch.length === 0) {
+    log('Nothing to send — need status drafted, an office email, and touch 1.')
+    return
+  }
+
+  let sent = 0
+  try {
+    for (let i = 0; i < batch.length; i++) {
+      throwIfStopped(signal)
+      const lead = batch[i]
+      const touch = getOutreachDrafts(lead)['1']
+      const subject =
+        touch?.subject?.trim() ||
+        `Quick idea for ${lead.team_name || 'your team'}`
+      const to = lead.contact_email!.trim()
+      log(
+        `#${lead.id}: send touch 1 to ${to} (${lead.team_name ?? '—'}) (${i + 1}/${batch.length})`,
+      )
+      const mail = await openMailDraft({
+        to,
+        subject,
+        body: touch?.body ?? '',
+        send: true,
+      })
+      if (!mail.ok) {
+        log(`  Mail failed: ${mail.message}`)
+        log(
+          `Stopped — ${sent} sent and marked contacted_1. This lead and the rest were not sent.`,
+        )
+        throw new Error(`Mail send failed for #${lead.id}: ${mail.message}`)
+      }
+      updateLead(lead.id, { status: nextContactedStatus(lead.status, 1) })
+      sent++
+      log(`  sent · status → ${getLead(lead.id)!.status}`)
+      if (i < batch.length - 1) await sleep(delayMs, signal)
+    }
+    log(`Send complete — ${sent} email(s)`)
+  } catch (err) {
+    if (err instanceof JobStoppedError) {
+      log(`Stopped — ${sent} already sent stay contacted_1`)
       return
     }
     throw err

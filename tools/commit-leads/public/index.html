@@ -315,6 +315,48 @@
                 Stop drafts
               </button>
             </div>
+            <hr class="process-split" />
+            <h3>Send first email (bulk)</h3>
+            <p class="hint">
+              Sends <strong>touch 1</strong> through Mail.app for
+              <strong>drafted</strong> leads that have an office email and a
+              saved first touch, then sets status
+              <strong>contacted_1</strong>. Skips the rest. Stops if Mail fails.
+              The server must be running on this Mac.
+            </p>
+            <label
+              class="has-tip"
+              data-tip="How many drafted leads to actually send in this run. Max 100."
+            >
+              Send batch size
+              <input id="send-limit" type="number" value="10" min="1" max="100" />
+            </label>
+            <label
+              class="has-tip"
+              data-tip="Pause between sends so Mail and Resend are not flooded. Minimum 2 seconds."
+            >
+              Pause between sends (seconds)
+              <input id="send-pause" type="number" value="4" min="2" max="120" />
+            </label>
+            <div class="step-row">
+              <button
+                type="button"
+                class="has-tip"
+                id="btn-send-first"
+                data-tip="Send touch 1 now. Asks for confirmation. Uses the saved draft, not unsaved edits in an open lead."
+              >
+                Send first emails
+              </button>
+              <button
+                type="button"
+                id="stop-send"
+                class="danger has-tip"
+                data-tip="Stop after the current Mail send finishes. Already sent leads stay contacted_1."
+                disabled
+              >
+                Stop send
+              </button>
+            </div>
           </div>
 
           <div class="process-col">

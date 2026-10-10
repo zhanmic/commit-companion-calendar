@@ -117,15 +117,19 @@ function setBusyUi() {
   const oneBtn = document.getElementById('btn-process-one')
   const draftQueueBtn = document.getElementById('btn-draft-queue')
   const draftOneBtn = document.getElementById('btn-draft-one')
+  const sendFirstBtn = document.getElementById('btn-send-first')
   if (queueBtn) queueBtn.disabled = processBusy
   if (oneBtn) oneBtn.disabled = processBusy
   if (draftQueueBtn) draftQueueBtn.disabled = processBusy
   if (draftOneBtn) draftOneBtn.disabled = processBusy
+  if (sendFirstBtn) sendFirstBtn.disabled = processBusy
   const stopBtn = document.getElementById('stop-process')
   const stopDraftBtn = document.getElementById('stop-draft')
+  const stopSendBtn = document.getElementById('stop-send')
   const stopOutreach = document.getElementById('btn-stop-outreach')
   if (stopBtn) stopBtn.disabled = !processBusy
   if (stopDraftBtn) stopDraftBtn.disabled = !processBusy
+  if (stopSendBtn) stopSendBtn.disabled = !processBusy
   if (stopOutreach) stopOutreach.disabled = !processBusy
   const genAll = document.getElementById('btn-gen-all')
   const genOne = document.getElementById('btn-gen-draft')
@@ -582,7 +586,7 @@ async function showDetail(id, opts = {}) {
         <h3>Outreach drafts (3 touches)</h3>
         <p class="hint">
           researched = enrich done · drafted = touches 1–3 ready · contacted_1/2/3 = sent once / twice / three times.
-          Calendar window + Ollama customize each touch. Mail opens a draft only.
+          Calendar window + Ollama customize each touch. Open in Mail leaves a draft. Send first emails (bulk) sends touch 1.
         </p>
       </div>
       <div class="touch-tabs" id="touch-tabs" role="tablist">
@@ -1151,6 +1155,33 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
   )
 })
 
+document.getElementById('btn-send-first')?.addEventListener('click', () => {
+  const limit = Math.max(
+    1,
+    Math.min(Number(document.getElementById('send-limit')?.value || 10), 100),
+  )
+  const pauseSec = Math.max(
+    2,
+    Math.min(Number(document.getElementById('send-pause')?.value || 4), 120),
+  )
+  const ok = window.confirm(
+    `Send touch 1 to up to ${limit} drafted leads via Mail.app?\n\nThis sends real email and sets each lead to contacted_1. Leads without an office email or touch 1 are skipped. The batch stops if Mail fails.`,
+  )
+  if (!ok) {
+    appendLog(logProcess, 'Send cancelled')
+    return
+  }
+  runAction(
+    'send-first',
+    {
+      target: 'all',
+      limit,
+      delayMs: pauseSec * 1000,
+    },
+    logProcess,
+  )
+})
+
 document.getElementById('btn-draft-one')?.addEventListener('click', () => {
   const id = selectedLeadId()
   if (!id) {
@@ -1202,7 +1233,7 @@ async function requestStopProcess(outreachMsg) {
       body: JSON.stringify({ lane: 'process' }),
     })
     const line = res.stopped
-      ? 'Stopping after current Ollama/lead step…'
+      ? 'Stopping after the current step…'
       : res.message || 'Process not running'
     appendLog(logProcess, line)
     if (outreachMsg) setOutreachStatus(line)
@@ -1217,6 +1248,9 @@ document.getElementById('stop-process')?.addEventListener('click', () => {
 })
 document.getElementById('stop-draft')?.addEventListener('click', () => {
   requestStopProcess('Stopping draft generation…')
+})
+document.getElementById('stop-send')?.addEventListener('click', () => {
+  requestStopProcess('Stopping bulk send…')
 })
 
 async function runExportAction() {

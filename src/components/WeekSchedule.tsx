@@ -9,9 +9,9 @@ import {
 import { useTenant } from '../tenants/TenantContext'
 import {
   dayHeading,
-  formatTimeRange,
-  formatTimeRangeCompact,
-  isOccurrenceOnDay,
+  formatOccurrenceWhen,
+  formatOccurrenceWhenCompact,
+  occurrenceFallsOnDay,
   type WeekModel,
 } from '../lib/week'
 import type { Occurrence } from '../types'
@@ -59,7 +59,7 @@ function groupOccurrencesByDay(
   return week.days
     .map((day) => {
       const dayOccs = occurrences.filter((o) =>
-        isOccurrenceOnDay(o.start, day, timeZone),
+        occurrenceFallsOnDay(o, day, timeZone),
       )
       return {
         day,
@@ -192,7 +192,11 @@ export function WeekSchedule({
                   const isMeet = kind === 'meet'
                   const team = teamLabel(occ)
                   const loc = kind === 'event' ? null : occ.location
-                  const time = formatTimeRangeCompact(occ.start, occ.end, timeZone)
+                  const time = formatOccurrenceWhenCompact(
+                    occ.start,
+                    occ.end,
+                    timeZone,
+                  )
                   const label = [
                     sessionKindTitle(kind),
                     isPractice ? team : occ.name,
@@ -278,7 +282,7 @@ export function WeekSchedule({
         {week.days.map((day) => {
           const heading = dayHeading(day, timeZone)
           const dayOccs = occurrences.filter((o) =>
-            isOccurrenceOnDay(o.start, day, timeZone),
+            occurrenceFallsOnDay(o, day, timeZone),
           )
           const hasSessions = dayOccs.length > 0
 
@@ -377,7 +381,7 @@ export function WeekSchedule({
                           )}
                         </h3>
                         <p className="practice-card__time">
-                          {formatTimeRange(occ.start, occ.end, timeZone)}
+                          {formatOccurrenceWhen(occ.start, occ.end, timeZone)}
                         </p>
                       </article>
                     )

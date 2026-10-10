@@ -145,6 +145,107 @@ export function isOccurrenceOnDay(
   )
 }
 
+/**
+ * True when [start, end) overlaps this local calendar day.
+ * A zero-length interval (start === end) occupies only its start day.
+ * An end that lands on local midnight does not occupy that next day.
+ */
+export function intervalOverlapsDay(
+  start: Date,
+  end: Date,
+  day: WeekModel['days'][number],
+  timeZone: string,
+): boolean {
+  const dayStart = atLocalMidnight(day.year, day.month, day.date, timeZone)
+  const dayEnd = atLocalMidnight(day.year, day.month, day.date + 1, timeZone)
+  if (end.getTime() <= start.getTime()) {
+    return start >= dayStart && start < dayEnd
+  }
+  return start < dayEnd && end > dayStart
+}
+
+/**
+ * Practices stay on the day they start. Meets and team events occupy every
+ * local day their interval overlaps, matching Commit's multi-day bars.
+ */
+export function occurrenceFallsOnDay(
+  occ: { label: string; start: Date; end: Date },
+  day: WeekModel['days'][number],
+  timeZone: string,
+): boolean {
+  if (occ.label === 'practice') {
+    return isOccurrenceOnDay(occ.start, day, timeZone)
+  }
+  return intervalOverlapsDay(occ.start, occ.end, day, timeZone)
+}
+
+/** Last local calendar day occupied by [start, end). */
+function occupiedLocalEnd(start: Date, end: Date, timeZone: string): Date {
+  if (end.getTime() <= start.getTime()) return toZonedTime(start, timeZone)
+  const zonedEnd = toZonedTime(end, timeZone)
+  const atMidnight =
+    zonedEnd.getHours() === 0 &&
+    zonedEnd.getMinutes() === 0 &&
+    zonedEnd.getSeconds() === 0 &&
+    zonedEnd.getMilliseconds() === 0
+  return atMidnight ? addDays(zonedEnd, -1) : zonedEnd
+}
+
+export function isMultiDayInterval(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): boolean {
+  const s = toZonedTime(start, timeZone)
+  const e = occupiedLocalEnd(start, end, timeZone)
+  return (
+    s.getFullYear() !== e.getFullYear() ||
+    s.getMonth() !== e.getMonth() ||
+    s.getDate() !== e.getDate()
+  )
+}
+
+/** "Oct 23–25" when the interval covers more than one local day, else null. */
+export function formatDateSpan(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): string | null {
+  if (!isMultiDayInterval(start, end, timeZone)) return null
+  const s = toZonedTime(start, timeZone)
+  const e = occupiedLocalEnd(start, end, timeZone)
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+    return `${format(s, 'MMM d')}–${format(e, 'd')}`
+  }
+  if (s.getFullYear() === e.getFullYear()) {
+    return `${format(s, 'MMM d')}–${format(e, 'MMM d')}`
+  }
+  return `${format(s, 'MMM d, yyyy')}–${format(e, 'MMM d, yyyy')}`
+}
+
+/** Detail view: include clocks when the meet runs across days. */
+export function formatOccurrenceWhen(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): string {
+  if (!isMultiDayInterval(start, end, timeZone)) {
+    return formatTimeRange(start, end, timeZone)
+  }
+  const s = toZonedTime(start, timeZone)
+  const e = toZonedTime(end, timeZone)
+  return `${format(s, 'MMM d, h:mm a')} – ${format(e, 'MMM d, h:mm a')}`
+}
+
+/** Week/month chips: date span for multi-day items, otherwise the clock range. */
+export function formatOccurrenceWhenCompact(
+  start: Date,
+  end: Date,
+  timeZone: string,
+): string {
+  return formatDateSpan(start, end, timeZone) ?? formatTimeRangeCompact(start, end, timeZone)
+}
+
 export function shiftWeek(anchor: Date, deltaWeeks: number) {
   return addDays(anchor, deltaWeeks * 7)
 }

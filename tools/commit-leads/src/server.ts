@@ -11,6 +11,7 @@ import {
   runProcessPending,
   runScore,
   runSeed,
+  runSendFirstTouch,
   runCalendarUsageScan,
   runUsaDiscover,
   runCommitswimDiscover,
@@ -133,6 +134,7 @@ async function handleRun(
     score?: boolean
     touches?: Array<1 | 2 | 3>
     statuses?: LeadStatus[]
+    delayMs?: number
   }
   try {
     body = JSON.parse(raw || '{}') as typeof body
@@ -152,6 +154,7 @@ async function handleRun(
     action !== 'enrich' &&
     action !== 'score' &&
     action !== 'draft' &&
+    action !== 'send-first' &&
     action !== 'calendar-usage' &&
     action !== 'export'
   ) {
@@ -166,7 +169,7 @@ async function handleRun(
   }
   if (lane === 'process' && processBusy) {
     sendJson(res, 409, {
-      error: 'Process lane busy (fingerprint/enrich/score/draft)',
+      error: 'Process lane busy (fingerprint/enrich/score/draft/send)',
     })
     return
   }
@@ -277,6 +280,16 @@ async function handleRun(
           log,
         )
       }
+    } else if (action === 'send-first') {
+      log('Starting bulk send of touch 1 for drafted leads…')
+      await runSendFirstTouch(
+        {
+          limit: body.limit,
+          delayMs: body.delayMs,
+          signal,
+        },
+        log,
+      )
     } else if (action === 'calendar-usage') {
       log('Starting calendar usage scan (contacted + replied, Sep–Oct 2026)…')
       await runCalendarUsageScan({ signal }, log)
