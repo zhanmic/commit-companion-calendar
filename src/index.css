@@ -32,6 +32,9 @@
   --team-vortex-hail: #0d9488;
   --team-vortex-lightning: #65a30d;
   --team-vortex-thunder: #a21caf;
+  /* Vernon Hills metals — brown bronze, yellow gold (not the shared amber/orange) */
+  --team-vh-bronze: #c17a3e;
+  --team-vh-gold: #e8a200;
   /* Meet / Event — Delmar-safe; Vortex overrides below (Thunder/Storm clash) */
   --team-meet: #c026d3;
   --team-event: #4f46e5;
@@ -78,6 +81,8 @@ html.dark {
   --team-vortex-hail: #2dd4bf;
   --team-vortex-lightning: #a3e635;
   --team-vortex-thunder: #f472b6;
+  --team-vh-bronze: #e8bc86;
+  --team-vh-gold: #ffcc00;
   --team-meet: #e879f9;
   --team-event: #818cf8;
 

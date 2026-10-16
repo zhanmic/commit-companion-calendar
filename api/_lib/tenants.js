@@ -137,6 +137,38 @@ export const TENANTS = [
      */
     teamAdminEmail: 'headcoach@donnerswimclub.com',
   },
+  {
+    slug: 'VernonHillsTurtles',
+    displayName: 'Vernon Hills Turtles',
+    path: '/4',
+    shortSlug: '4',
+    slugAliases: ['VHTurtles', 'VHST'],
+    superTeamId: '6BvqcZJXmLNmAW6gi',
+    defaultTimeZone: 'America/Chicago',
+    groups: [
+      { id: 'Bronze', label: 'Bronze' },
+      { id: 'Silver', label: 'Silver' },
+      { id: 'Silver Comp', label: 'Silver Comp' },
+      { id: 'Gold', label: 'Gold' },
+      { id: 'Green', label: 'Green' },
+      { id: 'Other', label: 'Other' },
+    ],
+    defaultGroups: ['Bronze', 'Silver', 'Silver Comp', 'Gold', 'Green'],
+    icsFilenamePrefix: 'vernon-hills-turtles',
+    practiceNameFormat: {
+      mode: 'keywords',
+      separator: '-',
+      fields: ['group', 'location', 'time'],
+    },
+    dailySendHour: 7,
+    weeklySendHour: 18,
+    /**
+     * Recovery inbox for Settings → Team → Forgot password.
+     * Published contact on vhturtlesswimteam.org.
+     * Override via TEAM_ADMIN_EMAIL_VERNONHILLSTURTLES or TEAM_ADMIN_EMAILS.
+     */
+    teamAdminEmail: 'enricom@vhparkdistrict.org',
+  },
 ]
 
 export function listTenants() {

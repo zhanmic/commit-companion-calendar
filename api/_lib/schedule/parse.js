@@ -255,6 +255,62 @@ export function donnerOccurrenceMatchesTeams(teams, selected) {
   return teams.some((t) => selected.has(t))
 }
 
+const VERNON_HILLS_NAMED_GROUP_IDS = [
+  'Bronze',
+  'Silver',
+  'Silver Comp',
+  'Gold',
+  'Green',
+]
+
+const VERNON_HILLS_ALL_GROUPS =
+  /\b(?:no|canceled|cancelled)\s+practices?\b|\bpractices?\s+cancell?ed\b|\ball\s+groups\b/i
+
+/** Keyword scan of a Vernon Hills title. Silver Comp is not also Silver. */
+export function parseVernonHillsSubTeams(name) {
+  const raw = name.trim()
+  if (VERNON_HILLS_ALL_GROUPS.test(raw)) return [...VERNON_HILLS_NAMED_GROUP_IDS]
+
+  let scan = raw.toLowerCase()
+  const found = new Set()
+
+  if (/\bsiver\s*comp\b|\bsilver\s*comp\b/.test(scan)) {
+    found.add('Silver Comp')
+    scan = scan.replace(/\bsiver\s*comp\b|\bsilver\s*comp\b/g, ' ')
+  }
+
+  if (/\bbronze\b/.test(scan)) found.add('Bronze')
+  if (/\bsilver\b/.test(scan)) found.add('Silver')
+  if (/\bgold\b/.test(scan)) found.add('Gold')
+  if (/\bgreen\b/.test(scan)) found.add('Green')
+
+  if (found.size === 0) return ['Other']
+  return VERNON_HILLS_NAMED_GROUP_IDS.filter((id) => found.has(id))
+}
+
+const VERNON_HILLS_LOCATION_PATTERNS = [
+  { match: /\b(?:field|fiel)\s*house\b/i, label: 'VHHS Field House' },
+  { match: /\bsullivan\b/i, label: 'Sullivan Center' },
+  { match: /\bturtle\s*creek\b|\bTK\b/i, label: 'Turtle Creek' },
+  { match: /\blake\s*view\b|\blavkeview\b|\bLV\b|\bLF\b/i, label: 'Lakeview' },
+  {
+    match: /\bVHHS\b|vernon\s*hills?\s*high\b/i,
+    label: 'Vernon Hills High School',
+  },
+]
+
+export function parseVernonHillsLocation(text) {
+  for (const { match, label } of VERNON_HILLS_LOCATION_PATTERNS) {
+    if (match.test(text)) return label
+  }
+  return null
+}
+
+export function vernonHillsOccurrenceMatchesTeams(teams, selected) {
+  if (selected.size === 0) return false
+  return teams.some((t) => selected.has(t))
+}
+
 export function parseMeet(meet) {
   const start = new Date(meet.startDateTime)
   const end = new Date(meet.endDateTime)
@@ -318,6 +374,22 @@ export function getTenantParsers(tenant) {
       },
       parseMeet,
       occurrenceMatchesTeams: donnerOccurrenceMatchesTeams,
+    }
+  }
+
+  if (tenant.slug === 'VernonHillsTurtles') {
+    return {
+      parsePractice: (name, _format, context) => {
+        const locationSource = [name, context?.description]
+          .filter(Boolean)
+          .join(' ')
+        return {
+          subTeams: parseVernonHillsSubTeams(name),
+          location: parseVernonHillsLocation(locationSource),
+        }
+      },
+      parseMeet,
+      occurrenceMatchesTeams: vernonHillsOccurrenceMatchesTeams,
     }
   }
 
