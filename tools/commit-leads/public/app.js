@@ -117,12 +117,12 @@ function setBusyUi() {
   const oneBtn = document.getElementById('btn-process-one')
   const draftQueueBtn = document.getElementById('btn-draft-queue')
   const draftOneBtn = document.getElementById('btn-draft-one')
-  const sendFirstBtn = document.getElementById('btn-send-first')
+  const sendBtn = document.getElementById('btn-send')
   if (queueBtn) queueBtn.disabled = processBusy
   if (oneBtn) oneBtn.disabled = processBusy
   if (draftQueueBtn) draftQueueBtn.disabled = processBusy
   if (draftOneBtn) draftOneBtn.disabled = processBusy
-  if (sendFirstBtn) sendFirstBtn.disabled = processBusy
+  if (sendBtn) sendBtn.disabled = processBusy
   const stopBtn = document.getElementById('stop-process')
   const stopDraftBtn = document.getElementById('stop-draft')
   const stopSendBtn = document.getElementById('stop-send')
@@ -586,7 +586,7 @@ async function showDetail(id, opts = {}) {
         <h3>Outreach drafts (3 touches)</h3>
         <p class="hint">
           researched = enrich done · drafted = touches 1–3 ready · contacted_1/2/3 = sent once / twice / three times.
-          Calendar window + Ollama customize each touch. Open in Mail leaves a draft. Send first emails (bulk) sends touch 1.
+          Calendar window + Ollama customize each touch. Open in Mail leaves a draft. Send emails (bulk) sends touch 1, 2, or 3.
         </p>
       </div>
       <div class="touch-tabs" id="touch-tabs" role="tablist">
@@ -1155,7 +1155,15 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
   )
 })
 
-document.getElementById('btn-send-first')?.addEventListener('click', () => {
+document.getElementById('btn-send')?.addEventListener('click', () => {
+  const selected = document.querySelector('input[name="send-touch"]:checked')
+  const touch = [1, 2, 3].includes(Number(selected?.value))
+    ? Number(selected.value)
+    : 1
+  const from =
+    touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
+  const to =
+    touch === 1 ? 'contacted_1' : touch === 2 ? 'contacted_2' : 'contacted_3'
   const limit = Math.max(
     1,
     Math.min(Number(document.getElementById('send-limit')?.value || 10), 100),
@@ -1165,16 +1173,17 @@ document.getElementById('btn-send-first')?.addEventListener('click', () => {
     Math.min(Number(document.getElementById('send-pause')?.value || 4), 120),
   )
   const ok = window.confirm(
-    `Send touch 1 to up to ${limit} drafted leads via Mail.app?\n\nThis sends real email and sets each lead to contacted_1. Leads without an office email or touch 1 are skipped. The batch stops if Mail fails.`,
+    `Send touch ${touch} to up to ${limit} ${from} leads via Mail.app?\n\nThis sends real email and sets each lead to ${to}. Leads without an office email or touch ${touch} are skipped. The batch stops if Mail fails.`,
   )
   if (!ok) {
     appendLog(logProcess, 'Send cancelled')
     return
   }
   runAction(
-    'send-first',
+    'send',
     {
       target: 'all',
+      touch,
       limit,
       delayMs: pauseSec * 1000,
     },

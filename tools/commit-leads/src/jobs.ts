@@ -987,35 +987,56 @@ export async function runDraftPending(
   }
 }
 
+/** Status a lead must already have before bulk-sending that touch. */
+const SEND_FROM_STATUS: Record<1 | 2 | 3, LeadStatus> = {
+  1: 'drafted',
+  2: 'contacted_1',
+  3: 'contacted_2',
+}
+
+export function parseSendTouch(value: unknown): 1 | 2 | 3 {
+  const n = Number(value)
+  if (n === 2 || n === 3) return n
+  return 1
+}
+
 /**
- * Send touch 1 through Mail.app for drafted leads that have an office email
- * and a saved first touch. Marks each success contacted_1. Stops on Mail failure.
+ * Send one outreach touch through Mail.app.
+ * Touch 1: drafted → contacted_1.
+ * Touch 2: contacted_1 → contacted_2.
+ * Touch 3: contacted_2 → contacted_3.
+ * Needs an office email and a saved draft for that touch. Stops on Mail failure.
  */
-export async function runSendFirstTouch(
+export async function runSendTouch(
   options: {
+    touch?: 1 | 2 | 3
     limit?: number
     delayMs?: number
     signal?: AbortSignal
   } = {},
   log: LogFn = console.log,
 ): Promise<void> {
+  const touchNum = parseSendTouch(options.touch)
+  const fromStatus = SEND_FROM_STATUS[touchNum]
+  const toStatus = nextContactedStatus(fromStatus, touchNum)
   const limit = Math.max(1, Math.min(options.limit ?? 10, 100))
   const delayMs = Math.max(2_000, Math.min(options.delayMs ?? 4_000, 120_000))
   const signal = options.signal
+  const key = String(touchNum) as '1' | '2' | '3'
 
-  const drafted = listLeads()
-    .filter((lead) => lead.status === 'drafted')
+  const candidates = listLeads()
+    .filter((lead) => lead.status === fromStatus)
     .sort((a, b) => a.id - b.id)
 
   let noEmail = 0
   let noTouch = 0
   const ready: Lead[] = []
-  for (const lead of drafted) {
+  for (const lead of candidates) {
     if (!lead.contact_email?.trim()) {
       noEmail++
       continue
     }
-    if (!hasTouch(getOutreachDrafts(lead), 1)) {
+    if (!hasTouch(getOutreachDrafts(lead), touchNum)) {
       noTouch++
       continue
     }
@@ -1024,10 +1045,12 @@ export async function runSendFirstTouch(
 
   const batch = ready.slice(0, limit)
   log(
-    `Send first email: ${batch.length} lead(s) (limit=${limit}, pause=${Math.round(delayMs / 1000)}s). ${ready.length} drafted with office email + touch 1. Skipped ${noEmail} with no office email, ${noTouch} with no touch 1.`,
+    `Send touch ${touchNum}: ${batch.length} lead(s) (limit=${limit}, pause=${Math.round(delayMs / 1000)}s). ${ready.length} ${fromStatus} with office email + touch ${touchNum}. Skipped ${noEmail} with no office email, ${noTouch} with no touch ${touchNum}.`,
   )
   if (batch.length === 0) {
-    log('Nothing to send — need status drafted, an office email, and touch 1.')
+    log(
+      `Nothing to send — need status ${fromStatus}, an office email, and touch ${touchNum}.`,
+    )
     return
   }
 
@@ -1036,36 +1059,38 @@ export async function runSendFirstTouch(
     for (let i = 0; i < batch.length; i++) {
       throwIfStopped(signal)
       const lead = batch[i]
-      const touch = getOutreachDrafts(lead)['1']
+      const draft = getOutreachDrafts(lead)[key]
       const subject =
-        touch?.subject?.trim() ||
+        draft?.subject?.trim() ||
         `Quick idea for ${lead.team_name || 'your team'}`
       const to = lead.contact_email!.trim()
       log(
-        `#${lead.id}: send touch 1 to ${to} (${lead.team_name ?? '—'}) (${i + 1}/${batch.length})`,
+        `#${lead.id}: send touch ${touchNum} to ${to} (${lead.team_name ?? '—'}) (${i + 1}/${batch.length})`,
       )
       const mail = await openMailDraft({
         to,
         subject,
-        body: touch?.body ?? '',
+        body: draft?.body ?? '',
         send: true,
       })
       if (!mail.ok) {
         log(`  Mail failed: ${mail.message}`)
         log(
-          `Stopped — ${sent} sent and marked contacted_1. This lead and the rest were not sent.`,
+          `Stopped — ${sent} sent and marked ${toStatus}. This lead and the rest were not sent.`,
         )
         throw new Error(`Mail send failed for #${lead.id}: ${mail.message}`)
       }
-      updateLead(lead.id, { status: nextContactedStatus(lead.status, 1) })
+      updateLead(lead.id, {
+        status: nextContactedStatus(lead.status, touchNum),
+      })
       sent++
       log(`  sent · status → ${getLead(lead.id)!.status}`)
       if (i < batch.length - 1) await sleep(delayMs, signal)
     }
-    log(`Send complete — ${sent} email(s)`)
+    log(`Send complete — ${sent} email(s) · status → ${toStatus}`)
   } catch (err) {
     if (err instanceof JobStoppedError) {
-      log(`Stopped — ${sent} already sent stay contacted_1`)
+      log(`Stopped — ${sent} already sent stay ${toStatus}`)
       return
     }
     throw err

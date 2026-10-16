@@ -10,7 +10,8 @@ import {
   runUsaDiscover,
   runCommitswimDiscover,
   runCalendarUsageScan,
-  runSendFirstTouch,
+  parseSendTouch,
+  runSendTouch,
 } from './jobs.js'
 
 function usage(): never {
@@ -27,7 +28,8 @@ Usage:
   npm run cli -- score [id|all]
   npm run cli -- export [path]
   npm run cli -- calendar
-  npm run cli -- send-first --yes [--limit 10] [--pause 4]
+  npm run cli -- send --yes [--touch 1|2|3] [--limit 10] [--pause 4]
+  npm run cli -- send-first --yes [--limit 10] [--pause 4]   # alias for --touch 1
   npm run cli -- status
   npm run ui
 
@@ -151,24 +153,35 @@ async function main(): Promise<void> {
     case 'calendar':
       await runCalendarUsageScan()
       break
+    case 'send':
     case 'send-first': {
       let limit = 10
       let delayMs = 4000
+      let touch: 1 | 2 | 3 = 1
       let yes = false
       for (let i = 0; i < rest.length; i++) {
         const a = rest[i]
         if (a === '--limit') limit = Number(rest[++i])
         else if (a === '--pause') delayMs = Number(rest[++i]) * 1000
+        else if (a === '--touch') touch = parseSendTouch(rest[++i])
         else if (a === '--yes') yes = true
         else if (a === '--help') usage()
       }
+      const from =
+        touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
+      const to =
+        touch === 1
+          ? 'contacted_1'
+          : touch === 2
+            ? 'contacted_2'
+            : 'contacted_3'
       if (!yes) {
         console.error(
-          'Refusing to send. Re-run with --yes to send touch 1 for drafted leads via Mail.app.',
+          `Refusing to send. Re-run with --yes to send touch ${touch} for ${from} leads via Mail.app (status → ${to}).`,
         )
         process.exit(1)
       }
-      await runSendFirstTouch({ limit, delayMs })
+      await runSendTouch({ touch, limit, delayMs })
       break
     }
     case 'status': {

@@ -316,17 +316,38 @@
               </button>
             </div>
             <hr class="process-split" />
-            <h3>Send first email (bulk)</h3>
+            <h3>Send emails (bulk)</h3>
             <p class="hint">
-              Sends <strong>touch 1</strong> through Mail.app for
-              <strong>drafted</strong> leads that have an office email and a
-              saved first touch, then sets status
-              <strong>contacted_1</strong>. Skips the rest. Stops if Mail fails.
-              The server must be running on this Mac.
+              Sends the chosen touch through Mail.app, then advances status:
+              touch 1 from <strong>drafted</strong> →
+              <strong>contacted_1</strong>, touch 2 from
+              <strong>contacted_1</strong> → <strong>contacted_2</strong>,
+              touch 3 from <strong>contacted_2</strong> →
+              <strong>contacted_3</strong>. Needs an office email and a saved
+              draft for that touch. Stops if Mail fails. The server must be
+              running on this Mac.
             </p>
+            <fieldset
+              class="draft-touches has-tip"
+              data-tip="Which saved draft to send. Each touch only goes to leads at the matching status."
+            >
+              <legend>Which email</legend>
+              <label class="check">
+                <input type="radio" name="send-touch" value="1" checked />
+                1 · First
+              </label>
+              <label class="check">
+                <input type="radio" name="send-touch" value="2" />
+                2 · Follow-up
+              </label>
+              <label class="check">
+                <input type="radio" name="send-touch" value="3" />
+                3 · Close loop
+              </label>
+            </fieldset>
             <label
               class="has-tip"
-              data-tip="How many drafted leads to actually send in this run. Max 100."
+              data-tip="How many matching leads to actually send in this run. Max 100."
             >
               Send batch size
               <input id="send-limit" type="number" value="10" min="1" max="100" />
@@ -342,16 +363,16 @@
               <button
                 type="button"
                 class="has-tip"
-                id="btn-send-first"
-                data-tip="Send touch 1 now. Asks for confirmation. Uses the saved draft, not unsaved edits in an open lead."
+                id="btn-send"
+                data-tip="Send the selected touch now. Asks for confirmation. Uses the saved draft, not unsaved edits in an open lead."
               >
-                Send first emails
+                Send emails
               </button>
               <button
                 type="button"
                 id="stop-send"
                 class="danger has-tip"
-                data-tip="Stop after the current Mail send finishes. Already sent leads stay contacted_1."
+                data-tip="Stop after the current Mail send finishes. Already sent leads keep the new contacted status."
                 disabled
               >
                 Stop send

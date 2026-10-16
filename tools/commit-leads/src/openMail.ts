@@ -47,14 +47,11 @@ export async function openMailDraft(
     }
   }
 
-  const subject = escapeAppleScript(input.subject || '')
   const rawBody = input.body || ''
   const isHtml = looksLikeHtml(rawBody)
-  const plainBody = escapeAppleScript(
-    isHtml ? htmlToPlainText(rawBody) : rawBody,
-  )
-  const htmlDoc = escapeAppleScript(
-    wrapEmailHtmlDocument(isHtml ? rawBody : rawBody.replace(/\n/g, '<br>\n')),
+  const plainBody = isHtml ? htmlToPlainText(rawBody) : rawBody
+  const htmlDoc = wrapEmailHtmlDocument(
+    isHtml ? rawBody : rawBody.replace(/\n/g, '<br>\n'),
   )
   const to = (input.to || '').trim()
   if (input.send && !to) {
@@ -78,15 +75,31 @@ export async function openMailDraft(
     end tell`
     : ''
 
-  const visible = input.send ? 'false' : 'true'
+  // Bring Mail forward before creating the message. A compose window made
+  // while Mail is in the background often never appears; setting HTML on a
+  // hidden message also does not open a window.
   const finish = input.send
     ? `delay 1
   send newMessage`
-    : 'activate'
+    : `set visible of newMessage to true
+  activate`
 
+  const dir = await mkdtemp(join(tmpdir(), 'commit-leads-mail-'))
+  const scriptPath = join(dir, `${randomUUID()}.applescript`)
+  const subjectPath = join(dir, 'subject.txt')
+  const plainPath = join(dir, 'plain.txt')
+  const htmlPath = join(dir, 'body.html')
+  const q = (filePath: string) => escapeAppleScript(filePath)
   const script = `
+set subjectText to do shell script "cat " & quoted form of "${q(subjectPath)}"
+set plainText to do shell script "cat " & quoted form of "${q(plainPath)}"
+set htmlText to do shell script "cat " & quoted form of "${q(htmlPath)}"
 tell application "Mail"
-  set newMessage to make new outgoing message with properties {subject:"${subject}", content:"${plainBody}", visible:${visible}}
+  activate
+end tell
+delay 0.3
+tell application "Mail"
+  set newMessage to make new outgoing message with properties {subject:subjectText, content:plainText, visible:${input.send ? 'false' : 'true'}}
   ${recipientBlock}
   try
     set sender of newMessage to "${senderEsc}"
@@ -96,15 +109,15 @@ tell application "Mail"
     end try
   end try
   try
-    set html content of newMessage to "${htmlDoc}"
+    set html content of newMessage to htmlText
   end try
   ${finish}
 end tell
 `
-
-  const dir = await mkdtemp(join(tmpdir(), 'commit-leads-mail-'))
-  const scriptPath = join(dir, `${randomUUID()}.applescript`)
   try {
+    await writeFile(subjectPath, input.subject || '', 'utf8')
+    await writeFile(plainPath, plainBody, 'utf8')
+    await writeFile(htmlPath, htmlDoc, 'utf8')
     await writeFile(scriptPath, script, 'utf8')
     await execFileAsync('osascript', [scriptPath], {
       timeout: input.send ? 60_000 : 15_000,
@@ -120,7 +133,14 @@ end tell
           : `Opened Mail draft from ${fromAddr} (HTML; add recipient manually)`,
     }
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err)
+    const failed = err as NodeJS.ErrnoException & {
+      stderr?: string
+      killed?: boolean
+    }
+    const stderr = typeof failed.stderr === 'string' ? failed.stderr.trim() : ''
+    const detail = failed.killed
+      ? 'Timed out waiting for Mail.app'
+      : stderr || (err instanceof Error ? err.message : String(err))
     return {
       ok: false,
       method: 'none',
@@ -128,6 +148,9 @@ end tell
     }
   } finally {
     await unlink(scriptPath).catch(() => {})
+    await unlink(subjectPath).catch(() => {})
+    await unlink(plainPath).catch(() => {})
+    await unlink(htmlPath).catch(() => {})
     await rmdir(dir).catch(() => {})
   }
 }

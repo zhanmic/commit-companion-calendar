@@ -11,7 +11,8 @@ import {
   runProcessPending,
   runScore,
   runSeed,
-  runSendFirstTouch,
+  parseSendTouch,
+  runSendTouch,
   runCalendarUsageScan,
   runUsaDiscover,
   runCommitswimDiscover,
@@ -133,6 +134,7 @@ async function handleRun(
     enrich?: boolean
     score?: boolean
     touches?: Array<1 | 2 | 3>
+    touch?: 1 | 2 | 3
     statuses?: LeadStatus[]
     delayMs?: number
   }
@@ -154,6 +156,7 @@ async function handleRun(
     action !== 'enrich' &&
     action !== 'score' &&
     action !== 'draft' &&
+    action !== 'send' &&
     action !== 'send-first' &&
     action !== 'calendar-usage' &&
     action !== 'export'
@@ -280,10 +283,14 @@ async function handleRun(
           log,
         )
       }
-    } else if (action === 'send-first') {
-      log('Starting bulk send of touch 1 for drafted leads…')
-      await runSendFirstTouch(
+    } else if (action === 'send' || action === 'send-first') {
+      const touch = parseSendTouch(body.touch)
+      const from =
+        touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
+      log(`Starting bulk send of touch ${touch} for ${from} leads…`)
+      await runSendTouch(
         {
+          touch,
           limit: body.limit,
           delayMs: body.delayMs,
           signal,
