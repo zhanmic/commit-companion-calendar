@@ -2833,9 +2833,19 @@ button.month-day__num:focus-visible {
   }
 
   .app--fit .hero__carpool {
-    height: 2.15rem;
-    padding: 0 0.55rem;
-    font-size: 0.72rem;
+    width: 3.35rem;
+    height: auto;
+    min-height: 2.15rem;
+    padding: 0.28rem 0.28rem;
+    font-size: 0.62rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .app--fit .hero__carpool span {
+    display: block;
   }
 
   .app--fit .hero__brand {
