@@ -10,6 +10,14 @@ Use this before a team moves from pilot to paid production.
 
 `billingStatus: 'active'` and `stripeCustomerId` are set on the frontend tenant and `api/_lib/tenants.js`. Redeploy so Settings → Team shows **Active** and **Manage billing**.
 
+## Pilot tenants
+
+Demo calendars with no Stripe customer. Next unused `shortSlug` is `5`.
+
+| Tenant | Path | Notes |
+|--------|------|-------|
+| Vernon Hills Turtles (`VernonHillsTurtles`) | `/4` | `America/Chicago`. Groups: Bronze, Silver, Silver Comp, Gold, Green. Commit spells Bronze as `Bonze` (Tue/Thu swim); parsers count that as Bronze. Recovery inbox: `enricom@vhparkdistrict.org`. |
+
 ## 1. Confirm Commit prerequisite
 
 - [ ] Team uses Commit Swimming
@@ -29,7 +37,7 @@ Use this before a team moves from pilot to paid production.
 ## 3. Pilot setup and QA
 
 - [ ] Add `src/tenants/<Slug>/` (config, groups, practice/meet parsers)
-- [ ] Assign next unused `shortSlug` (`1` Delmar, `2` Vortex, then `3`…)
+- [ ] Assign next unused `shortSlug` (`1` Delmar, `2` Vortex, `3` Donner, `4` Vernon Hills, then `5`…)
 - [ ] Register in `src/tenants/registry.ts` and mirror in `api/_lib/tenants.js`
 - [ ] Timezone + digest send hours correct
 - [ ] Optional: `publicApiHouseholds` if the club is much smaller/larger than `groups × 35` (public `/api/schedule` hourly cap)

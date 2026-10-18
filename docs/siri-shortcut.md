@@ -84,6 +84,8 @@ All four Delmar groups in one ask:
 
 Vortex: `team=2` (or `VortexSwimClub`) and a Vortex group such as `Peak`.
 
+Vernon Hills Turtles: `team=4` (or `VernonHillsTurtles`) and a group such as `Bronze`, `Silver`, `Silver Comp`, `Gold`, or `Green`.
+
 ## Meets and team events
 
 You do **not** need a separate shortcut. Existing practice shortcuts stay practices-only until you add `include=`.

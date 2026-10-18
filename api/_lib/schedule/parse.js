@@ -266,7 +266,7 @@ const VERNON_HILLS_NAMED_GROUP_IDS = [
 const VERNON_HILLS_ALL_GROUPS =
   /\b(?:no|canceled|cancelled)\s+practices?\b|\bpractices?\s+cancell?ed\b|\ball\s+groups\b/i
 
-/** Keyword scan of a Vernon Hills title. Silver Comp is not also Silver. */
+/** Keyword scan of a Vernon Hills title. Silver Comp is not also Silver. Bonze is Bronze. */
 export function parseVernonHillsSubTeams(name) {
   const raw = name.trim()
   if (VERNON_HILLS_ALL_GROUPS.test(raw)) return [...VERNON_HILLS_NAMED_GROUP_IDS]
@@ -279,7 +279,7 @@ export function parseVernonHillsSubTeams(name) {
     scan = scan.replace(/\bsiver\s*comp\b|\bsilver\s*comp\b/g, ' ')
   }
 
-  if (/\bbronze\b/.test(scan)) found.add('Bronze')
+  if (/\bbonze\b|\bbronze\b/.test(scan)) found.add('Bronze')
   if (/\bsilver\b/.test(scan)) found.add('Silver')
   if (/\bgold\b/.test(scan)) found.add('Gold')
   if (/\bgreen\b/.test(scan)) found.add('Green')

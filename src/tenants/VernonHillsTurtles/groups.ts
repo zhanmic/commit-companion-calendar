@@ -41,6 +41,7 @@ const ALL_GROUPS =
 /**
  * Keyword scan of a Vernon Hills practice title.
  * "Silver Comp" (and the typo "Siver Comp") is not also Silver.
+ * "Bonze" is the published typo for Bronze.
  */
 export function parseVernonHillsSubTeams(name: string): string[] {
   const raw = name.trim()
@@ -54,7 +55,7 @@ export function parseVernonHillsSubTeams(name: string): string[] {
     scan = scan.replace(/\bsiver\s*comp\b|\bsilver\s*comp\b/g, ' ')
   }
 
-  if (/\bbronze\b/.test(scan)) found.add('Bronze')
+  if (/\bbonze\b|\bbronze\b/.test(scan)) found.add('Bronze')
   if (/\bsilver\b/.test(scan)) found.add('Silver')
   if (/\bgold\b/.test(scan)) found.add('Gold')
   if (/\bgreen\b/.test(scan)) found.add('Green')

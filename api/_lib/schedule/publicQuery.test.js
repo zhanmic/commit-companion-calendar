@@ -497,6 +497,10 @@ describe('Vernon Hills practice parser', () => {
       parsePractice('Siver Comp - Swimming', vernonHills.practiceNameFormat).subTeams,
       ['Silver Comp'],
     )
+    assert.deepEqual(
+      parsePractice('Bonze - Swim', vernonHills.practiceNameFormat).subTeams,
+      ['Bronze'],
+    )
     assert.equal(
       parsePractice('Bronze - Swim', vernonHills.practiceNameFormat, {
         description: 'LV',
