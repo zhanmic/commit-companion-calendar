@@ -206,7 +206,7 @@ function usagePayload(req) {
       method: 'GET',
       path: '/api/schedule',
       query: {
-        team: 'Tenant slug or alias (DelmarDolfins, DelmarDolphins, VortexSwimClub, …)',
+        team: 'Tenant slug, number, or short alias (1, Delmar, DD, 2, Vortex, VSC, 3, Donner, DSC, 4, VHTurtles, VHST, …)',
         group: 'One or more groups: Sr, Sr,Jr, senior and junior (also group=Sr&group=Jr)',
         date: 'today | tomorrow | this Friday | next Monday | YYYY-MM-DD',
         include: 'practice (default) | meets | events | all | meets,events',

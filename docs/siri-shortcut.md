@@ -82,9 +82,11 @@ All four Delmar groups in one ask:
 
 `https://myswimday.com/api/schedule?team=1&group=Sr,Jr,Jr%20Prep,DEVO&date=today&format=spoken`
 
-Vortex: `team=2` (or `VortexSwimClub`) and a Vortex group such as `Peak`.
+Vortex: `team=2` (or `VortexSwimClub`, `Vortex`, `VSC`) and a Vortex group such as `Peak`.
 
-Vernon Hills Turtles: `team=4` (or `VernonHillsTurtles`) and a group such as `Bronze`, `Silver`, `Silver Comp`, `Gold`, or `Green`.
+Donner: `team=3` (or `DonnerSwimClub`, `Donner`, `DSC`) and a Donner group such as `Senior`.
+
+Vernon Hills Turtles: `team=4` (or `VernonHillsTurtles`, `VHTurtles`, `VHST`) and a group such as `Bronze`, `Silver`, `Silver Comp`, `Gold`, or `Green`.
 
 ## Meets and team events
 

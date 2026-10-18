@@ -6,9 +6,9 @@ Weekly practice and meet calendars for swim teams (`myswimday.com`), built on Co
 
 | Path | Team |
 |------|------|
-| [`/1`](/1) | Delmar Dolfins (also `/DelmarDolfins`) |
-| [`/2`](/2) | Vortex Swim Club (also `/VortexSwimClub`) |
-| [`/3`](/3) | Donner Swim Club (also `/DonnerSwimClub`) |
+| [`/1`](/1) | Delmar Dolfins (also `/DelmarDolfins`, `/Delmar`, `/DD`) |
+| [`/2`](/2) | Vortex Swim Club (also `/VortexSwimClub`, `/Vortex`, `/VSC`) |
+| [`/3`](/3) | Donner Swim Club (also `/DonnerSwimClub`, `/Donner`, `/DSC`) |
 | [`/4`](/4) | Vernon Hills Turtles (also `/VernonHillsTurtles`, `/VHTurtles`, `/VHST`) |
 
 Product home (`/`) lists available teams. Each tenant owns its Commit `superTeamId` and its own practice/meet parsers under `src/tenants/<Slug>/`.

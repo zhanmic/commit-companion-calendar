@@ -64,6 +64,15 @@ describe('resolveGroup', () => {
     assert.equal(resolveGroup(delmar, 'developmental').group.id, 'DEVO')
   })
 
+  it('resolves each team short alias', () => {
+    assert.equal(getTenantBySlug('Delmar')?.slug, 'DelmarDolfins')
+    assert.equal(getTenantBySlug('DD')?.slug, 'DelmarDolfins')
+    assert.equal(getTenantBySlug('Vortex')?.slug, 'VortexSwimClub')
+    assert.equal(getTenantBySlug('VSC')?.slug, 'VortexSwimClub')
+    assert.equal(getTenantBySlug('DSC')?.slug, 'DonnerSwimClub')
+    assert.equal(getTenantBySlug('VHST')?.slug, 'VernonHillsTurtles')
+  })
+
   it('maps Vernon Hills groups and aliases', () => {
     assert.equal(getTenantBySlug('4')?.slug, 'VernonHillsTurtles')
     assert.equal(getTenantBySlug('VHTurtles')?.displayName, 'Vernon Hills Turtles')

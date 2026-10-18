@@ -16,7 +16,7 @@ Demo calendars with no Stripe customer. Next unused `shortSlug` is `5`.
 
 | Tenant | Path | Notes |
 |--------|------|-------|
-| Vernon Hills Turtles (`VernonHillsTurtles`) | `/4` | `America/Chicago`. Groups: Bronze, Silver, Silver Comp, Gold, Green. Commit spells Bronze as `Bonze` (Tue/Thu swim); parsers count that as Bronze. Recovery inbox: `enricom@vhparkdistrict.org`. |
+| Vernon Hills Turtles (`VernonHillsTurtles`, also `/VHTurtles`, `/VHST`) | `/4` | `America/Chicago`. Groups: Bronze, Silver, Silver Comp, Gold, Green. Commit spells Bronze as `Bonze` (Tue/Thu swim); parsers count that as Bronze. Recovery inbox: `enricom@vhparkdistrict.org`. |
 
 ## 1. Confirm Commit prerequisite
 

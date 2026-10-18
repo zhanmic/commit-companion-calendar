@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS: ScheduleSettings = {
 export const vortexSwimClubTenant: TenantConfig = {
   slug: 'VortexSwimClub',
   shortSlug: '2',
-  slugAliases: ['TeamVortex', 'Vortex'],
+  slugAliases: ['Vortex', 'VSC', 'TeamVortex'],
   displayName: 'Vortex Swim Club',
   superTeamId: 'WNP4xfPJL67a6k2Np',
   /** Mountain — daily digests 7 a.m. MT, weekly Sunday 6 p.m. MT. */

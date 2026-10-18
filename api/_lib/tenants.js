@@ -11,6 +11,8 @@ export const TENANTS = [
     path: '/1',
     shortSlug: '1',
     slugAliases: [
+      'Delmar',
+      'DD',
       'DelmarDolphins',
       'DelmaDolphins',
       'DelmarDolfin',
@@ -55,7 +57,7 @@ export const TENANTS = [
     displayName: 'Vortex Swim Club',
     path: '/2',
     shortSlug: '2',
-    slugAliases: ['TeamVortex', 'Vortex'],
+    slugAliases: ['Vortex', 'VSC', 'TeamVortex'],
     superTeamId: 'WNP4xfPJL67a6k2Np',
     defaultTimeZone: 'America/Denver',
     groups: [

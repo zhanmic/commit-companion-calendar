@@ -29,6 +29,8 @@ export const delmarDolfinsTenant: TenantConfig = {
   slug: 'DelmarDolfins',
   shortSlug: '1',
   slugAliases: [
+    'Delmar',
+    'DD',
     'DelmarDolphins',
     'DelmaDolphins',
     'DelmarDolfin',
