@@ -39,7 +39,7 @@ export const vernonHillsTurtlesTenant: TenantConfig = {
   groups: VERNON_HILLS_GROUPS,
   defaultSettings: DEFAULT_SETTINGS,
   links: {
-    officialCalendar: 'https://www.vhturtlesswimteam.org/practice-calendar',
+    officialCalendar: 'https://www.vhturtlesswimteam.org/Calendar',
   },
   icsFilenamePrefix: 'vernon-hills-turtles',
   parsePractice: parseVernonHillsPractice,
