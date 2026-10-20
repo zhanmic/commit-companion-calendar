@@ -10,6 +10,7 @@
  *
  * Traffic far above team size trips the same per-team hourly circuit as /api/schedule.
  */
+import { createHash } from 'node:crypto'
 import {
   clientIp,
   queryParam,
@@ -41,8 +42,29 @@ const MAX_FUTURE_WEEKS = 12
 const PAST_DAYS = 7
 const OPENAPI_PATH = '/openapi.json'
 
+/** True when If-None-Match names this tag, or is `*` and a tag exists. */
+export function etagMatches(header, etag) {
+  if (!header || !etag) return false
+  const raw = String(header).trim()
+  if (raw === '*') return true
+  return raw.split(',').some((part) => {
+    const token = part
+      .trim()
+      .replace(/^W\//i, '')
+      .replace(/^"/, '')
+      .replace(/"$/, '')
+    return token === etag
+  })
+}
+
+function icsEtag(ics) {
+  return createHash('sha256').update(ics).digest('hex')
+}
+
 export default async function handler(req, res) {
   setPublicCors(res, 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, If-None-Match')
+  res.setHeader('Access-Control-Expose-Headers', 'ETag')
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
@@ -140,14 +162,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const ics = await loadFeedIcs({
+    const feed = await loadFeedIcs({
       tenant,
       selectedGroups,
       include,
       futureWeeks,
       req,
     })
-    sendIcs(res, ics, icsFilename(tenant), rateHeaders)
+    if (feed.notModified) {
+      sendNotModified(res, feed.etag, rateHeaders)
+      return
+    }
+    sendIcs(res, feed.ics, icsFilename(tenant), {
+      ...rateHeaders,
+      ETag: `"${feed.etag}"`,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Calendar lookup failed'
     sendJson(
@@ -180,13 +209,39 @@ function feedCacheKey(tenant, groups, include, futureWeeks) {
   return `msd:pubics:v1:${tenant.slug}:${groupPart}:${kindPart}:${futureWeeks}`
 }
 
+function feedEtagKey(cacheKey) {
+  return cacheKey.replace('msd:pubics:v1:', 'msd:pubics:etag:')
+}
+
 async function loadFeedIcs({ tenant, selectedGroups, include, futureWeeks, req }) {
   const cacheKey = feedCacheKey(tenant, selectedGroups, include, futureWeeks)
+  const etagKey = feedEtagKey(cacheKey)
+  let cachedEtag = ''
   if (isRedisConfigured()) {
+    try {
+      const raw = await redisCommand('GET', etagKey)
+      if (typeof raw === 'string' && raw) cachedEtag = raw
+    } catch {
+      // continue to the calendar body or a live build
+    }
+    if (etagMatches(req.headers?.['if-none-match'], cachedEtag)) {
+      return { notModified: true, etag: cachedEtag }
+    }
     try {
       const cached = await redisCommand('GET', cacheKey)
       if (typeof cached === 'string' && cached.includes('BEGIN:VCALENDAR')) {
-        return cached
+        const etag = cachedEtag || icsEtag(cached)
+        if (!cachedEtag) {
+          try {
+            const ttl = Number(await redisCommand('TTL', cacheKey))
+            if (ttl > 0) {
+              await redisCommand('SET', etagKey, etag, 'EX', String(ttl))
+            }
+          } catch {
+            // hash is optional
+          }
+        }
+        return { ics: cached, etag }
       }
     } catch {
       // continue to live build
@@ -223,14 +278,16 @@ async function loadFeedIcs({ tenant, selectedGroups, include, futureWeeks, req }
     subscribe: true,
   })
 
+  const etag = icsEtag(ics)
   if (isRedisConfigured()) {
     try {
       await redisCommand('SET', cacheKey, ics, 'EX', String(ICS_CACHE_TTL_SEC))
+      await redisCommand('SET', etagKey, etag, 'EX', String(ICS_CACHE_TTL_SEC))
     } catch {
       // cache is optional
     }
   }
-  return ics
+  return { ics, etag }
 }
 
 function serveEncodedIcs(res, raw) {
@@ -252,6 +309,17 @@ function serveEncodedIcs(res, raw) {
   }
 
   sendIcs(res, ics, 'myswimday.ics', { 'Cache-Control': 'no-store' }, 'inline')
+}
+
+function sendNotModified(res, etag, headers = {}) {
+  res.statusCode = 304
+  res.setHeader('ETag', `"${etag}"`)
+  res.setHeader('Cache-Control', 'public, max-age=300')
+  for (const [name, value] of Object.entries(headers)) {
+    if (value === undefined || value === null) continue
+    res.setHeader(name, String(value))
+  }
+  res.end()
 }
 
 function sendIcs(res, ics, filename, headers = {}, disposition = 'attachment') {

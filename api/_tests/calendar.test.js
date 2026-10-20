@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import handler from '../calendar.js'
+import handler, { etagMatches } from '../calendar.js'
 
 function mockReq(url, method = 'GET') {
   return {
@@ -37,6 +37,21 @@ async function call(url, method) {
   }
   return { res, json }
 }
+
+describe('etagMatches', () => {
+  it('matches a quoted tag, a weak tag, and a list', () => {
+    assert.equal(etagMatches('"abc"', 'abc'), true)
+    assert.equal(etagMatches('W/"abc"', 'abc'), true)
+    assert.equal(etagMatches('"other", "abc"', 'abc'), true)
+    assert.equal(etagMatches('*', 'abc'), true)
+  })
+
+  it('does not match a different tag or an empty validator', () => {
+    assert.equal(etagMatches('"other"', 'abc'), false)
+    assert.equal(etagMatches('', 'abc'), false)
+    assert.equal(etagMatches('*', ''), false)
+  })
+})
 
 describe('GET /api/calendar', () => {
   it('returns usage when called with no query', async () => {
