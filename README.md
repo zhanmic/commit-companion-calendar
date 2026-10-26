@@ -185,14 +185,14 @@ Requires env vars from [`.env.example`](.env.example):
 
 ### Digest send times (per tenant timezone)
 
-Vercel **Hobby** only allows cron expressions that run once per day, so `vercel.json` registers **24 daily jobs** (`0 0` … `0 23` UTC), each hitting `/api/cron/send-digests`. That endpoint checks every tenant’s **local** clock and sends when it is **at or past** the send hour (same local day):
+Vercel **Hobby** only allows cron expressions that run once per day. `vercel.json` registers the UTC hours that cover **7:00 a.m.** local (daily) and **Sunday 6:00 p.m.** local (weekly) for New York, Chicago, and Denver, plus the next hour so a late tick still sends. That endpoint checks every tenant’s **local** clock and sends when it is **at or past** the send hour:
 
 | Digest | When (tenant local time) | Delmar (`America/New_York`) |
 |--------|--------------------------|-----------------------------|
-| Daily | `dailySendHour` (default **7**) and later | from ~7:00am ET |
-| Weekly | Sunday at `weeklySendHour` (default **18**) and later | from Sunday ~6:00pm ET |
+| Daily | `dailySendHour` (default **7**) | ~7:00 a.m. ET |
+| Weekly | Sunday at `weeklySendHour` (default **18**) | Sunday ~6:00 p.m. ET |
 
-Already-sent days/weeks are skipped (`lastDailySentOn` / `lastWeeklySentOn`), so later UTC ticks are a safe catch-up if an earlier Hobby cron is late or missed. Confirming a **daily** subscription also sends today’s digest immediately.
+If every subscriber for that team was already sent (`lastDailySentOn` / `lastWeeklySentOn`), the tick does not load the Commit schedule. Confirming a **daily** subscription also sends today’s digest immediately.
 
 ## Adding a tenant
 

@@ -8,6 +8,7 @@ import {
   loadScheduleWindow,
 } from './schedule/digest.js'
 import { listActiveByFrequency, markSent } from './subscribeStore.js'
+import { getDayRange, getWeekRange } from './schedule/week.js'
 import { getTenantBySlug } from './tenants.js'
 
 /**
@@ -47,9 +48,26 @@ export async function sendDigestToSubscription(
   })
 }
 
+/** Day or week id stored on lastDailySentOn / lastWeeklySentOn. */
+export function digestSentKey(frequency, now, timeZone) {
+  const tz = timeZone || 'America/New_York'
+  if (frequency === 'weekly') return getWeekRange(now, tz).weekStartKey
+  return getDayRange(now, tz).dayKey
+}
+
+/** Subscribers who still need this day or week. */
+export function subscribersPendingSend(subs, frequency, rangeKey) {
+  return (subs ?? []).filter((sub) => {
+    const marker =
+      frequency === 'weekly' ? sub.lastWeeklySentOn : sub.lastDailySentOn
+    return marker !== rangeKey
+  })
+}
+
 /**
  * Send digests for all active subscribers of one tenant + frequency.
  * Loads the Commit schedule window once and fans out.
+ * Skips that load when every subscriber was already sent for this range.
  */
 export async function sendDigestsForTenantFrequency({
   tenant,
@@ -75,6 +93,11 @@ export async function sendDigestsForTenantFrequency({
   const errors = []
 
   if (subs.length === 0) return { sent, skipped, errors }
+
+  const rangeKey = digestSentKey(frequency, now, tenant.defaultTimeZone)
+  if (subscribersPendingSend(subs, frequency, rangeKey).length === 0) {
+    return { sent, skipped: subs.length, errors }
+  }
 
   let window
   try {

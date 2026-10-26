@@ -311,10 +311,14 @@ function serveEncodedIcs(res, raw) {
   sendIcs(res, ics, 'myswimday.ics', { 'Cache-Control': 'no-store' }, 'inline')
 }
 
+const FEED_CACHE_CONTROL = 'public, max-age=300'
+const FEED_CDN_CACHE_CONTROL = 'public, s-maxage=300'
+
 function sendNotModified(res, etag, headers = {}) {
   res.statusCode = 304
   res.setHeader('ETag', `"${etag}"`)
-  res.setHeader('Cache-Control', 'public, max-age=300')
+  res.setHeader('Cache-Control', FEED_CACHE_CONTROL)
+  res.setHeader('Vercel-CDN-Cache-Control', FEED_CDN_CACHE_CONTROL)
   for (const [name, value] of Object.entries(headers)) {
     if (value === undefined || value === null) continue
     res.setHeader(name, String(value))
@@ -323,9 +327,14 @@ function sendNotModified(res, etag, headers = {}) {
 }
 
 function sendIcs(res, ics, filename, headers = {}, disposition = 'attachment') {
+  const cacheControl = headers['Cache-Control'] || FEED_CACHE_CONTROL
+  const cdnCache = String(cacheControl).includes('no-store')
+    ? undefined
+    : FEED_CDN_CACHE_CONTROL
   sendText(res, 200, ics, 'text/calendar', {
     'Content-Disposition': `${disposition}; filename="${filename}"`,
-    'Cache-Control': 'public, max-age=300',
+    'Cache-Control': cacheControl,
+    ...(cdnCache ? { 'Vercel-CDN-Cache-Control': cdnCache } : {}),
     ...headers,
   })
 }

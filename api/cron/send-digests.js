@@ -1,14 +1,17 @@
 /**
  * GET /api/cron/send-digests
  *
- * Vercel Cron tick (see vercel.json). Hobby forbids true hourly expressions, so
- * production registers 24 once-daily jobs (one per UTC hour). Each tick sends
- * digests when that tenant’s local clock is at or past its send hour (same day):
+ * Vercel Cron tick (see vercel.json). Hobby only allows expressions that run
+ * once a day, so production registers the UTC hours that cover 7:00 a.m. local
+ * (daily) and Sunday 6:00 p.m. local (weekly) for New York, Chicago, and Denver,
+ * including daylight saving and a one-hour late tick.
+ *
+ * Each tick sends when that tenant’s local clock is at or past its send hour:
  * - daily  → local hour >= dailySendHour (default 7)
  * - weekly → Sunday + local hour >= weeklySendHour (default 18)
  *
- * Using >= (not ===) catches Hobby ±hour jitter and missed ticks; per-subscriber
- * lastDailySentOn / lastWeeklySentOn still prevent double sends.
+ * Using >= (not ===) catches a tick that lands an hour late. If every subscriber
+ * was already sent for that day or week, the tick does not load Commit.
  *
  * Query:
  * - frequency=daily|weekly — only consider that frequency

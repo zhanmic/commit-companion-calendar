@@ -39,50 +39,6 @@
   "crons": [
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
       "schedule": "0 11 * * *"
     },
     {
@@ -103,35 +59,23 @@
     },
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 16 * * *"
+      "schedule": "0 22 * * 0"
     },
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 17 * * *"
+      "schedule": "0 23 * * 0"
     },
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 18 * * *"
+      "schedule": "0 0 * * 1"
     },
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 19 * * *"
+      "schedule": "0 1 * * 1"
     },
     {
       "path": "/api/cron/send-digests",
-      "schedule": "0 20 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 21 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/send-digests",
-      "schedule": "0 23 * * *"
+      "schedule": "0 2 * * 1"
     }
   ]
 }

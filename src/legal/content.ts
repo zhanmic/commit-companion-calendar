@@ -72,7 +72,7 @@ export const serviceDocument: LegalDocument = {
         'Commit Swimming itself, Commit licenses, or Commit admin support',
         'Coaching, meet entry, registration, billing of swimmers, or team CRM',
         'Guaranteed real-time sync (near-live best effort from public Commit data)',
-        'Push updates into iPhone Calendar or other subscribed apps (those apps pull the ICS feed on their own schedule, often hours later)',
+        'Push updates into iPhone Calendar or other subscribed apps. The feed is refreshed about every 5 minutes; those apps download it on their own schedule, often hours later',
         'Custom native apps, SSO, or private/authenticated calendars (unless sold separately later)',
         'Editing or correcting schedule data inside Commit on your behalf',
         'SMS, push notifications, or unlimited email or API volume beyond fair use',
@@ -184,7 +184,7 @@ export const termsDocument: LegalDocument = {
       id: 'service',
       title: 'The service',
       paragraphs: [
-        `We provide the features described in the Service description on a best-effort basis. Features may change. We do not guarantee uninterrupted availability, real-time sync, or that parsers will match every future Commit title format without adjustment. Calendar subscriptions (Sync to iPhone and equivalent ICS feeds) update only when the calendar app next downloads the feed.`,
+        `We provide the features described in the Service description on a best-effort basis. Features may change. We do not guarantee uninterrupted availability, real-time sync, or that parsers will match every future Commit title format without adjustment. Calendar subscriptions (Sync to iPhone and equivalent ICS feeds) are refreshed about every 5 minutes. They update on a phone only when that calendar app next downloads the feed, which is often hours later.`,
         `${PRODUCT_NAME} is not affiliated with Commit Swimming.`,
       ],
     },
