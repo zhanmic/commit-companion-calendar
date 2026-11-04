@@ -1,4 +1,4 @@
-import { addDays, addMonths, addYears } from 'date-fns'
+import { addMonths, addYears } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -36,18 +36,50 @@ function nearestDayStartMs(ms, timeZone) {
   return dayStartMs(new Date(start + DAY_MS * 1.5), timeZone)
 }
 
-function advanceByPeriod(date, period) {
+/**
+ * Step a recurrence cursor by one period in the team timezone, keeping the
+ * same local wall-clock time. date-fns addDays follows the *host* timezone
+ * (UTC on Vercel), which shifts Eastern practices by an hour after DST.
+ */
+function advanceByPeriod(date, period, timeZone) {
+  const zoned = toZonedTime(date, timeZone)
+  const hours = zoned.getHours()
+  const minutes = zoned.getMinutes()
+  const seconds = zoned.getSeconds()
+  const ms = zoned.getMilliseconds()
+
+  let year = zoned.getFullYear()
+  let month = zoned.getMonth()
+  let day = zoned.getDate()
+
   switch (period) {
     case 'weekly':
-      return addDays(date, 7)
-    case 'monthly':
-      return addMonths(date, 1)
-    case 'yearly':
-      return addYears(date, 1)
+      day += 7
+      break
+    case 'monthly': {
+      const next = addMonths(new Date(year, month, day), 1)
+      year = next.getFullYear()
+      month = next.getMonth()
+      day = next.getDate()
+      break
+    }
+    case 'yearly': {
+      const next = addYears(new Date(year, month, day), 1)
+      year = next.getFullYear()
+      month = next.getMonth()
+      day = next.getDate()
+      break
+    }
     case 'weekdays':
     default:
-      return addDays(date, 1)
+      day += 1
+      break
   }
+
+  return fromZonedTime(
+    new Date(year, month, day, hours, minutes, seconds, ms),
+    timeZone,
+  )
 }
 
 function toOccurrence(event, name, start, end, options) {
@@ -123,21 +155,21 @@ export function expandEvents(events, rangeStart, rangeEnd, options) {
 
       if (rec.period === 'weekdays') {
         if (!allowedDays.has(momentDay(cursor, timeZone))) {
-          cursor = advanceByPeriod(cursor, rec.period)
+          cursor = advanceByPeriod(cursor, rec.period, timeZone)
           continue
         }
       }
 
       if (cursor < rangeStart) {
         if (cursor.getTime() + durationMs < rangeStart.getTime()) {
-          cursor = advanceByPeriod(cursor, rec.period)
+          cursor = advanceByPeriod(cursor, rec.period, timeZone)
           continue
         }
       }
 
       const custom = customs.get(dayStartMs(cursor, timeZone))
       if (custom?.removed) {
-        cursor = advanceByPeriod(cursor, rec.period)
+        cursor = advanceByPeriod(cursor, rec.period, timeZone)
         continue
       }
 
@@ -155,7 +187,7 @@ export function expandEvents(events, rangeStart, rangeEnd, options) {
         results.push(toOccurrence(event, name, occStart, occEnd, options))
       }
 
-      cursor = advanceByPeriod(cursor, rec.period)
+      cursor = advanceByPeriod(cursor, rec.period, timeZone)
     }
   }
 
