@@ -426,6 +426,66 @@ function applyLeadView() {
         ? `${total.toLocaleString()} leads`
         : `${rows.length.toLocaleString()} of ${total.toLocaleString()} leads`
   }
+  updateSendUsageCount()
+}
+
+const SEND_USAGE_LEVELS = ['high', 'medium', 'small', 'none', 'unscanned']
+
+function selectedSendTouch() {
+  const selected = document.querySelector('input[name="send-touch"]:checked')
+  const touch = Number(selected?.value)
+  return [1, 2, 3].includes(touch) ? touch : 1
+}
+
+function selectedSendUsages() {
+  return SEND_USAGE_LEVELS.filter(
+    (level) => document.getElementById(`send-usage-${level}`)?.checked === true,
+  )
+}
+
+function leadSendUsage(lead) {
+  return SEND_USAGE_LEVELS.includes(lead?.calendar_usage)
+    ? lead.calendar_usage
+    : 'unscanned'
+}
+
+function leadHasSavedTouch(lead, touch) {
+  let drafts = {}
+  try {
+    drafts = lead?.outreach_drafts ? JSON.parse(lead.outreach_drafts) : {}
+  } catch {
+    drafts = {}
+  }
+  const key = String(touch)
+  if (drafts[key]?.body?.trim()) return true
+  return touch === 1 && !!lead?.draft_email?.trim() && !drafts['1']?.body
+}
+
+function countSendReady(touch, usages) {
+  const from =
+    touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
+  const allowed = new Set(usages)
+  return leadsCache.filter((lead) => {
+    if (lead.status !== from) return false
+    if (!lead.contact_email?.trim()) return false
+    if (!allowed.has(leadSendUsage(lead))) return false
+    return leadHasSavedTouch(lead, touch)
+  }).length
+}
+
+function updateSendUsageCount() {
+  const el = document.getElementById('send-usage-count')
+  if (!el) return
+  const usages = selectedSendUsages()
+  if (!usages.length) {
+    el.textContent = 'Pick at least one usage level. High is sent before the others.'
+    return
+  }
+  const touch = selectedSendTouch()
+  const ready = countSendReady(touch, usages)
+  const scope = searchEl?.value.trim() ? ' in the current search' : ''
+  const levels = usages.length === SEND_USAGE_LEVELS.length ? 'any usage' : usages.join(', ')
+  el.textContent = `${ready.toLocaleString()} ready${scope} · ${levels} · high usage first`
 }
 
 function renderLeads(leads) {
@@ -1156,14 +1216,17 @@ document.getElementById('btn-draft-queue')?.addEventListener('click', () => {
 })
 
 document.getElementById('btn-send')?.addEventListener('click', () => {
-  const selected = document.querySelector('input[name="send-touch"]:checked')
-  const touch = [1, 2, 3].includes(Number(selected?.value))
-    ? Number(selected.value)
-    : 1
+  const touch = selectedSendTouch()
   const from =
     touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
   const to =
     touch === 1 ? 'contacted_1' : touch === 2 ? 'contacted_2' : 'contacted_3'
+  const usages = selectedSendUsages()
+  if (!usages.length) {
+    appendLog(logProcess, 'Pick at least one usage level (High is the usual first batch)')
+    updateSendUsageCount()
+    return
+  }
   const limit = Math.max(
     1,
     Math.min(Number(document.getElementById('send-limit')?.value || 10), 100),
@@ -1172,8 +1235,12 @@ document.getElementById('btn-send')?.addEventListener('click', () => {
     2,
     Math.min(Number(document.getElementById('send-pause')?.value || 4), 120),
   )
+  const usagePhrase =
+    usages.length === SEND_USAGE_LEVELS.length
+      ? 'any usage, high first'
+      : `usage ${usages.join(', ')}, high first`
   const ok = window.confirm(
-    `Send touch ${touch} to up to ${limit} ${from} leads via Mail.app?\n\nThis sends real email and sets each lead to ${to}. Leads without an office email or touch ${touch} are skipped. The batch stops if Mail fails.`,
+    `Send touch ${touch} to up to ${limit} ${from} leads (${usagePhrase}) via Mail.app?\n\nHigher usage is sent first. This sends real email and sets each lead to ${to}. Leads outside the usage filter, or without an office email or touch ${touch}, are skipped. The batch stops if Mail fails.`,
   )
   if (!ok) {
     appendLog(logProcess, 'Send cancelled')
@@ -1184,11 +1251,16 @@ document.getElementById('btn-send')?.addEventListener('click', () => {
     {
       target: 'all',
       touch,
+      usages,
       limit,
       delayMs: pauseSec * 1000,
     },
     logProcess,
   )
+})
+
+document.querySelectorAll('#send-usage input, input[name="send-touch"]').forEach((input) => {
+  input.addEventListener('change', updateSendUsageCount)
 })
 
 document.getElementById('btn-draft-one')?.addEventListener('click', () => {

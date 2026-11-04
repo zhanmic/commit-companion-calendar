@@ -11,6 +11,7 @@ import {
   runCommitswimDiscover,
   runCalendarUsageScan,
   parseSendTouch,
+  parseSendUsages,
   runSendTouch,
 } from './jobs.js'
 
@@ -28,7 +29,7 @@ Usage:
   npm run cli -- score [id|all]
   npm run cli -- export [path]
   npm run cli -- calendar
-  npm run cli -- send --yes [--touch 1|2|3] [--limit 10] [--pause 4]
+  npm run cli -- send --yes [--touch 1|2|3] [--usage high,medium] [--limit 10] [--pause 4]
   npm run cli -- send-first --yes [--limit 10] [--pause 4]   # alias for --touch 1
   npm run cli -- status
   npm run ui
@@ -158,12 +159,14 @@ async function main(): Promise<void> {
       let limit = 10
       let delayMs = 4000
       let touch: 1 | 2 | 3 = 1
+      let usages: ReturnType<typeof parseSendUsages> = undefined
       let yes = false
       for (let i = 0; i < rest.length; i++) {
         const a = rest[i]
         if (a === '--limit') limit = Number(rest[++i])
         else if (a === '--pause') delayMs = Number(rest[++i]) * 1000
         else if (a === '--touch') touch = parseSendTouch(rest[++i])
+        else if (a === '--usage') usages = parseSendUsages(rest[++i])
         else if (a === '--yes') yes = true
         else if (a === '--help') usage()
       }
@@ -181,7 +184,7 @@ async function main(): Promise<void> {
         )
         process.exit(1)
       }
-      await runSendTouch({ touch, limit, delayMs })
+      await runSendTouch({ touch, limit, delayMs, usages })
       break
     }
     case 'status': {

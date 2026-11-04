@@ -12,6 +12,7 @@ import {
   runScore,
   runSeed,
   parseSendTouch,
+  parseSendUsages,
   runSendTouch,
   runCalendarUsageScan,
   runUsaDiscover,
@@ -135,6 +136,7 @@ async function handleRun(
     score?: boolean
     touches?: Array<1 | 2 | 3>
     touch?: 1 | 2 | 3
+    usages?: unknown
     statuses?: LeadStatus[]
     delayMs?: number
   }
@@ -285,14 +287,22 @@ async function handleRun(
       }
     } else if (action === 'send' || action === 'send-first') {
       const touch = parseSendTouch(body.touch)
+      const usages = parseSendUsages(body.usages)
       const from =
         touch === 1 ? 'drafted' : touch === 2 ? 'contacted_1' : 'contacted_2'
-      log(`Starting bulk send of touch ${touch} for ${from} leads…`)
+      const usageLabel =
+        usages == null
+          ? 'any usage, high first'
+          : usages.length
+            ? `usage ${usages.join(', ')}`
+            : 'no usage selected'
+      log(`Starting bulk send of touch ${touch} for ${from} leads (${usageLabel})…`)
       await runSendTouch(
         {
           touch,
           limit: body.limit,
           delayMs: body.delayMs,
+          usages,
           signal,
         },
         log,

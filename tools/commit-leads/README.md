@@ -103,7 +103,7 @@ Enrich (Process step 2) scores calendar usage when a Commit team first becomes *
 2. **Generate drafts** (bulk) — uses **Draft batch size** and the **1 / 2 / 3** checkboxes. **Force regenerate** only hits the **Force statuses** you check (default: **drafted**; check **researched** to rewrite those too). Status becomes **drafted** when all three exist (does not overwrite contacted_1/2/3). Existing drafts stay until you force-regenerate.
 3. Open a lead → touch tabs → edit **HTML** on the left; **Preview** updates live on the right → **Save edits** → **Copy draft** (HTML + plain) or **Open in Mail**.
 4. Mail.app opens an HTML draft. Pick **From:** `sales@mail.myswimday.com` (see [Send as myswimday.com](#send-as-myswimdaycom)). **Open Mail + contacted** / **Mark contacted** advances `contacted_1` → `contacted_2` → `contacted_3` (from the active touch; never goes backward).
-5. **Send emails** (bulk) sends the chosen saved touch, then advances status: touch 1 for `drafted` → `contacted_1`, touch 2 for `contacted_1` → `contacted_2`, touch 3 for `contacted_2` → `contacted_3`. It asks for confirmation, pauses between sends, skips leads with no office email or no draft for that touch, and stops if Mail fails. Already-sent leads keep the new status if you hit **Stop send**. The UI server must be running on this Mac. CLI: `npm run cli -- send --yes --touch 2 --limit 10` (`send-first` is still touch 1).
+5. **Send emails** (bulk) sends the chosen saved touch, then advances status: touch 1 for `drafted` → `contacted_1`, touch 2 for `contacted_1` → `contacted_2`, touch 3 for `contacted_2` → `contacted_3`. **Usage** limits the batch (default: **High** only). When more than one level is checked, high is sent before medium, then small, then none, then unscanned. It asks for confirmation, pauses between sends, skips leads outside that usage filter or with no office email or no draft for that touch, and stops if Mail fails. Already-sent leads keep the new status if you hit **Stop send**. The UI server must be running on this Mac. CLI: `npm run cli -- send --yes --touch 1 --usage high --limit 10` (`send-first` is still touch 1; omit `--usage` to include every level, still high first).
 
 Draft bodies use simple tags (`<p>`, `<br>`, `<a href>`, `<strong>`, `<em>`). Product URLs are forced in as clickable anchors if the model omits them. Plain-text legacy drafts are converted to HTML when loaded / saved / opened in Mail.
 
@@ -159,9 +159,9 @@ npm run cli -- fingerprint all
 npm run cli -- enrich all
 npm run cli -- score all
 npm run cli -- calendar             # refresh Sep–Oct usage for contacted/replied
-npm run cli -- send --yes --touch 1  # drafted → contacted_1 (send-first is the same)
-npm run cli -- send --yes --touch 2  # contacted_1 → contacted_2
-npm run cli -- send --yes --touch 3  # contacted_2 → contacted_3
+npm run cli -- send --yes --touch 1 --usage high   # drafted + high usage → contacted_1
+npm run cli -- send --yes --touch 2 --usage high   # contacted_1 + high usage → contacted_2
+npm run cli -- send --yes --touch 3 --usage high   # contacted_2 + high usage → contacted_3
 npm run cli -- export
 npm run cli -- status
 ```

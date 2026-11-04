@@ -324,8 +324,9 @@
               <strong>contacted_1</strong> → <strong>contacted_2</strong>,
               touch 3 from <strong>contacted_2</strong> →
               <strong>contacted_3</strong>. Needs an office email and a saved
-              draft for that touch. Stops if Mail fails. The server must be
-              running on this Mac.
+              draft for that touch. Usage picks who is included; high is sent
+              before medium, then small, then none. Stops if Mail fails. The
+              server must be running on this Mac.
             </p>
             <fieldset
               class="draft-touches has-tip"
@@ -345,6 +346,34 @@
                 3 · Close loop
               </label>
             </fieldset>
+            <fieldset
+              class="draft-touches has-tip"
+              id="send-usage"
+              data-tip="Only checked Sep–Oct usage levels are sent. High goes out before medium, then small, then none, then teams that have not been scanned."
+            >
+              <legend>Usage</legend>
+              <label class="check">
+                <input id="send-usage-high" type="checkbox" checked />
+                High
+              </label>
+              <label class="check">
+                <input id="send-usage-medium" type="checkbox" />
+                Medium
+              </label>
+              <label class="check">
+                <input id="send-usage-small" type="checkbox" />
+                Small
+              </label>
+              <label class="check">
+                <input id="send-usage-none" type="checkbox" />
+                None
+              </label>
+              <label class="check">
+                <input id="send-usage-unscanned" type="checkbox" />
+                Not scanned
+              </label>
+            </fieldset>
+            <p id="send-usage-count" class="hint">High usage is sent first.</p>
             <label
               class="has-tip"
               data-tip="How many matching leads to actually send in this run. Max 100."
@@ -364,7 +393,7 @@
                 type="button"
                 class="has-tip"
                 id="btn-send"
-                data-tip="Send the selected touch now. Asks for confirmation. Uses the saved draft, not unsaved edits in an open lead."
+                data-tip="Send the selected touch now, high usage first, only for the checked usage levels. Asks for confirmation. Uses the saved draft, not unsaved edits in an open lead."
               >
                 Send emails
               </button>

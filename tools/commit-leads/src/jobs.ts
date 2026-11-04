@@ -994,10 +994,69 @@ const SEND_FROM_STATUS: Record<1 | 2 | 3, LeadStatus> = {
   3: 'contacted_2',
 }
 
+/** Sep–Oct usage levels the bulk sender can include. `unscanned` is a null calendar_usage. */
+export const SEND_USAGE_LEVELS = [
+  'high',
+  'medium',
+  'small',
+  'none',
+  'unscanned',
+] as const
+
+export type SendUsage = (typeof SEND_USAGE_LEVELS)[number]
+
+const SEND_USAGE_RANK: Record<SendUsage, number> = {
+  high: 4,
+  medium: 3,
+  small: 2,
+  none: 1,
+  unscanned: 0,
+}
+
 export function parseSendTouch(value: unknown): 1 | 2 | 3 {
   const n = Number(value)
   if (n === 2 || n === 3) return n
   return 1
+}
+
+/**
+ * Usage levels to include. `undefined` means every level.
+ * An empty list means the caller picked none.
+ */
+export function parseSendUsages(value: unknown): SendUsage[] | undefined {
+  if (value == null || value === '') return undefined
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/[,\s]+/)
+      : []
+  const allowed = new Set<string>(SEND_USAGE_LEVELS)
+  const out: SendUsage[] = []
+  for (const item of raw) {
+    const level = String(item).trim().toLowerCase()
+    if (!allowed.has(level)) continue
+    const usage = level as SendUsage
+    if (!out.includes(usage)) out.push(usage)
+  }
+  return out
+}
+
+function leadSendUsage(lead: Lead): SendUsage {
+  const level = lead.calendar_usage
+  if (
+    level === 'high' ||
+    level === 'medium' ||
+    level === 'small' ||
+    level === 'none'
+  ) {
+    return level
+  }
+  return 'unscanned'
+}
+
+function matchesSendUsage(lead: Lead, usages: SendUsage[] | undefined): boolean {
+  if (usages == null) return true
+  return usages.includes(leadSendUsage(lead))
 }
 
 /**
@@ -1012,6 +1071,8 @@ export async function runSendTouch(
     touch?: 1 | 2 | 3
     limit?: number
     delayMs?: number
+    /** Omit to include every usage level. Empty list sends nothing. */
+    usages?: SendUsage[]
     signal?: AbortSignal
   } = {},
   log: LogFn = console.log,
@@ -1023,10 +1084,34 @@ export async function runSendTouch(
   const delayMs = Math.max(2_000, Math.min(options.delayMs ?? 4_000, 120_000))
   const signal = options.signal
   const key = String(touchNum) as '1' | '2' | '3'
+  const usages = options.usages
+  const usageNote =
+    usages == null
+      ? 'any usage, high first'
+      : usages.length
+        ? `usage ${usages.join(', ')}, high first`
+        : 'no usage levels selected'
 
+  if (usages && usages.length === 0) {
+    log('Nothing to send — pick at least one usage level.')
+    return
+  }
+
+  let usageSkipped = 0
   const candidates = listLeads()
-    .filter((lead) => lead.status === fromStatus)
-    .sort((a, b) => a.id - b.id)
+    .filter((lead) => {
+      if (lead.status !== fromStatus) return false
+      if (!matchesSendUsage(lead, usages)) {
+        usageSkipped++
+        return false
+      }
+      return true
+    })
+    .sort(
+      (a, b) =>
+        SEND_USAGE_RANK[leadSendUsage(b)] - SEND_USAGE_RANK[leadSendUsage(a)] ||
+        a.id - b.id,
+    )
 
   let noEmail = 0
   let noTouch = 0
@@ -1045,11 +1130,11 @@ export async function runSendTouch(
 
   const batch = ready.slice(0, limit)
   log(
-    `Send touch ${touchNum}: ${batch.length} lead(s) (limit=${limit}, pause=${Math.round(delayMs / 1000)}s). ${ready.length} ${fromStatus} with office email + touch ${touchNum}. Skipped ${noEmail} with no office email, ${noTouch} with no touch ${touchNum}.`,
+    `Send touch ${touchNum}: ${batch.length} lead(s) (limit=${limit}, pause=${Math.round(delayMs / 1000)}s, ${usageNote}). ${ready.length} ${fromStatus} with office email + touch ${touchNum}. Skipped ${noEmail} with no office email, ${noTouch} with no touch ${touchNum}${usageSkipped ? `, ${usageSkipped} outside the usage filter` : ''}.`,
   )
   if (batch.length === 0) {
     log(
-      `Nothing to send — need status ${fromStatus}, an office email, and touch ${touchNum}.`,
+      `Nothing to send — need status ${fromStatus}, an office email, touch ${touchNum}, and ${usageNote}.`,
     )
     return
   }
@@ -1065,7 +1150,7 @@ export async function runSendTouch(
         `Quick idea for ${lead.team_name || 'your team'}`
       const to = lead.contact_email!.trim()
       log(
-        `#${lead.id}: send touch ${touchNum} to ${to} (${lead.team_name ?? '—'}) (${i + 1}/${batch.length})`,
+        `#${lead.id}: send touch ${touchNum} to ${to} (${lead.team_name ?? '—'}, ${leadSendUsage(lead)}) (${i + 1}/${batch.length})`,
       )
       const mail = await openMailDraft({
         to,
