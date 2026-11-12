@@ -96,7 +96,10 @@ describe('GET /api/calendar', () => {
     if (res.statusCode === 200) {
       assert.match(res.body, /BEGIN:VCALENDAR/)
       assert.match(res.headers['Content-Type'], /text\/calendar/)
-      assert.equal(res.headers['Vercel-CDN-Cache-Control'], 'public, s-maxage=300')
+      assert.equal(
+        res.headers['Vercel-CDN-Cache-Control'],
+        'public, s-maxage=1800, stale-while-revalidate=86400',
+      )
     }
   })
 })

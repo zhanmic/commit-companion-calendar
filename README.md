@@ -185,7 +185,7 @@ Requires env vars from [`.env.example`](.env.example):
 
 ### Digest send times (per tenant timezone)
 
-Vercel **Hobby** only allows cron expressions that run once per day. `vercel.json` registers the UTC hours that cover **7:00 a.m.** local (daily) and **Sunday 6:00 p.m.** local (weekly) for New York, Chicago, and Denver, plus the next hour so a late tick still sends. That endpoint checks every tenant’s **local** clock and sends when it is **at or past** the send hour:
+Vercel **Hobby** only allows cron expressions that run once per day. `vercel.json` registers the UTC hours that cover **7:00 a.m.** local (daily) and **Sunday 6:00 p.m.** local (weekly) for New York, Chicago, and Denver, plus the next hour so a late tick still sends. That endpoint checks every tenant’s **local** clock and sends only in the send hour and the following catch-up hour (not every later morning tick):
 
 | Digest | When (tenant local time) | Delmar (`America/New_York`) |
 |--------|--------------------------|-----------------------------|
