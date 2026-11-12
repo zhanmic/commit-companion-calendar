@@ -98,7 +98,7 @@ describe('GET /api/calendar', () => {
       assert.match(res.headers['Content-Type'], /text\/calendar/)
       assert.equal(
         res.headers['Vercel-CDN-Cache-Control'],
-        'public, s-maxage=1800, stale-while-revalidate=86400',
+        'public, s-maxage=300, stale-while-revalidate=86400',
       )
     }
   })

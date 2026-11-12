@@ -40,7 +40,7 @@ The iPhone stores the feed URL and **re-downloads** it on its own schedule:
 
 Apple chooses the poll interval. It is often **hours**, not seconds. The feed asks for about every 6 hours (`REFRESH-INTERVAL`); iOS may ignore that and use its own timing. Pulling down in Calendar does not always force a refresh. To force a refresh, delete the subscription and add it again.
 
-After a coach edits Commit, the website updates within a couple of minutes. The live feed is CDN-cached for about **30 minutes** (Fluid Active CPU on Hobby is tight), so the phone updates on the next Calendar fetch after that window.
+After a coach edits Commit, the website updates within a couple of minutes. The phone updates on the next Calendar fetch after that.
 
 ## Paste the URL yourself
 

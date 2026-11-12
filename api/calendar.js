@@ -36,8 +36,7 @@ import { consumePublicApiQuota } from './_lib/schedule/rateLimit.js'
 import { getHorizonRange } from './_lib/schedule/week.js'
 import { getTenantBySlug, listTenants } from './_lib/tenants.js'
 
-/** Match phone refresh (hours) — CDN hits skip Fluid CPU entirely. */
-const ICS_CACHE_TTL_SEC = 1800
+const ICS_CACHE_TTL_SEC = 300
 const DEFAULT_FUTURE_WEEKS = 8
 const MAX_FUTURE_WEEKS = 12
 const PAST_DAYS = 7

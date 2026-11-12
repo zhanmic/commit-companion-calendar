@@ -8,8 +8,7 @@
 import { isRedisConfigured, redisCommand } from '../redis.js'
 import { fetchCommitBundle } from './publicQuery.js'
 
-/** Swim schedules rarely change mid-hour; longer TTL cuts Fluid Active CPU on polls. */
-const CACHE_TTL_SEC = 1800
+const CACHE_TTL_SEC = 300
 
 const EVENT_FIELDS = ['_id', 'label', 'name', 'description', 'startDate', 'endDate']
 const RECURRING_FIELDS = ['endDate', 'days', 'period']
