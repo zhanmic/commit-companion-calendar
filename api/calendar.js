@@ -140,6 +140,18 @@ export default async function handler(req, res) {
 
   const futureWeeks = parseWeeks(weeksRaw)
 
+  // Cheap 304 before rate-limit Redis / ICS rebuild — phone polls send If-None-Match.
+  const earlyEtag = await peekFeedEtag(
+    tenant,
+    selectedGroups,
+    include,
+    futureWeeks,
+  )
+  if (etagMatches(req.headers?.['if-none-match'], earlyEtag)) {
+    sendNotModified(res, earlyEtag)
+    return
+  }
+
   const quota = await consumePublicApiQuota({
     tenant,
     ip: clientIp(req),
@@ -168,6 +180,7 @@ export default async function handler(req, res) {
       include,
       futureWeeks,
       req,
+      knownEtag: earlyEtag,
     })
     if (feed.notModified) {
       sendNotModified(res, feed.etag, rateHeaders)
@@ -213,16 +226,36 @@ function feedEtagKey(cacheKey) {
   return cacheKey.replace('msd:pubics:v1:', 'msd:pubics:etag:')
 }
 
-async function loadFeedIcs({ tenant, selectedGroups, include, futureWeeks, req }) {
+async function peekFeedEtag(tenant, groups, include, futureWeeks) {
+  if (!isRedisConfigured()) return ''
+  const etagKey = feedEtagKey(feedCacheKey(tenant, groups, include, futureWeeks))
+  try {
+    const raw = await redisCommand('GET', etagKey)
+    return typeof raw === 'string' && raw ? raw : ''
+  } catch {
+    return ''
+  }
+}
+
+async function loadFeedIcs({
+  tenant,
+  selectedGroups,
+  include,
+  futureWeeks,
+  req,
+  knownEtag = '',
+}) {
   const cacheKey = feedCacheKey(tenant, selectedGroups, include, futureWeeks)
   const etagKey = feedEtagKey(cacheKey)
-  let cachedEtag = ''
+  let cachedEtag = knownEtag
   if (isRedisConfigured()) {
-    try {
-      const raw = await redisCommand('GET', etagKey)
-      if (typeof raw === 'string' && raw) cachedEtag = raw
-    } catch {
-      // continue to the calendar body or a live build
+    if (!cachedEtag) {
+      try {
+        const raw = await redisCommand('GET', etagKey)
+        if (typeof raw === 'string' && raw) cachedEtag = raw
+      } catch {
+        // continue to the calendar body or a live build
+      }
     }
     if (etagMatches(req.headers?.['if-none-match'], cachedEtag)) {
       return { notModified: true, etag: cachedEtag }
@@ -311,8 +344,8 @@ function serveEncodedIcs(res, raw) {
   sendIcs(res, ics, 'myswimday.ics', { 'Cache-Control': 'no-store' }, 'inline')
 }
 
-const FEED_CACHE_CONTROL = 'public, max-age=300'
-const FEED_CDN_CACHE_CONTROL = 'public, s-maxage=300'
+const FEED_CACHE_CONTROL = `public, max-age=${ICS_CACHE_TTL_SEC}`
+const FEED_CDN_CACHE_CONTROL = `public, s-maxage=${ICS_CACHE_TTL_SEC}, stale-while-revalidate=86400`
 
 function sendNotModified(res, etag, headers = {}) {
   res.statusCode = 304

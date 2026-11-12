@@ -167,13 +167,19 @@ export default async function handler(req, res) {
       sessions,
       kinds: include,
     })
+    const cacheHeaders = {
+      ...rateHeaders,
+      'Cache-Control': 'public, max-age=60',
+      'Vercel-CDN-Cache-Control':
+        'public, s-maxage=300, stale-while-revalidate=3600',
+    }
 
     if (format === 'spoken' || format === 'text') {
-      sendText(res, 200, payload.spoken, 'text/plain', rateHeaders)
+      sendText(res, 200, payload.spoken, 'text/plain', cacheHeaders)
       return
     }
 
-    sendJson(res, 200, payload, rateHeaders)
+    sendJson(res, 200, payload, cacheHeaders)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Schedule lookup failed'
     sendJson(

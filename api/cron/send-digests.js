@@ -6,12 +6,13 @@
  * (daily) and Sunday 6:00 p.m. local (weekly) for New York, Chicago, and Denver,
  * including daylight saving and a one-hour late tick.
  *
- * Each tick sends when that tenant’s local clock is at or past its send hour:
- * - daily  → local hour >= dailySendHour (default 7)
- * - weekly → Sunday + local hour >= weeklySendHour (default 18)
+ * Each tick sends only in the local send window (send hour + one catch-up hour):
+ * - daily  → local hour in [dailySendHour, dailySendHour+1] (default 7–8)
+ * - weekly → Sunday + local hour in [weeklySendHour, weeklySendHour+1] (default 18–19)
  *
- * Using >= (not ===) catches a tick that lands an hour late. If every subscriber
- * was already sent for that day or week, the tick does not load Commit.
+ * The extra hour covers a late Hobby tick. Hours after that skip Redis subscriber
+ * scans so Fluid Active CPU stays low. If every subscriber was already sent for
+ * that day or week, the tick does not load Commit.
  *
  * Query:
  * - frequency=daily|weekly — only consider that frequency
@@ -91,13 +92,14 @@ export async function runSendDigests(
     const wantDaily = !freq || freq === 'daily'
     const wantWeekly = !freq || freq === 'weekly'
 
-    // Catch-up: any tick at or after the send hour (same local day) may send.
-    // Already-sent markers make repeated ticks safe.
+    // Catch-up: send hour and the next hour only (matches vercel.json late tick).
+    // Already-sent markers make the second tick safe.
     const dailyDue =
-      wantDaily && (force || clock.hour >= dailyHour)
+      wantDaily && (force || isWithinSendWindow(clock.hour, dailyHour))
     const weeklyDue =
       wantWeekly &&
-      (force || (clock.weekday === 0 && clock.hour >= weeklyHour))
+      (force ||
+        (clock.weekday === 0 && isWithinSendWindow(clock.hour, weeklyHour)))
 
     tenantSummary.dailyDue = dailyDue
     tenantSummary.weeklyDue = weeklyDue
@@ -142,4 +144,14 @@ function authorize(req) {
   const header = req.headers.authorization || req.headers.Authorization || ''
   if (header === `Bearer ${secret}`) return true
   return queryParam(req, 'secret') === secret
+}
+
+/** True for the send hour and one late hour (Hobby jitter / missed tick). */
+export function isWithinSendWindow(localHour, sendHour, catchUpHours = 1) {
+  const hour = Number(localHour)
+  const start = Number(sendHour)
+  const late = Number(catchUpHours)
+  if (!Number.isFinite(hour) || !Number.isFinite(start)) return false
+  const extra = Number.isFinite(late) && late >= 0 ? late : 1
+  return hour >= start && hour <= start + extra
 }
