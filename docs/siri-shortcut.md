@@ -86,8 +86,6 @@ Vortex: `team=2` (or `VortexSwimClub`, `Vortex`, `VSC`) and a Vortex group such 
 
 Donner: `team=3` (or `DonnerSwimClub`, `Donner`, `DSC`) and a Donner group such as `Senior`.
 
-Vernon Hills Turtles: `team=4` (or `VernonHillsTurtles`, `VHTurtles`, `VHST`) and a group such as `Bronze`, `Silver`, `Silver Comp`, `Gold`, or `Green`.
-
 ## Meets and team events
 
 You do **not** need a separate shortcut. Existing practice shortcuts stay practices-only until you add `include=`.

@@ -12,11 +12,7 @@ Use this before a team moves from pilot to paid production.
 
 ## Pilot tenants
 
-Demo calendars with no Stripe customer. Next unused `shortSlug` is `5`.
-
-| Tenant | Path | Notes |
-|--------|------|-------|
-| Vernon Hills Turtles (`VernonHillsTurtles`, also `/VHTurtles`, `/VHST`) | `/4` | `America/Chicago`. Groups: Bronze, Silver, Silver Comp, Gold, Green. Commit spells Bronze as `Bonze` (Tue/Thu swim); parsers count that as Bronze. Recovery inbox: `enricom@vhparkdistrict.org`. |
+None right now. Next unused `shortSlug` is `4`.
 
 ## 1. Confirm Commit prerequisite
 
@@ -37,7 +33,7 @@ Demo calendars with no Stripe customer. Next unused `shortSlug` is `5`.
 ## 3. Pilot setup and QA
 
 - [ ] Add `src/tenants/<Slug>/` (config, groups, practice/meet parsers)
-- [ ] Assign next unused `shortSlug` (`1` Delmar, `2` Vortex, `3` Donner, `4` Vernon Hills, then `5`…)
+- [ ] Assign next unused `shortSlug` (`1` Delmar, `2` Vortex, `3` Donner, then `4`…)
 - [ ] Register in `src/tenants/registry.ts` and mirror in `api/_lib/tenants.js`
 - [ ] Timezone + digest send hours correct
 - [ ] Optional: `publicApiHouseholds` if the club is much smaller/larger than `groups × 35` (public `/api/schedule` hourly cap)

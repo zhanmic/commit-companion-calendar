@@ -23,7 +23,6 @@ import {
 const delmar = getTenantBySlug('DelmarDolfins')
 const vortex = getTenantBySlug('VortexSwimClub')
 const donner = getTenantBySlug('DonnerSwimClub')
-const vernonHills = getTenantBySlug('VernonHillsTurtles')
 
 describe('resolveGroup', () => {
   it('maps senior to Delmar Sr', () => {
@@ -70,16 +69,8 @@ describe('resolveGroup', () => {
     assert.equal(getTenantBySlug('Vortex')?.slug, 'VortexSwimClub')
     assert.equal(getTenantBySlug('VSC')?.slug, 'VortexSwimClub')
     assert.equal(getTenantBySlug('DSC')?.slug, 'DonnerSwimClub')
-    assert.equal(getTenantBySlug('VHST')?.slug, 'VernonHillsTurtles')
-  })
-
-  it('maps Vernon Hills groups and aliases', () => {
-    assert.equal(getTenantBySlug('4')?.slug, 'VernonHillsTurtles')
-    assert.equal(getTenantBySlug('VHTurtles')?.displayName, 'Vernon Hills Turtles')
-    assert.equal(getTenantBySlug('VHST')?.slug, 'VernonHillsTurtles')
-    assert.equal(resolveGroup(vernonHills, 'silver comp').group.id, 'Silver Comp')
-    assert.equal(resolveGroup(vernonHills, 'silver').group.id, 'Silver')
-    assert.equal(resolveGroup(vernonHills, 'bronze').group.id, 'Bronze')
+    assert.equal(getTenantBySlug('VHST'), null)
+    assert.equal(getTenantBySlug('4'), null)
   })
 
   it('folds punctuation in group names', () => {
@@ -489,50 +480,6 @@ describe('Donner practice parser', () => {
     )
     assert.deepEqual(
       parsePractice('Team Tryouts', donner.practiceNameFormat).subTeams,
-      ['Other'],
-    )
-  })
-})
-
-describe('Vernon Hills practice parser', () => {
-  const { parsePractice } = getTenantParsers(vernonHills)
-
-  it('keeps Silver Comp separate and reads pools from the description', () => {
-    assert.deepEqual(
-      parsePractice('Silver Comp - Swim', vernonHills.practiceNameFormat).subTeams,
-      ['Silver Comp'],
-    )
-    assert.deepEqual(
-      parsePractice('Siver Comp - Swimming', vernonHills.practiceNameFormat).subTeams,
-      ['Silver Comp'],
-    )
-    assert.deepEqual(
-      parsePractice('Bonze - Swim', vernonHills.practiceNameFormat).subTeams,
-      ['Bronze'],
-    )
-    assert.equal(
-      parsePractice('Bronze - Swim', vernonHills.practiceNameFormat, {
-        description: 'LV',
-      }).location,
-      'Lakeview',
-    )
-    assert.equal(
-      parsePractice('Gold - Dryland', vernonHills.practiceNameFormat, {
-        description: 'VHHS - Fiel House',
-      }).location,
-      'VHHS Field House',
-    )
-    assert.equal(
-      parsePractice('Green - Swim', vernonHills.practiceNameFormat, {
-        description: '@ TK',
-      }).location,
-      'Turtle Creek',
-    )
-  })
-
-  it('leaves unmatched titles as Other', () => {
-    assert.deepEqual(
-      parsePractice('Divisional Team', vernonHills.practiceNameFormat).subTeams,
       ['Other'],
     )
   })
