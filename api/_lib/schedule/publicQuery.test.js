@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { getTenantBySlug } from '../tenants.js'
+import { getTenantBySlug, listTenants } from '../tenants.js'
 import {
   buildSpoken,
   filterDaySessions,
@@ -61,6 +61,14 @@ describe('resolveGroup', () => {
     assert.equal(resolveGroup(donner, 'pre-team').group.id, 'Pre Team')
     assert.equal(resolveGroup(donner, 'd group').group.id, 'Developmental')
     assert.equal(resolveGroup(delmar, 'developmental').group.id, 'DEVO')
+  })
+
+  it('lists Donner and Vortex as paid clients', () => {
+    const catalog = listTenants()
+    const status = (slug) => catalog.find((t) => t.slug === slug)?.billingStatus
+    assert.equal(status('DonnerSwimClub'), 'active')
+    assert.equal(status('VortexSwimClub'), 'active')
+    assert.equal(status('DelmarDolfins'), 'none')
   })
 
   it('resolves each team short alias', () => {

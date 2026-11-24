@@ -12,7 +12,7 @@ import {
   PRODUCT_DESCRIPTION,
   PRODUCT_NAME,
 } from './product'
-import { listTenantMeta } from './tenants'
+import { isBillingSubscribed, listTenantMeta } from './tenants'
 import './App.css'
 import './HomePage.css'
 
@@ -231,6 +231,7 @@ export function HomePage() {
               typeof window !== 'undefined'
                 ? `${window.location.origin}${tenant.path}`
                 : tenant.path
+            const customer = isBillingSubscribed(tenant.billingStatus)
             return (
               <li key={tenant.slug} className="landing-tenant-row">
                 <button
@@ -238,7 +239,12 @@ export function HomePage() {
                   className="landing-tenant"
                   onClick={() => navigate(tenant.path)}
                 >
-                  <span className="landing-tenant__name">{tenant.displayName}</span>
+                  <span className="landing-tenant__identity">
+                    <span className="landing-tenant__name">{tenant.displayName}</span>
+                    {customer ? (
+                      <span className="landing-tenant__badge">Customer</span>
+                    ) : null}
+                  </span>
                   <span className="landing-tenant__hint">Open calendar</span>
                 </button>
                 <ShareButton

@@ -40,7 +40,7 @@ Operator docs:
 
 **Roles:** Operator schedule tools = `?admin=<OPERATOR_ADMIN_PASSWORD>` (env). Team billing = Settings → **Team** password or `?ta=` via `TEAM_ADMIN_TOKENS` (env). See billing runbook.
 
-**Team admin UI:** unlock via Settings → Team → password → Billing shows **Get payment link** / **Manage billing**. After pay, set `billingStatus: 'active'` + `stripeCustomerId` on the tenant. Vortex Swim Club is active on the annual plan as of 2026-10-01 (`cus_VMES3pbATmbV3M`).
+**Team admin UI:** unlock via Settings → Team → password → Billing shows **Get payment link** / **Manage billing**. After pay, set `billingStatus: 'active'` + `stripeCustomerId` on the tenant. Vortex Swim Club is active on the annual plan as of 2026-10-01 (`cus_VMES3pbATmbV3M`). Donner Swim Club is a paid client as of 2026-11-24 (Stripe customer id not recorded yet). The home page marks active teams with a **Customer** badge.
 
 | Endpoint | Purpose |
 |----------|---------|

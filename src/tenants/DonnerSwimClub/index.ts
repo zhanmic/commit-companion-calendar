@@ -45,4 +45,6 @@ export const donnerSwimClubTenant: TenantConfig = {
   parsePractice: parseDonnerPractice,
   parseMeet: parseDonnerMeet,
   occurrenceMatchesTeams: donnerOccurrenceMatchesTeams,
+  /** Paid client as of 2026-11-24. */
+  billingStatus: 'active',
 }

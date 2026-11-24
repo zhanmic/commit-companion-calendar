@@ -111,6 +111,7 @@ export interface TenantPublicMeta {
   slug: string
   displayName: string
   path: string
+  billingStatus: TenantBillingStatus
 }
 
 /** Public calendar path (`/1`), not the storage slug. */

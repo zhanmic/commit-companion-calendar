@@ -138,6 +138,8 @@ export const TENANTS = [
      * Override via TEAM_ADMIN_EMAIL_DONNERSWIMCLUB or TEAM_ADMIN_EMAILS.
      */
     teamAdminEmail: 'headcoach@donnerswimclub.com',
+    /** Paid client as of 2026-11-24. Stripe customer id not recorded yet. */
+    billingStatus: 'active',
   },
 ]
 

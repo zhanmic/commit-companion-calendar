@@ -2,7 +2,7 @@ import { delmarDolfinsTenant } from './DelmarDolfins'
 import { donnerSwimClubTenant } from './DonnerSwimClub'
 import { vortexSwimClubTenant } from './VortexSwimClub'
 import type { TenantConfig, TenantPublicMeta } from './types'
-import { tenantPublicPath } from './types'
+import { normalizeBillingStatus, tenantPublicPath } from './types'
 
 /**
  * Register new tenants here.
@@ -46,6 +46,7 @@ export function listTenantMeta(): TenantPublicMeta[] {
     slug: t.slug,
     displayName: t.displayName,
     path: tenantPublicPath(t),
+    billingStatus: normalizeBillingStatus(t.billingStatus),
   }))
 }
 
