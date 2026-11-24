@@ -7,8 +7,9 @@ Use this before a team moves from pilot to paid production.
 | Tenant | Plan | Paid | Stripe customer |
 |--------|------|------|-----------------|
 | Vortex Swim Club (`VortexSwimClub`, `/2`) | Annual | 2026-10-01 | `cus_VMES3pbATmbV3M` (`coachnick@teamvortex.org`) |
+| Donner Swim Club (`DonnerSwimClub`, `/3`) | Not recorded | 2026-11-24 | Not recorded yet |
 
-`billingStatus: 'active'` and `stripeCustomerId` are set on the frontend tenant and `api/_lib/tenants.js`. Redeploy so Settings → Team shows **Active** and **Manage billing**.
+`billingStatus: 'active'` is set on the frontend tenant and `api/_lib/tenants.js`. The home page shows a **Customer** badge for active teams, and Settings → Team shows **Active**. Vortex also has `stripeCustomerId`, so **Manage billing** works. Donner does not have a Stripe customer id in the repo yet, so that button stays off until the id is added.
 
 ## Pilot tenants
 

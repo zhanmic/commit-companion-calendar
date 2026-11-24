@@ -377,11 +377,34 @@
   outline-offset: 2px;
 }
 
+.landing-tenant__identity {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  min-width: 0;
+}
+
 .landing-tenant__name {
   font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+.landing-tenant__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
+  color: var(--cyan-soft);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .landing-tenant__hint {
